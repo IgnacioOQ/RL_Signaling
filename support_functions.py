@@ -1,3 +1,15 @@
+
+# game dictionary takes as input binary tuples of length 4 and outputs a payoff
+def create_random_game(n_final_actions,n_features):
+  random_game_dict = dict()
+  world_states = set(product([0, 1], repeat=n_features))
+  for w in world_states:
+    random_game_dict[w] = dict()
+    for a in range(n_final_actions):
+      random_game_dict[w][a] = random.randint(0, 9)
+  return random_game_dict
+
+
 def compute_entropy(probabilities):
     """
     Compute entropy from a probability distribution.
