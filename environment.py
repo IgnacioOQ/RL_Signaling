@@ -1,6 +1,7 @@
 # Multi-Agent Environment
 class MultiAgentEnv:
-    def __init__(self, n_agents=2, n_features=5, n_signaling_actions=3, n_final_actions=2, full_information = False):
+    def __init__(self, n_agents=2, n_features=5, n_signaling_actions=3, n_final_actions=2, 
+                 full_information = False,game_dict=random_game_dict):
         """
         Initialize the multi-agent environment with separate signaling and final actions.
 
@@ -22,9 +23,9 @@ class MultiAgentEnv:
         self.final_actions = None
 
         # One random game dictionary per agent
-        self.internal_game_dicts = {}
-        for i in range(self.n_agents):
-          self.internal_game_dicts[i] = self.create_random_game()
+        self.internal_game_dicts = game_dict
+        # for i in range(self.n_agents):
+        #   self.internal_game_dicts[i] = self.create_random_game()
 
         # Init which variables each agent observes
         self.agents_observed_variables = {}
@@ -117,15 +118,6 @@ class MultiAgentEnv:
         print(f"Nature Vector: {self.nature_vector}")
         print(f"Signals: {self.signals}")
         print(f"Final Actions: {self.final_actions}")
-
-    def create_random_game(self):
-      random_game_dict = dict()
-      world_states = set(product([0, 1], repeat=self.n_features))
-      for w in world_states:
-        random_game_dict[w] = dict()
-        for a in range(self.n_final_actions):
-          random_game_dict[w][a] = random.randint(0, 9)
-      return random_game_dict
 
     def assign_observations(self):
       agents_observations = []
