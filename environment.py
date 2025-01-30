@@ -4,6 +4,9 @@ from agents import UrnAgent
 
 # Multi-Agent Environment Class
 # Environment input
+n_agents=2
+n_features=2
+n_final_actions=4
 random_game_dicts = {}
 for i in range(n_agents):
   random_game_dicts[i] = create_randomcannonical_game(n_features,n_final_actions)
@@ -14,17 +17,7 @@ class MultiAgentEnv:
     def __init__(self, n_agents=2, n_features=2, n_signaling_actions=2, n_final_actions=4,
                  full_information=False, game_dict=random_game_dicts,
                  observed_variables=agents_observed_variables):
-        """
-        Initialize the multi-agent environment with signaling and final actions.
 
-        :param n_agents: Number of agents
-        :param n_features: Number of binary features in the nature vector
-        :param n_signaling_actions: Number of signaling actions per agent
-        :param n_final_actions: Number of final actions per agent
-        :param full_information: Boolean flag for whether agents observe all features
-        :param game_dict: Dictionary containing game structures for each agent
-        :param observed_variables: Dictionary containing observed feature indices per agent
-        """
         self.n_agents = n_agents
         self.n_features = n_features
         self.n_signaling_actions = n_signaling_actions
@@ -34,26 +27,18 @@ class MultiAgentEnv:
 
         # Internal game dictionaries for each agent
         self.internal_game_dicts = game_dict
-
         # Observed variables per agent
         self.agents_observed_variables = observed_variables
-
         # Environment state
         self.nature_vector = None  # Binary vector determined by nature
         self.signals = None  # Signals chosen by agents in step 0
         self.final_actions = None  # Final actions chosen by agents in step 1
-
         # Tracking history
         self.rewards_history = [[] for _ in range(self.n_agents)]  # Store rewards per episode
         self.signal_usage = [{} for _ in range(self.n_agents)]  # Track signal counts per observation
         self.signal_information_history = [[] for _ in range(self.n_agents)]  # Track mutual information history
 
     def reset(self):
-        """
-        Reset the environment for a new episode.
-
-        :return: Initial observation (binary vector from nature)
-        """
         self.current_step = 0
         self.nature_vector = np.random.randint(0, 2, size=self.n_features)  # Random binary vector
         self.signals = [None] * self.n_agents  # Reset signals
@@ -61,70 +46,42 @@ class MultiAgentEnv:
         return self.nature_vector
 
     def step(self, actions):
-        """
-        Execute a step in the environment.
-
-        :param actions: Actions taken by the agents
-        :return: Tuple (observation, rewards, done)
-            - observation: The environment state observed by agents
-            - rewards: A list of rewards for each agent
-            - done: Boolean indicating if the episode has ended
-        """
-
         if self.current_step == 0:
             # Step 0: Agents perform signaling actions
             self.signals = actions
             self.current_step += 1  # Move to the next step
-
             # Assign observations based on agent-specific visibility
             assigned_observations = self.assign_observations()
-
             # Update signal usage tracking
             for i in range(self.n_agents):
                 agent_observation = assigned_observations[i]
-
                 # Initialize tracking for this observation if it does not exist
                 if agent_observation not in self.signal_usage[i]:
-                    self.signal_usage[i][agent_observation] = [1] * self.n_signaling_actions
-
+                    self.signal_usage[i][agent_observation] = [0] * self.n_signaling_actions
                 # Increment signal count for the chosen signal
                 self.signal_usage[i][agent_observation][self.signals[i]] += 1
-
             return False  # Step not yet complete, waiting for final actions
 
         elif self.current_step == 1:
             # Step 1: Agents perform final actions based on signals
             self.final_actions = actions
             rewards = self.calculate_rewards()  # Compute rewards based on actions
-
             # Store reward history
             for i in range(self.n_agents):
                 self.rewards_history[i].append(rewards[i])
-
             # Compute and record mutual information of signals
             for i in range(self.n_agents):
                 mutual_info, normalized_mutual_info = compute_mutual_information(self.signal_usage[i])
                 self.signal_information_history[i].append(normalized_mutual_info)
 
             return rewards, True  # Step complete, episode ends
-
         else:
             raise ValueError("Environment has already completed two steps. Reset before reusing.")
 
     def report_metrics(self):
-        """
-        Report signal usage, rewards history, and mutual information history.
-
-        :return: Tuple (signal usage, rewards history, signal information history)
-        """
         return self.signal_usage, self.rewards_history, self.signal_information_history
 
     def calculate_rewards(self):
-        """
-        Calculate rewards for each agent based on their final actions.
-
-        :return: List of rewards per agent
-        """
         rewards = []
         for i in range(self.n_agents):
             agent_action = self.final_actions[i]
