@@ -5,9 +5,9 @@ World is composed of states coming from n_features=3 binary random variables.
 The procedure is the following:
 
 Step 0:
-- World emits some random state. Say with features X,Y,Z are binary random variables.
-- Agents observe different substates of that state. For exampe, agents of type 1 observe X,Y and agents of type 2 observe Y,Z.
-- Agents emit some signals to each other, say from a set S={s1,s2}. These are actions with their associated q_table. No reward in this step.
+- World emits some random state. Say with features X,Y as binary random variables.
+- Agents observe different substates of that state. For exampe, agents of type 1 observes X and agents of type 2 observes Y.
+- Agents emit some signals to each other, say from a set S={s1,s2}. These are actions with their associated urn (or q_table). No reward in this step.
 
 Step 1:
 - Agents receive signal from others, and together with their respective substates they have a new input for action.

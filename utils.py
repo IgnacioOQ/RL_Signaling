@@ -1,7 +1,6 @@
 from imports import *
 
 # Games
-
 # game dictionary takes as input binary tuples of length 4 and outputs a payoff
 def create_random_game(n_features=3,n_final_actions=5):
   random_game_dict = dict()
@@ -60,6 +59,8 @@ def create_initial_signals(n_observed_features, n_signals,n=1,m=0):
         signalling_urns[o] = vector
 
     return signalling_urns
+
+# print(create_initial_signals(n_observed_features=2, n_signals=4,n=1,m=0))
 
 # Information Theory
 def compute_entropy(probabilities):
