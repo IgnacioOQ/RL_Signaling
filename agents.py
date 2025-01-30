@@ -12,7 +12,7 @@ class UrnAgent:
         # Initialize urns (probability distributions over actions per state)
         if initialize:
             self.signalling_urns = create_initial_signals(n_observed_features=n_observed_features,
-                                                        n_signals=n_signaling_actions,n=100,m=0)
+                                                        n_signals=n_signaling_actions,n=1,m=0)
         else:
             self.signalling_urns = {}  # Dictionary for signaling action distributions                                                         n_signals=n_signaling_actions, n=100, m=0)
         self.action_urns = {}
