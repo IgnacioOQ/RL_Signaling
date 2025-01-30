@@ -47,6 +47,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
         nature_history.append(nature_vector)
         if verbose:
           print(f'nature vector is {nature_vector}')
+          
         # total_rewards = [0] * n_agents  # Track total rewards for each agent in the episode
 
         # Pre Step: Assign observations
@@ -60,6 +61,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
         _ = env.step(signals)
         if verbose:
           print(f'agents signals are {signals}')
+          print(f'environment step {env.current_step}')
 
         # Step 1: Agents choose final actions based on Q-learning policy
         # this step is different depending on whether agents they get each other's signals or not
@@ -76,6 +78,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
         rewards, done = env.step(final_actions)
         if verbose:
           print(f'agents final_actions are {final_actions}')
+          print(f'environment step {env.current_step}')
 
         # Update Q-tables for signaling and final actions
         # update_urns(self, state, action, reward, is_signaling=True):
@@ -84,11 +87,11 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
           if with_signals:
             # important that the state is the agents_observations and not the new observations
             # because this us updating the signal payoff, and the signal inputs are the initial observations
-            agent.update_urns(agents_observations[i], signals[i], rewards[i], is_signaling=True)
+            agent.update(agents_observations[i], signals[i], rewards[i], is_signaling=True)
             # now we update the action q_table, the input being the new_observations
-            agent.update_urns(new_observations[i], final_actions[i], rewards[i], is_signaling=False)
+            agent.update(new_observations[i], final_actions[i], rewards[i], is_signaling=False)
           else: # if with_signals = False then there is no updating of signal q_table, but yes for action q_table
-            agent.update_urns(agents_observations[i], final_actions[i], rewards[i], is_signaling=False)
+            agent.update(agents_observations[i], final_actions[i], rewards[i], is_signaling=False)
 
           if verbose:
             print(f'agent {i} signalling_urns are {agent.signalling_urns}')
@@ -101,9 +104,6 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
         for i, agent in enumerate(agents):
           urn_histories[i]['signal_urns_history'].append(copy.deepcopy(agent.signalling_urns))
           urn_histories[i]['action_urns_history'].append(copy.deepcopy(agent.action_urns))
-
-        for agent in agents:
-            agent.decay_exploration()
 
         if verbose:
           print('Episode ended')

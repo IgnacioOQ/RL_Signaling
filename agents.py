@@ -110,14 +110,10 @@ class QLearningAgent:
         # Q-learning update rule
         td_target = reward #+ self.discount_factor * future_value
         if is_signaling:
-          td_error = td_target - self.q_table_signaling[state][action]
-          self.q_table_signaling[state][action]+= self.learning_rate * td_error
+            td_error = td_target - self.q_table_signaling[state][action]
+            self.q_table_signaling[state][action]+= self.learning_rate * td_error
         else:
-          td_error = td_target - self.q_table_action[state][action]
-          self.q_table_action[state][action] += self.learning_rate * td_error
-
-    def decay_exploration(self):
-        """
-        Decay the exploration rate (epsilon).
-        """
-        self.exploration_rate = max(self.min_exploration_rate, self.exploration_rate * self.exploration_decay)
+            td_error = td_target - self.q_table_action[state][action]
+            self.q_table_action[state][action] += self.learning_rate * td_error
+            # Decay exploration rate
+            self.exploration_rate = max(self.min_exploration_rate, self.exploration_rate * self.exploration_decay)     
