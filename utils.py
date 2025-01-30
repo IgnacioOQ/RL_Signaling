@@ -61,17 +61,6 @@ def create_initial_signals(n_observed_features, n_signals,n=1,m=0):
 
     return signalling_urns
 
-
-
-
-
-
-
-
-
-
-
-
 # Information Theory
 
 def compute_entropy(probabilities):
