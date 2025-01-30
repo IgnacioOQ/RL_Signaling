@@ -15,7 +15,7 @@ agents_observed_variables = {0:[0],1:[1]}
 
 class MultiAgentEnv:
     def __init__(self, n_agents=2, n_features=2, n_signaling_actions=2, n_final_actions=4,
-                 full_information=False, game_dict=random_game_dicts,
+                 full_information=False, game_dicts=random_game_dicts,
                  observed_variables=agents_observed_variables):
 
         self.n_agents = n_agents
@@ -26,7 +26,7 @@ class MultiAgentEnv:
         self.full_information = full_information
 
         # Internal game dictionaries for each agent
-        self.internal_game_dicts = game_dict
+        self.internal_game_dicts = game_dicts
         # Observed variables per agent
         self.agents_observed_variables = observed_variables
         # Environment state
