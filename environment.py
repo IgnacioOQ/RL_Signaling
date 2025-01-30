@@ -1,5 +1,6 @@
 from imports import *
 from utils import *
+from agents import UrnAgent
 
 # Multi-Agent Environment Class
 # Environment input
