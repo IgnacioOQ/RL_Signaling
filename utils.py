@@ -109,3 +109,152 @@ def compute_mutual_information(agent_signal_usage):
     NMI = I_S_O / H_O if H_O > 0 else 0
 
     return I_S_O, NMI
+
+
+# PLOTTING
+def plot_hist(df,variablewith_signal=True,full_information=False):
+  subset_df = df[(df['full_information'] == full_information) & (df['with_signal'] == with_signal)]
+  subset_df[variable].plot(kind='hist', bins=100, title=f'variable={variable}, setup = {with_signal,full_information}')
+  plt.gca().spines[['top', 'right',]].set_visible(False)
+  plt.show()
+  
+def plot_histograms_with_kde(df, variable, bins=100, figsize=(6, 3),
+                             alpha=0.5, kde=True,variables = [(True, True), (True, False), (False, True), (False, False)]):
+    # Initialize the figure
+    plt.figure(figsize=figsize)
+
+    # Define colors for different setups
+    colors = ['blue', 'orange', 'green', 'red']
+
+    # Loop over the combinations of conditions
+    for idx, (with_signals, full_information) in enumerate(variables):
+        subset_df = df[(df['full_information'] == full_information) & (df['with_signals'] == with_signals)]
+
+        # Plot the histogram for each subset
+        plt.hist(
+            subset_df[variable],
+            bins=bins,
+            alpha=alpha,
+            color=colors[idx],
+            label=f'signals={with_signals}, full_info={full_information}',
+            density=True  # Normalize histogram to show density
+        )
+
+        # Plot KDE curve if enabled
+        if kde:
+            sns.kdeplot(
+                subset_df[variable],
+                color=colors[idx],
+                linewidth=2#,
+                #label=f'KDE: signals={with_signals}, full_infon={full_information}'
+            )
+
+       # Add a vertical line for the mean
+        mean_value = subset_df[variable].mean()
+        plt.axvline(mean_value, color=colors[idx], linestyle='--', linewidth=1.5)#,
+                    #label=f'Mean: signals={with_signals}, full_info={full_information}')
+
+        # Initialize an offset value to adjust text positions
+        vertical_offset = 0.07  # Adjust as needed to prevent overlap
+
+        # Annotate the mean value on the plot
+        plt.text(
+            mean_value,
+            plt.gca().get_ylim()[1] * (0.9 - idx * vertical_offset),  # Incrementally adjust position
+            f'{mean_value:.2f}',
+            color=colors[idx],
+            fontsize=10,
+            ha='center',
+            bbox=dict(facecolor='white', edgecolor=colors[idx], boxstyle='round,pad=0.3'))
+
+    # Add labels, legend, and title
+    plt.title(f'Histogram and KDE of {variable} by Setup', fontsize=12)
+    plt.xlabel(variable, fontsize=10)
+    plt.ylabel('Density', fontsize=10)
+    plt.legend(title="Setup", fontsize=9, title_fontsize=10)
+    plt.gca().spines[['top', 'right']].set_visible(False)
+
+    # Display the plot
+    plt.show()
+
+def plot_all_histograms(df,bins=75):
+    plot_histograms_with_kde(df,'Agent_0_final_reward',bins=75)
+    plot_histograms_with_kde(df,'Agent_0_avg_reward',bins=75)
+    plot_histograms_with_kde(df,'Agent_1_final_reward',bins=75)
+    plot_histograms_with_kde(df,'Agent_1_avg_reward',bins=75)
+    df['Agent_0_NMI_Difference'] = df['Agent_0_NMI'] - df['Agent_0_Initial_NMI']
+    df['Agent_1_NMI_Difference'] = df['Agent_1_NMI'] - df['Agent_1_Initial_NMI']
+    plot_histograms_with_kde(df,'Agent_0_NMI_Difference',bins=50, variables = [(True, True), (True, False)])
+    plot_histograms_with_kde(df,'Agent_1_NMI_Difference',bins=50, variables = [(True, True), (True, False)])
+    
+# Helper function to calculate reward differences
+def calculate_reward_difference(df, agent_col):
+    return (
+        df[df['with_signals']][agent_col].values -
+        df[~df['with_signals']][agent_col].values
+    )[0]  # Extract the single value
+
+def compare_payoffs(df):
+    iteration_indexes = df['iteration'].unique()
+
+    # Define the structure of the resulting DataFrame
+    columns = [
+        'iteration', 'n_signaling_actions', 'n_final_actions',
+        'A0_final_reward_signalvsnon_partialinfo', 'A0_final_reward_signalvsnon_fullinfo',
+        'A1_final_reward_signalvsnon_partialinfo', 'A1_final_reward_signalvsnon_fullinfo'
+    ]
+    compared_payoff_df = pd.DataFrame(columns=columns)
+
+    # Iterate over unique iterations
+    for i in iteration_indexes:
+        iteration_df = df[df['iteration'] == i]
+        n_signaling_actions = iteration_df['n_signaling_actions'].iloc[0]
+        n_final_actions = iteration_df['n_final_actions'].iloc[0]
+
+        # Split the DataFrame based on information availability
+        full_info = iteration_df[iteration_df['full_information']]
+        partial_info = iteration_df[~iteration_df['full_information']]
+
+        # Calculate reward differences
+        A0_fullinfo_diff = calculate_reward_difference(full_info, 'Agent_0_final_reward')
+        A0_partialinfo_diff = calculate_reward_difference(partial_info, 'Agent_0_final_reward')
+        A1_fullinfo_diff = calculate_reward_difference(full_info, 'Agent_1_final_reward')
+        A1_partialinfo_diff = calculate_reward_difference(partial_info, 'Agent_1_final_reward')
+
+        # Append results to the DataFrame
+        compared_payoff_df.loc[len(compared_payoff_df)] = [
+            i, n_signaling_actions, n_final_actions,
+            A0_partialinfo_diff, A0_fullinfo_diff,
+            A1_partialinfo_diff, A1_fullinfo_diff
+        ]
+    return compared_payoff_df
+
+def plot_payoff_comparison(df):
+    compared_payoff_df = compare_payoffs(df)
+
+    # Define variables
+    variables = [
+        'A0_final_reward_signalvsnon_partialinfo', 'A0_final_reward_signalvsnon_fullinfo',
+        'A1_final_reward_signalvsnon_partialinfo', 'A1_final_reward_signalvsnon_fullinfo'
+    ]
+
+    # Define distinct colors for the mean lines
+    mean_colors = ['red', 'blue', 'green', 'purple']
+
+    # Plot all variables in the same plot
+    plt.figure(figsize=(10, 6))  # Set figure size
+    for idx, variable in enumerate(variables):
+        # Plot the histogram
+        compared_payoff_df[variable].plot(kind='hist', bins=50, alpha=0.6, label=variable)
+
+        # Calculate and plot the mean with a distinct color
+        mean_value = compared_payoff_df[variable].mean()
+        plt.axvline(mean_value, color=mean_colors[idx], linestyle='--', linewidth=1.5, label=f'{variable} Mean: {mean_value:.2f}')
+
+    # Style the plot
+    plt.gca().spines[['top', 'right']].set_visible(False)
+    plt.title("Distributions of Difference Signaling vs Not")
+    plt.xlabel("Value")
+    plt.ylabel("Frequency")
+    plt.legend()  # Add legend to differentiate variables and their means
+    plt.show()
