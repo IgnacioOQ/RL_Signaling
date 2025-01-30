@@ -26,5 +26,5 @@ env = MultiAgentEnv(n_agents=n_agents, n_features=n_features,
 
 signal_usage, rewards_history, signal_information_history, urn_histories,nature_history = simulation_function(n_agents=n_agents,
                       n_features=n_features, n_signaling_actions=n_signaling_actions, n_final_actions=n_final_actions,
-                      n_episodes=15, with_signals = with_signals,
-                      plot=True,env=env,initialize = False, verbose=True)
+                      n_episodes=1500, with_signals = with_signals,
+                      plot=True,env=env,initialize = True, verbose=False)
