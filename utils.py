@@ -182,6 +182,8 @@ def plot_all_histograms(df,bins=75):
     plot_histograms_with_kde(df,'Agent_0_avg_reward',bins=75)
     plot_histograms_with_kde(df,'Agent_1_final_reward',bins=75)
     plot_histograms_with_kde(df,'Agent_1_avg_reward',bins=75)
+    plot_histograms_with_kde(df,'Agent_0_NMI',bins=75)
+    plot_histograms_with_kde(df,'Agent_1_NMI',bins=75)
     df['Agent_0_NMI_Difference'] = df['Agent_0_NMI'] - df['Agent_0_Initial_NMI']
     df['Agent_1_NMI_Difference'] = df['Agent_1_NMI'] - df['Agent_1_Initial_NMI']
     plot_histograms_with_kde(df,'Agent_0_NMI_Difference',bins=50, variables = [(True, True), (True, False)])
