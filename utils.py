@@ -151,7 +151,11 @@ def plot_histograms_with_kde(df, variable, bins=100, figsize=(6, 3),
 
        # Add a vertical line for the mean
         mean_value = subset_df[variable].mean()
-        plt.axvline(mean_value, color=colors[idx], linestyle='--', linewidth=1.5)#,
+        std_dev = subset_df[variable].std()
+
+        plt.axvline(mean_value, color=colors[idx], linestyle='--', linewidth=1.5, 
+            label=f'Mean: {mean_value:.2f}, Std Dev: {std_dev:.2f}')
+       #plt.axvline(mean_value, color=colors[idx], linestyle='--', linewidth=1.5)#,
                     #label=f'Mean: signals={with_signals}, full_info={full_information}')
 
         # Initialize an offset value to adjust text positions
