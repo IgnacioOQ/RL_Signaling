@@ -111,47 +111,120 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
     signal_usage, rewards_history, signal_information_history = env.report_metrics()
 
     if plot:
-      # Plot results
-      plt.figure(figsize=(8, 15)) # (width, height)
 
       # Plot rewards over episodes
-      #plt.subplot(3, 1, 1)  # 3 rows, 1 column, index 1
-      plt.figure(figsize=(8, 4)) # (width, height)
+      plt.figure(figsize=(8, 5)) # (width, height)
       for i in range(n_agents):
-          smoothed_rewards = [sum(rewards_history[i][j:j+100]) / 100 for j in range(0, n_episodes, 100)]
-          plt.plot(range(0, n_episodes, 100), smoothed_rewards, label=f"Agent {i}")
-      plt.title("Average Rewards (Smoothed over 100 episodes)")
+        # first smoothing
+        #smoothed_rewards = [sum(rewards_history[i][j:j+100]) / 100 for j in range(0, n_episodes, 100)]
+        #plt.plot(range(0, n_episodes, 100), smoothed_rewards, label=f"Agent {i}")
+        # second smoothing
+        window_size = 100
+        smoothed_rewards = np.convolve(rewards_history[i], np.ones(window_size)/window_size, mode='valid')
+        plt.plot(range(window_size - 1, n_episodes), smoothed_rewards, label=f"Agent {i}")
+
+
+      plt.title("Average Rewards (Smoothed)")
       plt.xlabel("Episode")
       plt.ylabel("Average Reward")
       plt.legend()
 
       # Plot NMI over episodes
-      #plt.subplot(3, 1, 2)  # 3 rows, 1 column, index 2
-      plt.figure(figsize=(8, 4)) # (width, height)
+      plt.figure(figsize=(8, 5)) # (width, height)
       for i in range(n_agents):
-          smoothed_NMI = [sum(signal_information_history[i][j:j+10]) / 10 for j in range(0, n_episodes, 10)]
-          plt.plot(range(0, n_episodes, 10), smoothed_NMI, label=f"Agent {i}")
-      plt.title("Average Normalized Mutual Information (Smoothed over 10 episodes)")
+        smoothed_NMI = [sum(signal_information_history[i][j:j+10]) / 10 for j in range(0, n_episodes, 10)]
+        plt.plot(range(0, n_episodes, 10), smoothed_NMI, label=f"Agent {i}")
+      plt.title("Average Normalized Mutual Information (Smoothed)")
       plt.xlabel("Episode")
       plt.ylabel("Average NMI")
       plt.legend()
 
-      # Plot signal usage
-      #plt.subplot(3, 1, 3)  # 3 rows, 1 column, index 3\
+      # Plot total signal usage
       plt.figure(figsize=(8, 5)) # (width, height)
       for i, usage in enumerate(signal_usage):
           for state, counts in usage.items():
-              plt.bar(
+              bar_labels = [f"{count:.2f}" for count in counts]  # Format proportion labels
+              bars = plt.bar(
                   [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
                   counts,
                   label=f"A{i}, State {state}",
                   alpha=0.7
               )
-      plt.title("Signal Usage by Observation")
+
+              # Add proportion labels on top of each bar
+              for bar, label in zip(bars, bar_labels):
+                  plt.text(
+                      bar.get_x() + bar.get_width() / 2,  # Center horizontally
+                      bar.get_height(),                   # Position at the top of the bar
+                      label,                              # The proportion label
+                      ha='center',                        # Horizontal alignment
+                      va='bottom'                         # Vertical alignment
+                  )
+              # plt.bar(
+              #     [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
+              #     counts,
+              #     label=f"A{i}, State {state}",
+              #     alpha=0.7
+              # )
+      plt.title("Accumulated Signal Usage Count by Observation")
       plt.ylabel("Frequency")
       plt.xticks(rotation=90)
       plt.legend()
       plt.tight_layout()
       plt.show()
+      
+      # Plot final signal usage
+      final_signal_usage = [urn_histories[0]['signal_urns_history'][-1],urn_histories[1]['signal_urns_history'][-1]]
+      plt.figure(figsize=(8, 5))  # (width, height)
+      for i, usage in enumerate(final_signal_usage):
+          for state, counts in usage.items():
+              total_counts = counts.sum()  # Normalize independently for each state
+              proportions = counts / total_counts  # Normalize to proportions
+
+              bar_labels = [f"{prop:.2f}" for prop in proportions]  # Format proportion labels
+              bars = plt.bar(
+                  [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
+                  proportions,
+                  label=f"A{i}, State {state}",
+                  alpha=0.7
+              )
+
+              # Add proportion labels on top of each bar
+              for bar, label in zip(bars, bar_labels):
+                  plt.text(
+                      bar.get_x() + bar.get_width() / 2,  # Center horizontally
+                      bar.get_height(),                   # Position at the top of the bar
+                      label,                              # The proportion label
+                      ha='center',                        # Horizontal alignment
+                      va='bottom'                         # Vertical alignment
+                  )
+
+      plt.title("Final Signal Usage Proportions by Observation")
+      plt.ylabel("Proportion")
+      plt.xticks(rotation=90)
+      plt.legend()
+      plt.tight_layout()
+      plt.show()
+      
+      plt.figure(figsize=(8, 5))  # (width, height)
+      # Dataset 1
+      proportions1 = calculate_proportions(urn_histories[0])
+      for key, values in proportions1.items():
+          smoothed_values = smooth(values)
+          plt.plot(range(len(values)), smoothed_values, marker='o', markersize=1, label=f'Agent 0 - Key {key}')
+          plt.text(len(values)-1, smoothed_values[-1], f'{smoothed_values[-1]:.2f}', fontsize=10, ha='right')
+          
+      # Dataset 2
+      proportions2 = calculate_proportions(urn_histories[1])
+      for key, values in proportions2.items():
+          smoothed_values = smooth(values)
+          plt.plot(range(len(values)), smoothed_values, marker='x', markersize=1, label=f'Agent 1 - Key {key}')
+          plt.text(len(values)-1, smoothed_values[-1], f'{smoothed_values[-1]:.2f}', fontsize=10, ha='right')
+          
+      plt.title('(Smoothed) Signal Urn Proportions History for Agent and Observation')
+      plt.xlabel('Episode')
+      plt.ylabel('Proportion')
+      plt.grid(True)
+      plt.legend()
 
     return signal_usage, rewards_history, signal_information_history, urn_histories, nature_history
