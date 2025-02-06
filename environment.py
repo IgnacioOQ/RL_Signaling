@@ -56,8 +56,6 @@ class MultiAgentEnv:
         """
         self.current_step = 0
         self.nature_vector = np.random.randint(0, 2, size=self.n_features)  # Random binary vector
-        self.signals = [None] * self.n_agents  # Reset signals
-        self.final_actions = [None] * self.n_agents  # Reset final actions
         self.current_step = 0
         return self.nature_vector
 
@@ -69,7 +67,6 @@ class MultiAgentEnv:
         :return: Tuple of rewards and completion status when final actions are taken.
         """
         # Step 0: Agents perform signaling actions
-        self.signals = signals
         # Assign observations based on agent-specific visibility
         assigned_observations = self.assign_observations(nature_vector)
         # Update signal usage tracking
@@ -79,10 +76,10 @@ class MultiAgentEnv:
             if agent_observation not in self.signal_usage[i]:
                 self.signal_usage[i][agent_observation] = [0] * self.n_signaling_actions
             # Increment signal count for the chosen signal
-            if not (0 <= self.signals[i] < self.n_signaling_actions):
-                raise ValueError(f"Signal {self.signals[i]} is out of range for agent {i}")
+            if not (0 <= signals[i] < self.n_signaling_actions):
+                raise ValueError(f"Signal {signals[i]} is out of range for agent {i}")
             else:
-                self.signal_usage[i][agent_observation][self.signals[i]] += 1
+                self.signal_usage[i][agent_observation][signals[i]] += 1
         self.current_step = 1
         return False  # Step not yet complete, waiting for final actions
 
@@ -94,8 +91,7 @@ class MultiAgentEnv:
         :return: Tuple of rewards and completion status when final actions are taken.
         """
         # Step 1: Agents perform final actions based on signals
-        self.final_actions = actions
-        rewards = self.calculate_rewards()  # Compute rewards based on actions
+        rewards = self.calculate_rewards(actions)  # Compute rewards based on actions
         # Store reward history
         for i in range(self.n_agents):
             self.rewards_history[i].append(rewards[i])
@@ -115,7 +111,7 @@ class MultiAgentEnv:
         """
         return self.signal_usage, self.rewards_history, self.signal_information_history
 
-    def calculate_rewards(self):
+    def calculate_rewards(self,actions):
         """
         Calculate the rewards for each agent based on the final actions and nature vector.
 
@@ -123,7 +119,7 @@ class MultiAgentEnv:
         """
         rewards = []
         for i in range(self.n_agents):
-            agent_action = self.final_actions[i]
+            agent_action = actions[i]
 
             # Potential issue: Ensure the key exists in the dictionary
             state_key = tuple(self.nature_vector)
