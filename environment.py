@@ -7,17 +7,27 @@ from agents import UrnAgent
 n_agents=2
 n_features=2
 n_final_actions=4
+# example game_dicts and observed variables
 random_game_dicts = {}
 for i in range(n_agents):
-  random_game_dicts[i] = create_randomcannonical_game(n_features,n_final_actions)
-
+  random_game_dicts[i] = create_random_canonical_game(n_features,n_final_actions)
 agents_observed_variables = {0:[0],1:[1]}
 
 class MultiAgentEnv:
     def __init__(self, n_agents=2, n_features=2, n_signaling_actions=2, n_final_actions=4,
-                 full_information=False, game_dicts=random_game_dicts,
-                 observed_variables=agents_observed_variables):
+                 full_information=False, game_dicts=None,
+                 observed_variables=None):
+        """
+        Initialize the multi-agent environment with specified parameters.
 
+        :param n_agents: Number of agents in the environment.
+        :param n_features: Number of features in the nature vector.
+        :param n_signaling_actions: Number of possible signaling actions.
+        :param n_final_actions: Number of possible final actions.
+        :param full_information: Boolean indicating if agents have full information.
+        :param game_dicts: Dictionary defining the game dynamics for each agent.
+        :param observed_variables: Variables observed by each agent.
+        """
         self.n_agents = n_agents
         self.n_features = n_features
         self.n_signaling_actions = n_signaling_actions
@@ -26,9 +36,9 @@ class MultiAgentEnv:
         self.full_information = full_information
 
         # Internal game dictionaries for each agent
-        self.internal_game_dicts = game_dicts
+        self.internal_game_dicts = game_dicts if game_dicts is not None else {}
         # Observed variables per agent
-        self.agents_observed_variables = observed_variables
+        self.agents_observed_variables = observed_variables if observed_variables is not None else {}
         # Environment state
         self.nature_vector = None  # Binary vector determined by nature
         self.signals = None  # Signals chosen by agents in step 0
@@ -39,6 +49,11 @@ class MultiAgentEnv:
         self.signal_information_history = [[] for _ in range(self.n_agents)]  # Track mutual information history
 
     def reset(self):
+        """
+        Reset the environment to its initial state and return the new nature vector.
+
+        :return: Randomly generated binary nature vector.
+        """
         self.current_step = 0
         self.nature_vector = np.random.randint(0, 2, size=self.n_features)  # Random binary vector
         self.signals = [None] * self.n_agents  # Reset signals
@@ -46,6 +61,12 @@ class MultiAgentEnv:
         return self.nature_vector
 
     def step(self, actions):
+        """
+        Progress the environment by one step based on the provided actions.
+
+        :param actions: List of actions performed by the agents.
+        :return: Tuple of rewards and completion status when final actions are taken.
+        """
         if self.current_step == 0:
             # Step 0: Agents perform signaling actions
             self.signals = actions
@@ -59,7 +80,10 @@ class MultiAgentEnv:
                 if agent_observation not in self.signal_usage[i]:
                     self.signal_usage[i][agent_observation] = [0] * self.n_signaling_actions
                 # Increment signal count for the chosen signal
-                self.signal_usage[i][agent_observation][self.signals[i]] += 1
+                if not (0 <= self.signals[i] < self.n_signaling_actions):
+                    raise ValueError(f"Signal {self.signals[i]} is out of range for agent {i}")
+                else:
+                    self.signal_usage[i][agent_observation][self.signals[i]] += 1
             return False  # Step not yet complete, waiting for final actions
 
         elif self.current_step == 1:
@@ -79,19 +103,30 @@ class MultiAgentEnv:
             raise ValueError("Environment has already completed two steps. Reset before reusing.")
 
     def report_metrics(self):
+        """
+        Report key metrics from the environment, including signal usage, rewards history,
+        and mutual information history.
+
+        :return: Tuple containing signal usage, rewards history, and signal information history.
+        """
         return self.signal_usage, self.rewards_history, self.signal_information_history
 
     def calculate_rewards(self):
+        """
+        Calculate the rewards for each agent based on the final actions and nature vector.
+
+        :return: List of rewards for each agent.
+        """
         rewards = []
         for i in range(self.n_agents):
             agent_action = self.final_actions[i]
 
             # Potential issue: Ensure the key exists in the dictionary
             state_key = tuple(self.nature_vector)
-            if state_key in self.internal_game_dicts[i]:
+            if state_key in self.internal_game_dicts[i] and agent_action in self.internal_game_dicts[i][state_key]:
                 rewards.append(self.internal_game_dicts[i][state_key][agent_action])
             else:
-                raise KeyError(f"State {state_key} not found in agent {i}'s game dictionary.")
+                raise KeyError(f"Invalid state-action pair ({state_key}, {agent_action}) for agent {i}")
 
         return rewards
 
@@ -108,7 +143,7 @@ class MultiAgentEnv:
         """
         Assign observations to each agent based on their observed variables.
 
-        :return: List of observed feature subsets per agent
+        :return: List of observed feature subsets per agent.
         """
         agents_observations = []
         if self.full_information:

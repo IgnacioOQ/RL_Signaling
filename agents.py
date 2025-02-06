@@ -4,6 +4,15 @@ from utils import *
 # Urn-Learning Agent
 class UrnAgent:
     def __init__(self, n_signaling_actions, n_final_actions, n_observed_features=1, initialize=False):
+        """
+        Initialize the UrnAgent.
+
+        Parameters:
+        - n_signaling_actions (int): Number of possible signaling actions.
+        - n_final_actions (int): Number of possible final actions.
+        - n_observed_features (int): Number of observed features (default is 1).
+        - initialize (bool): Whether to initialize the signaling urns with predefined values.
+        """
         self.n_signaling_actions = n_signaling_actions
         self.n_final_actions = n_final_actions
 
@@ -15,86 +24,174 @@ class UrnAgent:
         self.action_urns = {}
 
     def reset_urns(self):
+        """Reset the signaling and action urns to empty dictionaries."""
         self.signalling_urns = {}
         self.action_urns = {}
 
-    def get_action(self, state, is_signaling=True):
-        urn_dict = self.signalling_urns if is_signaling else self.action_urns
-        n_actions = self.n_signaling_actions if is_signaling else self.n_final_actions
+    def get_signal(self, state):
+        """
+        Select a signaling action based on the probability distribution from the urn.
 
-        if state not in urn_dict:
-            urn_dict[state] = np.ones(n_actions)
+        Parameters:
+        - state: The current state.
 
-        epsilon = 1e-8  # Prevent division by zero
-        probability_weights = urn_dict[state] / (np.sum(urn_dict[state]) + epsilon)
-        return np.random.choice(n_actions, p=probability_weights)
+        Returns:
+        - int: The chosen signaling action.
+        """
+        if state not in self.signalling_urns:
+            self.signalling_urns[state] = np.ones(self.n_signaling_actions)
+        probability_weights = self.signalling_urns[state] / (np.sum(self.signalling_urns[state]))
+        return np.random.choice(self.n_signaling_actions, p=probability_weights)
 
-    def update(self, state, action, reward, is_signaling=True):
-        urn_dict = self.signalling_urns if is_signaling else self.action_urns
-        n_actions = self.n_signaling_actions if is_signaling else self.n_final_actions
+    def get_action(self, state):
+        """
+        Select a final action based on the probability distribution from the urn.
 
-        if state not in urn_dict:
-            urn_dict[state] = np.ones(n_actions)
+        Parameters:
+        - state: The current state.
 
-        urn_dict[state][action] += reward  # Assuming reward can be float
+        Returns:
+        - int: The chosen final action.
+        """
+        if state not in self.action_urns:
+            self.action_urns[state] = np.ones(self.n_final_actions)
+        probability_weights = self.action_urns[state] / (np.sum(self.action_urns[state]))
+        return np.random.choice(self.n_final_actions, p=probability_weights)
+
+    def update_signals(self, state, signal, reward):
+        """
+        Update the signaling urn based on the received reward.
+
+        Parameters:
+        - state: The current state.
+        - signal (int): The signaling action taken.
+        - reward (float): The reward received.
+        """
+        if state not in self.signalling_urns:
+            self.signalling_urns[state] = np.ones(self.n_signaling_actions)
+
+        self.signalling_urns[state][signal] += reward
+
+    def update_actions(self, state, action, reward):
+        """
+        Update the action urn based on the received reward.
+
+        Parameters:
+        - state: The current state.
+        - action (int): The final action taken.
+        - reward (float): The reward received.
+        """
+        if state not in self.action_urns:
+            self.action_urns[state] = np.ones(self.n_final_actions)
+
+        self.action_urns[state][action] += reward
+
 
 # Q-Learning Agent
 class QLearningAgent:
     def __init__(self, n_signaling_actions, n_final_actions, learning_rate=0.05,
                  exploration_rate=1.0, exploration_decay=0.995, 
                  min_exploration_rate=0.001, initialize=False,
-                n_observed_features=1):
+                 n_observed_features=1):
+        """
+        Initialize the QLearningAgent.
 
+        Parameters:
+        - n_signaling_actions (int): Number of possible signaling actions.
+        - n_final_actions (int): Number of possible final actions.
+        - learning_rate (float): Learning rate for Q-learning updates.
+        - exploration_rate (float): Initial exploration rate for epsilon-greedy strategy.
+        - exploration_decay (float): Decay rate for exploration.
+        - min_exploration_rate (float): Minimum exploration rate.
+        - initialize (bool): Whether to initialize the Q-tables with predefined values.
+        - n_observed_features (int): Number of observed features (default is 1).
+        """
         self.n_signaling_actions = n_signaling_actions
         self.n_final_actions = n_final_actions
         self.learning_rate = learning_rate
-        self.exploration_rate = exploration_rate
+        self.signal_exploration_rate = exploration_rate
+        self.action_exploration_rate = exploration_rate
         self.exploration_decay = exploration_decay
         self.min_exploration_rate = min_exploration_rate
 
-        # Q-tables for signaling and final actions
         if initialize:
             self.q_table_signaling = create_initial_signals(n_observed_features=n_observed_features,
-                                                n_signals=n_signaling_actions, n=100, m=0)
+                                                            n_signals=n_signaling_actions, n=100, m=0)
         else:
             self.q_table_signaling = {}
         self.q_table_action = {}
 
-    def get_action(self, state, is_signaling=True):
-        n_actions = self.n_signaling_actions if is_signaling else self.n_final_actions
+    def reset(self):
+        """Reset the Q-tables for signaling and actions."""
+        self.q_table_signaling = {}
+        self.q_table_action = {}
 
-        if is_signaling:
-          if state not in self.q_table_signaling:
-              self.q_table_signaling[state] = np.zeros(n_actions)
+    def get_signal(self, state):
+        """
+        Choose a signaling action using an epsilon-greedy policy.
+
+        Parameters:
+        - state: The current state.
+
+        Returns:
+        - int: The chosen signaling action.
+        """
+        if state not in self.q_table_signaling:
+            self.q_table_signaling[state] = np.zeros(self.n_signaling_actions)
+        if random.uniform(0, 1) < self.signal_exploration_rate:
+            return random.randint(0, self.n_signaling_actions - 1)
         else:
-          if state not in self.q_table_action:
-              self.q_table_action[state] = np.zeros(n_actions)
-
-        if random.uniform(0, 1) < self.exploration_rate:
-            return random.randint(0, n_actions - 1)
-        else:      # Exploitation: choose the action with the highest Q-value
-          if is_signaling:
             return np.argmax(self.q_table_signaling[state])
-          else:
+
+    def get_action(self, state):
+        """
+        Choose a final action using an epsilon-greedy policy.
+
+        Parameters:
+        - state: The current state.
+
+        Returns:
+        - int: The chosen final action.
+        """
+        if state not in self.q_table_action:
+            self.q_table_action[state] = np.zeros(self.n_final_actions)
+        if random.uniform(0, 1) < self.action_exploration_rate:
+            return random.randint(0, self.n_final_actions - 1)
+        else:
             return np.argmax(self.q_table_action[state])
 
-    def update(self, state, action, reward, is_signaling=True):
-        n_actions = self.n_signaling_actions if is_signaling else self.n_final_actions
+    def update_signals(self, state, signal, reward):
+        """
+        Update the Q-table for signaling actions based on the received reward.
 
-        if is_signaling:
-          if state not in self.q_table_signaling:
-              self.q_table_signaling[state] = np.zeros(n_actions)
-        else:
-          if state not in self.q_table_action:
-              self.q_table_action[state] = np.zeros(n_actions)
+        Parameters:
+        - state: The current state.
+        - signal (int): The signaling action taken.
+        - reward (float): The reward received.
+        """
+        if state not in self.q_table_signaling:
+            self.q_table_signaling[state] = np.zeros(self.n_signaling_actions)
 
-        # Q-learning update rule
-        td_target = reward #+ self.discount_factor * future_value
-        if is_signaling:
-            td_error = td_target - self.q_table_signaling[state][action]
-            self.q_table_signaling[state][action]+= self.learning_rate * td_error
-        else:
-            td_error = td_target - self.q_table_action[state][action]
-            self.q_table_action[state][action] += self.learning_rate * td_error
-            # Decay exploration rate
-            self.exploration_rate = max(self.min_exploration_rate, self.exploration_rate * self.exploration_decay)     
+        td_target = reward
+        td_error = td_target - self.q_table_signaling[state][signal]
+        self.q_table_signaling[state][signal] += self.learning_rate * td_error
+
+        self.signal_exploration_rate = max(self.min_exploration_rate, self.signal_exploration_rate * self.exploration_decay)
+
+    def update_actions(self, state, action, reward):
+        """
+        Update the Q-table for final actions based on the received reward.
+
+        Parameters:
+        - state: The current state.
+        - action (int): The final action taken.
+        - reward (float): The reward received.
+        """
+        if state not in self.q_table_action:
+            self.q_table_action[state] = np.zeros(self.n_final_actions)
+
+        td_target = reward
+        td_error = td_target - self.q_table_action[state][action]
+        self.q_table_action[state][action] += self.learning_rate * td_error
+
+        self.action_exploration_rate = max(self.min_exploration_rate, self.action_exploration_rate * self.exploration_decay)
