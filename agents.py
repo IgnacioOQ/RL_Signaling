@@ -67,9 +67,6 @@ class UrnAgent:
         - signal (int): The signaling action taken.
         - reward (float): The reward received.
         """
-        if state not in self.signalling_urns:
-            self.signalling_urns[state] = np.ones(self.n_signaling_actions)
-
         self.signalling_urns[state][signal] += reward
 
     def update_actions(self, state, action, reward):
@@ -81,9 +78,6 @@ class UrnAgent:
         - action (int): The final action taken.
         - reward (float): The reward received.
         """
-        if state not in self.action_urns:
-            self.action_urns[state] = np.ones(self.n_final_actions)
-
         self.action_urns[state][action] += reward
 
 
@@ -169,9 +163,6 @@ class QLearningAgent:
         - signal (int): The signaling action taken.
         - reward (float): The reward received.
         """
-        if state not in self.q_table_signaling:
-            self.q_table_signaling[state] = np.zeros(self.n_signaling_actions)
-
         td_target = reward
         td_error = td_target - self.q_table_signaling[state][signal]
         self.q_table_signaling[state][signal] += self.learning_rate * td_error
@@ -187,9 +178,6 @@ class QLearningAgent:
         - action (int): The final action taken.
         - reward (float): The reward received.
         """
-        if state not in self.q_table_action:
-            self.q_table_action[state] = np.zeros(self.n_final_actions)
-
         td_target = reward
         td_error = td_target - self.q_table_action[state][action]
         self.q_table_action[state][action] += self.learning_rate * td_error
