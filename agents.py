@@ -3,18 +3,15 @@ from utils import *
 
 # Urn-Learning Agent
 class UrnAgent:
-    def __init__(self, n_signaling_actions, n_final_actions,
-                 n_observed_features=1, initialize=False):
-        
-        self.n_signaling_actions = n_signaling_actions  # Number of signaling actions
-        self.n_final_actions = n_final_actions  # Number of final decision actions
- 
-        # Initialize urns (probability distributions over actions per state)
+    def __init__(self, n_signaling_actions, n_final_actions, n_observed_features=1, initialize=False):
+        self.n_signaling_actions = n_signaling_actions
+        self.n_final_actions = n_final_actions
+
         if initialize:
             self.signalling_urns = create_initial_signals(n_observed_features=n_observed_features,
-                                                        n_signals=n_signaling_actions,n=1,m=0)
+                                                          n_signals=n_signaling_actions, n=1, m=0)
         else:
-            self.signalling_urns = {}  # Dictionary for signaling action distributions                                                         n_signals=n_signaling_actions, n=100, m=0)
+            self.signalling_urns = {}
         self.action_urns = {}
 
     def reset_urns(self):
@@ -22,39 +19,24 @@ class UrnAgent:
         self.action_urns = {}
 
     def get_action(self, state, is_signaling=True):
-        # Determine the number of available actions
+        urn_dict = self.signalling_urns if is_signaling else self.action_urns
         n_actions = self.n_signaling_actions if is_signaling else self.n_final_actions
-        # Initialize urns with uniform distributions if state not encountered before
-        if is_signaling:
-            if state not in self.signalling_urns:
-                # Start with equal probability
-                self.signalling_urns[state] = np.ones(n_actions) 
-        else:
-            if state not in self.action_urns:
-                # Start with equal probability
-                self.action_urns[state] = np.ones(n_actions) 
 
-        # Select action based on urn probabilities (no epsilon-greedy exploration)
-        if is_signaling:
-            probability_weights = self.signalling_urns[state]/np.sum(self.signalling_urns[state])
-        else:
-            probability_weights = self.action_urns[state]/np.sum(self.action_urns[state])
+        if state not in urn_dict:
+            urn_dict[state] = np.ones(n_actions)
 
-        return np.random.choice(np.arange(len(probability_weights)), p=probability_weights)
+        epsilon = 1e-8  # Prevent division by zero
+        probability_weights = urn_dict[state] / (np.sum(urn_dict[state]) + epsilon)
+        return np.random.choice(n_actions, p=probability_weights)
 
     def update(self, state, action, reward, is_signaling=True):
-        # Determine the number of actions
+        urn_dict = self.signalling_urns if is_signaling else self.action_urns
         n_actions = self.n_signaling_actions if is_signaling else self.n_final_actions
-        # Ensure the state exists in the correct urn dictionary
-        if is_signaling:
-            if state not in self.signalling_urns:
-                self.signalling_urns[state] = np.ones(n_actions)  # Initialize if missing
-            self.signalling_urns[state][action] += int(reward)
-        else:
-            if state not in self.action_urns:
-                self.action_urns[state] = np.ones(n_actions)  # Initialize if missing
-            self.action_urns[state][action] += int(reward)
 
+        if state not in urn_dict:
+            urn_dict[state] = np.ones(n_actions)
+
+        urn_dict[state][action] += reward  # Assuming reward can be float
 
 # Q-Learning Agent
 class QLearningAgent:
