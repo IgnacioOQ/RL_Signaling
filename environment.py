@@ -58,49 +58,53 @@ class MultiAgentEnv:
         self.nature_vector = np.random.randint(0, 2, size=self.n_features)  # Random binary vector
         self.signals = [None] * self.n_agents  # Reset signals
         self.final_actions = [None] * self.n_agents  # Reset final actions
+        self.current_step = 0
         return self.nature_vector
 
-    def step(self, actions):
+    def signals_step(self, signals,nature_vector):
         """
         Progress the environment by one step based on the provided actions.
 
         :param actions: List of actions performed by the agents.
         :return: Tuple of rewards and completion status when final actions are taken.
         """
-        if self.current_step == 0:
-            # Step 0: Agents perform signaling actions
-            self.signals = actions
-            self.current_step += 1  # Move to the next step
-            # Assign observations based on agent-specific visibility
-            assigned_observations = self.assign_observations()
-            # Update signal usage tracking
-            for i in range(self.n_agents):
-                agent_observation = assigned_observations[i]
-                # Initialize tracking for this observation if it does not exist
-                if agent_observation not in self.signal_usage[i]:
-                    self.signal_usage[i][agent_observation] = [0] * self.n_signaling_actions
-                # Increment signal count for the chosen signal
-                if not (0 <= self.signals[i] < self.n_signaling_actions):
-                    raise ValueError(f"Signal {self.signals[i]} is out of range for agent {i}")
-                else:
-                    self.signal_usage[i][agent_observation][self.signals[i]] += 1
-            return False  # Step not yet complete, waiting for final actions
+        # Step 0: Agents perform signaling actions
+        self.signals = signals
+        # Assign observations based on agent-specific visibility
+        assigned_observations = self.assign_observations(nature_vector)
+        # Update signal usage tracking
+        for i in range(self.n_agents):
+            agent_observation = assigned_observations[i]
+            # Initialize tracking for this observation if it does not exist
+            if agent_observation not in self.signal_usage[i]:
+                self.signal_usage[i][agent_observation] = [0] * self.n_signaling_actions
+            # Increment signal count for the chosen signal
+            if not (0 <= self.signals[i] < self.n_signaling_actions):
+                raise ValueError(f"Signal {self.signals[i]} is out of range for agent {i}")
+            else:
+                self.signal_usage[i][agent_observation][self.signals[i]] += 1
+        self.current_step = 1
+        return False  # Step not yet complete, waiting for final actions
 
-        elif self.current_step == 1:
-            # Step 1: Agents perform final actions based on signals
-            self.final_actions = actions
-            rewards = self.calculate_rewards()  # Compute rewards based on actions
-            # Store reward history
-            for i in range(self.n_agents):
-                self.rewards_history[i].append(rewards[i])
-            # Compute and record mutual information of signals
-            for i in range(self.n_agents):
-                mutual_info, normalized_mutual_info = compute_mutual_information(self.signal_usage[i])
-                self.signal_information_history[i].append(normalized_mutual_info)
+    def actions_step(self, actions):
+        """
+        Progress the environment by one step based on the provided actions.
 
-            return rewards, True  # Step complete, episode ends
-        else:
-            raise ValueError("Environment has already completed two steps. Reset before reusing.")
+        :param actions: List of actions performed by the agents.
+        :return: Tuple of rewards and completion status when final actions are taken.
+        """
+        # Step 1: Agents perform final actions based on signals
+        self.final_actions = actions
+        rewards = self.calculate_rewards()  # Compute rewards based on actions
+        # Store reward history
+        for i in range(self.n_agents):
+            self.rewards_history[i].append(rewards[i])
+        # Compute and record mutual information of signals
+        for i in range(self.n_agents):
+            mutual_info, normalized_mutual_info = compute_mutual_information(self.signal_usage[i])
+            self.signal_information_history[i].append(normalized_mutual_info)
+
+        return rewards, True  # Step complete, episode ends
 
     def report_metrics(self):
         """
@@ -139,7 +143,7 @@ class MultiAgentEnv:
         print(f"Signals: {self.signals}")
         print(f"Final Actions: {self.final_actions}")
 
-    def assign_observations(self):
+    def assign_observations(self,nature_vector):
         """
         Assign observations to each agent based on their observed variables.
 
@@ -149,7 +153,7 @@ class MultiAgentEnv:
         if self.full_information:
             # Each agent sees the full nature vector
             for i in range(self.n_agents):
-                agents_observations.append(tuple(self.nature_vector))
+                agents_observations.append(tuple(nature_vector))
         else:
             # Each agent only sees a subset of features
             for i in range(self.n_agents):

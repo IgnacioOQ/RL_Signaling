@@ -40,74 +40,73 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
     nature_history = []
 
     for episode in range(n_episodes):
-        if verbose:
-          print(f'episode number is {episode}')
-        # Reset the environment for a new episode
-        nature_vector = tuple(env.reset())  # Convert nature vector to a tuple for Q-table indexing
-        nature_history.append(nature_vector)
-        if verbose:
-          print(f'nature vector is {nature_vector}')
-          
-        # total_rewards = [0] * n_agents  # Track total rewards for each agent in the episode
+      if verbose:
+        print(f'episode number is {episode}')
+      # Reset the environment for a new episode
+      nature_vector = tuple(env.reset())  # Convert nature vector to a tuple for Q-table indexing
+      nature_history.append(nature_vector)
+      if verbose:
+        print(f'nature vector is {nature_vector}')
 
-        # Pre Step: Assign observations
-        agents_observations = env.assign_observations()
-        if verbose:
-          print(f'agents direct observations are {agents_observations}')
+      # Pre Step: Assign observations
+      agents_observations = env.assign_observations(nature_vector)
+      if verbose:
+        print(f'environment step {env.current_step}')
+        print(f'agents direct observations are {agents_observations}')
 
-        # Step 0: Agents choose signaling actions based on Q-learning policy
-        signals = [agent.get_signal(observation) for agent, observation in zip(agents, agents_observations)]
-        # step to store signaling history, and move to the next step in the episode
-        _ = env.step(signals)
+      # Step 0: Agents choose signaling actions based on Q-learning policy
+      signals = [agent.get_signal(observation) for agent, observation in zip(agents, agents_observations)]
+      # step to store signaling history, and move to the next step in the episode
+      _ = env.signals_step(signals,nature_vector)
+      if verbose:
+        print(f'agents signals are {signals}')
+
+      # Step 1: Agents choose final actions based on Q-learning policy
+      # this step is different depending on whether agents they get each other's signals or not
+      if with_signals:
+        # Key here is that agent index 0 observes signal index 1 and viceversa
+        new_observations = [agents_observations[0]+ (signals[1],), agents_observations[1]+(signals[0],)]
+        #new_observations = [obs + (signal,) for obs, signal in zip(agents_observations,signals)]
         if verbose:
-          print(f'agents signals are {signals}')
           print(f'environment step {env.current_step}')
+          print(f'agents new_observations are {new_observations}')
+        final_actions = [agent.get_action(new_obs) for agent,new_obs in zip(agents,new_observations)]
+      else: #
+        final_actions = [agent.get_action(observation) for agent,observation in zip(agents,agents_observations)]
 
-        # Step 1: Agents choose final actions based on Q-learning policy
-        # this step is different depending on whether agents they get each other's signals or not
+      rewards, done = env.actions_step(final_actions)
+      if verbose:
+        print(f'agents final_actions are {final_actions}')
+
+
+      # Update Q-tables for signaling and final actions
+      # update_urns(self, state, action, reward, is_signaling=True):
+      for i, agent in enumerate(agents):
+        # updating the signaling q_table
         if with_signals:
-          # Key here is that agent index 0 observes signal index 1 and viceversa
-          new_observations = [agents_observations[0]+ (signals[1],), agents_observations[1]+(signals[0],)]
-          #new_observations = [obs + (signal,) for obs, signal in zip(agents_observations,signals)]
-          if verbose:
-            print(f'agents new_observations are {new_observations}')
-          final_actions = [agent.get_action(new_obs) for agent,new_obs in zip(agents,new_observations)]
-        else: #
-          final_actions = [agent.get_action(observation) for agent,observation in zip(agents,agents_observations)]
-
-        rewards, done = env.step(final_actions)
-        if verbose:
-          print(f'agents final_actions are {final_actions}')
-          print(f'environment step {env.current_step}')
-
-        # Update Q-tables for signaling and final actions
-        # update_urns(self, state, action, reward, is_signaling=True):
-        for i, agent in enumerate(agents):
-          # updating the signaling q_table
-          if with_signals:
-            # important that the state is the agents_observations and not the new observations
-            # because this us updating the signal payoff, and the signal inputs are the initial observations
-            agent.update_signals(agents_observations[i], signals[i], rewards[i])
-            # now we update the action q_table, the input being the new_observations
-            agent.update_actions(new_observations[i], final_actions[i], rewards[i])
-          else: # if with_signals = False then there is no updating of signal q_table, but yes for action q_table
-            agent.update_actions(agents_observations[i], final_actions[i], rewards[i])
-
-          if verbose:
-            print(f'agent {i} signalling_urns are {agent.signalling_urns}')
-            print(f'agent {i} action_urns are {agent.action_urns}')
-
-        # Update urn histories
-        # copy.deepcopy() is a function in Python's copy module that creates a deep copy of an object.
-        # A deep copy means that the new object is a completely independent copy of the original,
-        # including any nested objects it contains.
-        for i, agent in enumerate(agents):
-          urn_histories[i]['signal_urns_history'].append(copy.deepcopy(agent.signalling_urns))
-          urn_histories[i]['action_urns_history'].append(copy.deepcopy(agent.action_urns))
+          # important that the state is the agents_observations and not the new observations
+          # because this us updating the signal payoff, and the signal inputs are the initial observations
+          agent.update_signals(agents_observations[i], signals[i], rewards[i])
+          # now we update the action q_table, the input being the new_observations
+          agent.update_actions(new_observations[i], final_actions[i], rewards[i])
+        else: # if with_signals = False then there is no updating of signal q_table, but yes for action q_table
+          agent.update_actions(agents_observations[i], final_actions[i], rewards[i])
 
         if verbose:
-          print('Episode ended')
-          print('\n')
+          print(f'agent {i} signalling_urns are {agent.signalling_urns}')
+          print(f'agent {i} action_urns are {agent.action_urns}')
+
+      # Update urn histories
+      # copy.deepcopy() is a function in Python's copy module that creates a deep copy of an object.
+      # A deep copy means that the new object is a completely independent copy of the original,
+      # including any nested objects it contains.
+      for i, agent in enumerate(agents):
+        urn_histories[i]['signal_urns_history'].append(copy.deepcopy(agent.signalling_urns))
+        urn_histories[i]['action_urns_history'].append(copy.deepcopy(agent.action_urns))
+
+      if verbose:
+        print('Episode ended')
+        print('\n')
 
     signal_usage, rewards_history, signal_information_history = env.report_metrics()
 
