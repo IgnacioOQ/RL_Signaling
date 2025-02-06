@@ -278,3 +278,20 @@ def create_directed_graph(n):
             if i != j:
                 G.add_edge(i, j)
     return G
+
+# Plot Smoothing
+# Prepare data for plotting
+def calculate_proportions(data,urn_type='signal_urns_history'):
+    proportions = {key: [] for key in data[urn_type][-1].keys()}
+    for d in data[urn_type]:
+        for key, value in d.items():
+            total = np.sum(value)
+            proportion = value[0] / total if total != 0 else 0
+            proportions[key].append(proportion)
+    return proportions
+
+def smooth(values, window_size=3):
+    pad_width = window_size // 2
+    padded_values = np.pad(values, (pad_width, pad_width), mode='edge')
+    smoothed = np.convolve(padded_values, np.ones(window_size)/window_size, mode='valid')
+    return smoothed
