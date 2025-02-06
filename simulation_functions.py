@@ -10,7 +10,7 @@ n_final_actions = 4
 
 random_game_dicts = {}
 for i in range(n_agents):
-  random_game_dicts[i] = create_randomcannonical_game(n_features,n_final_actions)
+  random_game_dicts[i] = create_random_canonical_game(n_features,n_final_actions)
 
 agents_observed_variables = {0:[0],1:[1]}
 
@@ -56,7 +56,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
           print(f'agents direct observations are {agents_observations}')
 
         # Step 0: Agents choose signaling actions based on Q-learning policy
-        signals = [agent.get_action(observation, is_signaling=True) for agent, observation in zip(agents, agents_observations)]
+        signals = [agent.get_signal(observation) for agent, observation in zip(agents, agents_observations)]
         # step to store signaling history, and move to the next step in the episode
         _ = env.step(signals)
         if verbose:
@@ -71,9 +71,9 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
           #new_observations = [obs + (signal,) for obs, signal in zip(agents_observations,signals)]
           if verbose:
             print(f'agents new_observations are {new_observations}')
-          final_actions = [agent.get_action(new_obs, is_signaling=False) for agent,new_obs in zip(agents,new_observations)]
+          final_actions = [agent.get_action(new_obs) for agent,new_obs in zip(agents,new_observations)]
         else: #
-          final_actions = [agent.get_action(observation, is_signaling=False) for agent,observation in zip(agents,agents_observations)]
+          final_actions = [agent.get_action(observation) for agent,observation in zip(agents,agents_observations)]
 
         rewards, done = env.step(final_actions)
         if verbose:
@@ -87,11 +87,11 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
           if with_signals:
             # important that the state is the agents_observations and not the new observations
             # because this us updating the signal payoff, and the signal inputs are the initial observations
-            agent.update(agents_observations[i], signals[i], rewards[i], is_signaling=True)
+            agent.update_signals(agents_observations[i], signals[i], rewards[i])
             # now we update the action q_table, the input being the new_observations
-            agent.update(new_observations[i], final_actions[i], rewards[i], is_signaling=False)
+            agent.update_actions(new_observations[i], final_actions[i], rewards[i])
           else: # if with_signals = False then there is no updating of signal q_table, but yes for action q_table
-            agent.update(agents_observations[i], final_actions[i], rewards[i], is_signaling=False)
+            agent.update_actions(agents_observations[i], final_actions[i], rewards[i])
 
           if verbose:
             print(f'agent {i} signalling_urns are {agent.signalling_urns}')

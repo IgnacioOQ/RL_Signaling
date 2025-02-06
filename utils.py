@@ -19,7 +19,7 @@ def generate_unique_dicts(n_final_actions,n=1,m=0):
     ]
     
 # Updated function to create a game dictionary
-def create_randomcannonical_game(n_features, n_final_actions,n=1,m=0):
+def create_random_canonical_game(n_features, n_final_actions,n=1,m=0):
     random_game_dict = dict()
     world_states = list(product([0, 1], repeat=n_features))
     unique_dicts = generate_unique_dicts(n_final_actions,n,m)
@@ -264,3 +264,17 @@ def plot_payoff_comparison(df):
     plt.ylabel("Frequency")
     plt.legend()  # Add legend to differentiate variables and their means
     plt.show()
+    
+    # Function to create a directed graph with n agents
+def create_directed_graph(n):
+    G = nx.DiGraph()
+
+    # Add n nodes
+    G.add_nodes_from(range(1, n + 1))
+
+    # Add directed edges where each node points to every other node
+    for i in range(1, n + 1):
+        for j in range(1, n + 1):
+            if i != j:
+                G.add_edge(i, j)
+    return G
