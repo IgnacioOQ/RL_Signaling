@@ -49,13 +49,12 @@ class UrnAgent:
         if is_signaling:
             if state not in self.signalling_urns:
                 self.signalling_urns[state] = np.ones(n_actions)  # Initialize if missing
-            else:
-                self.signalling_urns[state][action] += int(reward)
+            self.signalling_urns[state][action] += int(reward)
         else:
             if state not in self.action_urns:
                 self.action_urns[state] = np.ones(n_actions)  # Initialize if missing
-            else:  
-                self.action_urns[state][action] += int(reward)
+            self.action_urns[state][action] += int(reward)
+
 
 # Q-Learning Agent
 class QLearningAgent:
