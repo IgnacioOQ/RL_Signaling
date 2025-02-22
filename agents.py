@@ -121,6 +121,8 @@ class QLearningAgent:
         """Reset the Q-tables for signaling and actions."""
         self.q_table_signaling = {}
         self.q_table_action = {}
+        self.signalling_counts = {}
+        self.action_counts = {}
 
     def get_signal(self, state):
         """
