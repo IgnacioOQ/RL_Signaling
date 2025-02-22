@@ -83,7 +83,7 @@ class UrnAgent:
 
 # Q-Learning Agent
 class QLearningAgent:
-    def __init__(self, n_signaling_actions, n_final_actions, learning_rate=0.05,
+    def __init__(self, n_signaling_actions, n_final_actions,
                  exploration_rate=1.0, exploration_decay=0.995, 
                  min_exploration_rate=0.001, initialize=False,
                  n_observed_features=1):
@@ -106,14 +106,16 @@ class QLearningAgent:
         self.action_exploration_rate = exploration_rate
         self.exploration_decay = exploration_decay
         self.min_exploration_rate = min_exploration_rate
+        self.signalling_counts = {}
+        self.action_counts = {}
         if initialize:
             self.q_table_signaling = create_initial_signals(n_observed_features=n_observed_features,
-                                                            n_signals=n_signaling_actions, n=100, m=0)
+                                                            n_signals=n_signaling_actions, n=1, m=0)
+            for state in self.q_table_signaling:
+                self.signalling_counts[state] = np.zeros(self.n_signaling_actions)
         else:
             self.q_table_signaling = {}
         self.q_table_action = {}
-        self.signalling_counts = {}
-        self.action_counts = {}
 
     def reset(self):
         """Reset the Q-tables for signaling and actions."""
@@ -152,7 +154,7 @@ class QLearningAgent:
         """
         if state not in self.q_table_action:
             self.q_table_action[state] = np.zeros(self.n_final_actions)
-            self.action_counts = np.zeros(self.n_final_actions)
+            self.action_counts[state] = np.zeros(self.n_final_actions)
         if random.uniform(0, 1) < self.action_exploration_rate:
             action = random.randint(0, self.n_final_actions - 1)
         else:
@@ -172,7 +174,7 @@ class QLearningAgent:
         """
         td_target = reward
         td_error = td_target - self.q_table_signaling[state][signal]
-        self.q_table_signaling[state][signal] += td_error/self.signalling_counts[state, signal]
+        self.q_table_signaling[state][signal] += td_error/self.signalling_counts[state][signal]
 
         self.signal_exploration_rate = max(self.min_exploration_rate, self.signal_exploration_rate * self.exploration_decay)
 
@@ -187,6 +189,6 @@ class QLearningAgent:
         """
         td_target = reward
         td_error = td_target - self.q_table_action[state][action]
-        self.q_table_action[state][action] += td_error/self.action_counts[state,action]
+        self.q_table_action[state][action] += td_error/self.action_counts[state][action]
 
         self.action_exploration_rate = max(self.min_exploration_rate, self.action_exploration_rate * self.exploration_decay)

@@ -1,6 +1,6 @@
 from imports import *
 from utils import *
-from agents import UrnAgent
+from agents import UrnAgent, QLearningAgent
 
 # Multi-Agent Environment Class
 # Environment input
