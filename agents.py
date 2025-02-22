@@ -102,18 +102,18 @@ class QLearningAgent:
         """
         self.n_signaling_actions = n_signaling_actions
         self.n_final_actions = n_final_actions
-        self.learning_rate = learning_rate
         self.signal_exploration_rate = exploration_rate
         self.action_exploration_rate = exploration_rate
         self.exploration_decay = exploration_decay
         self.min_exploration_rate = min_exploration_rate
-
         if initialize:
             self.q_table_signaling = create_initial_signals(n_observed_features=n_observed_features,
                                                             n_signals=n_signaling_actions, n=100, m=0)
         else:
             self.q_table_signaling = {}
         self.q_table_action = {}
+        self.signalling_counts = {}
+        self.action_counts = {}
 
     def reset(self):
         """Reset the Q-tables for signaling and actions."""
@@ -132,11 +132,14 @@ class QLearningAgent:
         """
         if state not in self.q_table_signaling:
             self.q_table_signaling[state] = np.zeros(self.n_signaling_actions)
+            self.signalling_counts[state] = np.zeros(self.n_signaling_actions)
         if random.uniform(0, 1) < self.signal_exploration_rate:
-            return random.randint(0, self.n_signaling_actions - 1)
+            signal = random.randint(0, self.n_signaling_actions - 1)
         else:
-            return np.argmax(self.q_table_signaling[state])
-
+            signal = np.argmax(self.q_table_signaling[state])
+        self.signalling_counts[state][signal] += 1
+        return signal
+    
     def get_action(self, state):
         """
         Choose a final action using an epsilon-greedy policy.
@@ -149,10 +152,14 @@ class QLearningAgent:
         """
         if state not in self.q_table_action:
             self.q_table_action[state] = np.zeros(self.n_final_actions)
+            self.action_counts = np.zeros(self.n_final_actions)
         if random.uniform(0, 1) < self.action_exploration_rate:
-            return random.randint(0, self.n_final_actions - 1)
+            action = random.randint(0, self.n_final_actions - 1)
         else:
-            return np.argmax(self.q_table_action[state])
+            action = np.argmax(self.q_table_action[state])
+        self.action_counts[action] += 1
+        return action
+
 
     def update_signals(self, state, signal, reward):
         """
