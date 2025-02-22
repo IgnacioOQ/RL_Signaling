@@ -157,7 +157,7 @@ class QLearningAgent:
             action = random.randint(0, self.n_final_actions - 1)
         else:
             action = np.argmax(self.q_table_action[state])
-        self.action_counts[action] += 1
+        self.action_counts[state][action] += 1
         return action
 
 
@@ -172,7 +172,7 @@ class QLearningAgent:
         """
         td_target = reward
         td_error = td_target - self.q_table_signaling[state][signal]
-        self.q_table_signaling[state][signal] += self.learning_rate * td_error
+        self.q_table_signaling[state][signal] += td_error/self.signalling_counts[state, signal]
 
         self.signal_exploration_rate = max(self.min_exploration_rate, self.signal_exploration_rate * self.exploration_decay)
 
@@ -187,6 +187,6 @@ class QLearningAgent:
         """
         td_target = reward
         td_error = td_target - self.q_table_action[state][action]
-        self.q_table_action[state][action] += self.learning_rate * td_error
+        self.q_table_action[state][action] += td_error/self.action_counts[state,action]
 
         self.action_exploration_rate = max(self.min_exploration_rate, self.action_exploration_rate * self.exploration_decay)
