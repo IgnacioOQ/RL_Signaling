@@ -119,7 +119,6 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
     signal_usage, rewards_history, signal_information_history = env.report_metrics()
 
     if plot:
-
       # Plot rewards over episodes
       plt.figure(figsize=(8, 5)) # (width, height)
       for i in range(n_agents):
