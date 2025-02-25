@@ -49,6 +49,9 @@ class NetMultiAgentEnv:
         # Number of agents in the environment
         self.n_agents = n_agents
         
+        # Agent type
+        self.agent_type = agent_type
+        
         # Initialize agents using the specified agent type
         self.agents = [agent_type(n_signaling_actions, n_final_actions,
                        initialize=initialize) for _ in range(self.n_agents)]
