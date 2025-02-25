@@ -1,7 +1,7 @@
 from imports import *
 from utils import *
 from agents import UrnAgent, QLearningAgent
-from environment import MultiAgentEnv
+from environment import NetMultiAgentEnv
 
 n_agents = 2
 n_features = 2
@@ -14,27 +14,20 @@ for i in range(n_agents):
 
 agents_observed_variables = {0:[0],1:[1]}
 
-env = MultiAgentEnv(n_agents=n_agents, n_features=n_features,
-                    n_signaling_actions=n_signaling_actions,
-                    n_final_actions=n_final_actions,
-                    full_information = False,
-                    game_dicts=random_game_dicts,
-                    observed_variables = agents_observed_variables)
 
 def simulation_function(n_agents=n_agents, n_features=n_features,
                         n_signaling_actions=n_signaling_actions, n_final_actions=n_final_actions,
                         n_episodes=6000, with_signals = True,
-                        plot=True,env=env,agent_type=UrnAgent,
-                        initialize = False,
+                        plot=True,env=None,
                         verbose=False):
 
-    agents = [agent_type(n_signaling_actions, n_final_actions,
-                       initialize=initialize) for _ in range(n_agents)]
+    # agents = [agent_type(n_signaling_actions, n_final_actions,
+    #                    initialize=initialize) for _ in range(n_agents)]
 
     # History of the information status of the agent after each episode
     # namely their signalling and action urns as they get more complex
     urn_histories = {}
-    for i, agent in enumerate(agents):
+    for i, agent in enumerate(env.agents):
       urn_histories[i] = {'signal_history':[],'action_history':[]}
 
     nature_history = []
@@ -55,7 +48,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
         print(f'agents direct observations are {agents_observations}')
 
       # Step 0: Agents choose signaling actions based on Q-learning policy
-      signals = [agent.get_signal(observation) for agent, observation in zip(agents, agents_observations)]
+      signals = [agent.get_signal(observation) for agent, observation in zip(env.agents, agents_observations)]
       # step to store signaling history, and move to the next step in the episode
       _ = env.signals_step(signals,nature_vector)
       if verbose:
@@ -64,15 +57,21 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       # Step 1: Agents choose final actions based on Q-learning policy
       # this step is different depending on whether agents they get each other's signals or not
       if with_signals:
-        # Key here is that agent index 0 observes signal index 1 and viceversa
-        new_observations = [agents_observations[0]+ (signals[1],), agents_observations[1]+(signals[0],)]
+        # here I use the environment graph
+        # crucial is that the index of the agent corresponds to the name of the node in the graph corresponding to that agent
+        new_observations = agents_observations.copy()
+        for i, agent in enumerate(env.agents):
+          in_neighbors = env.graph.predecessors(i)
+          for neig in in_neighbors:
+            new_observations[i]=new_observations[i]+(signals[neig],)
+
         #new_observations = [obs + (signal,) for obs, signal in zip(agents_observations,signals)]
         if verbose:
           print(f'environment step {env.current_step}')
           print(f'agents new_observations are {new_observations}')
-        final_actions = [agent.get_action(new_obs) for agent,new_obs in zip(agents,new_observations)]
+        final_actions = [agent.get_action(new_obs) for agent,new_obs in zip(env.agents,new_observations)]
       else: #
-        final_actions = [agent.get_action(observation) for agent,observation in zip(agents,agents_observations)]
+        final_actions = [agent.get_action(observation) for agent,observation in zip(env.agents,agents_observations)]
 
       rewards, done = env.actions_step(final_actions)
       if verbose:
@@ -81,7 +80,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
 
       # Update Q-tables for signaling and final actions
       # update_urns(self, state, action, reward, is_signaling=True):
-      for i, agent in enumerate(agents):
+      for i, agent in enumerate(env.agents):
         # updating the signaling q_table
         if with_signals:
           # important that the state is the agents_observations and not the new observations
@@ -93,10 +92,10 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
           agent.update_actions(agents_observations[i], final_actions[i], rewards[i])
 
         if verbose:
-          if agent_type == UrnAgent:
+          if env.agent_type == UrnAgent:
             print(f'agent {i} signalling_urns are {agent.signalling_urns}')
             print(f'agent {i} action_urns are {agent.action_urns}')
-          if agent_type == QLearningAgent:
+          if env.agent_type == QLearningAgent:
               print(f'agent {i} signalling_counts are {agent.signalling_counts}')
               print(f'agent {i} action_counts are {agent.action_counts}')
 
@@ -104,12 +103,12 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       # copy.deepcopy() is a function in Python's copy module that creates a deep copy of an object.
       # A deep copy means that the new object is a completely independent copy of the original,
       # including any nested objects it contains.
-      if agent_type == UrnAgent:
-        for i, agent in enumerate(agents):
+      if env.agent_type == UrnAgent:
+        for i, agent in enumerate(env.agents):
           urn_histories[i]['signal_history'].append(copy.deepcopy(agent.signalling_urns))
           urn_histories[i]['action_history'].append(copy.deepcopy(agent.action_urns))
-      if agent_type == QLearningAgent:
-        for i, agent in enumerate(agents):
+      if env.agent_type == QLearningAgent:
+        for i, agent in enumerate(env.agents):
           urn_histories[i]['signal_history'].append(copy.deepcopy(agent.signalling_counts))
           urn_histories[i]['action_history'].append(copy.deepcopy(agent.action_counts))
 
