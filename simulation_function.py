@@ -35,7 +35,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
     # namely their signalling and action urns as they get more complex
     urn_histories = {}
     for i, agent in enumerate(agents):
-      urn_histories[i] = {'signal_urns_history':[],'action_urns_history':[]}
+      urn_histories[i] = {'signal_history':[],'action_history':[]}
 
     nature_history = []
 
@@ -93,8 +93,12 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
           agent.update_actions(agents_observations[i], final_actions[i], rewards[i])
 
         if verbose:
-          print(f'agent {i} signalling_urns are {agent.signalling_urns}')
-          print(f'agent {i} action_urns are {agent.action_urns}')
+          if agent_type == UrnAgent:
+            print(f'agent {i} signalling_urns are {agent.signalling_urns}')
+            print(f'agent {i} action_urns are {agent.action_urns}')
+          if agent_type == QLearningAgent:
+              print(f'agent {i} signalling_counts are {agent.signalling_counts}')
+              print(f'agent {i} action_counts are {agent.action_counts}')
 
       # Update urn histories
       # copy.deepcopy() is a function in Python's copy module that creates a deep copy of an object.
@@ -102,8 +106,12 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       # including any nested objects it contains.
       if agent_type == UrnAgent:
         for i, agent in enumerate(agents):
-          urn_histories[i]['signal_urns_history'].append(copy.deepcopy(agent.signalling_urns))
-          urn_histories[i]['action_urns_history'].append(copy.deepcopy(agent.action_urns))
+          urn_histories[i]['signal_history'].append(copy.deepcopy(agent.signalling_urns))
+          urn_histories[i]['action_history'].append(copy.deepcopy(agent.action_urns))
+      if agent_type == QLearningAgent:
+        for i, agent in enumerate(agents):
+          urn_histories[i]['signal_history'].append(copy.deepcopy(agent.signalling_counts))
+          urn_histories[i]['action_history'].append(copy.deepcopy(agent.action_counts))
 
       if verbose:
         print('Episode ended')
@@ -175,58 +183,57 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       plt.show()
       
       # Plot final signal usage
-      if agent_type == UrnAgent:
-        final_signal_usage = [urn_histories[0]['signal_urns_history'][-1],urn_histories[1]['signal_urns_history'][-1]]
-        plt.figure(figsize=(8, 5))  # (width, height)
-        for i, usage in enumerate(final_signal_usage):
-            for state, counts in usage.items():
-                total_counts = counts.sum()  # Normalize independently for each state
-                proportions = counts / total_counts  # Normalize to proportions
+      final_signal_usage = [urn_histories[0]['signal_history'][-1],urn_histories[1]['signal_history'][-1]]
+      plt.figure(figsize=(8, 5))  # (width, height)
+      for i, usage in enumerate(final_signal_usage):
+          for state, counts in usage.items():
+              total_counts = counts.sum()  # Normalize independently for each state
+              proportions = counts / total_counts  # Normalize to proportions
 
-                bar_labels = [f"{prop:.2f}" for prop in proportions]  # Format proportion labels
-                bars = plt.bar(
-                    [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
-                    proportions,
-                    label=f"A{i}, State {state}",
-                    alpha=0.7
-                )
+              bar_labels = [f"{prop:.2f}" for prop in proportions]  # Format proportion labels
+              bars = plt.bar(
+                  [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
+                  proportions,
+                  label=f"A{i}, State {state}",
+                  alpha=0.7
+              )
 
-                # Add proportion labels on top of each bar
-                for bar, label in zip(bars, bar_labels):
-                    plt.text(
-                        bar.get_x() + bar.get_width() / 2,  # Center horizontally
-                        bar.get_height(),                   # Position at the top of the bar
-                        label,                              # The proportion label
-                        ha='center',                        # Horizontal alignment
-                        va='bottom'                         # Vertical alignment
-                    )
+              # Add proportion labels on top of each bar
+              for bar, label in zip(bars, bar_labels):
+                  plt.text(
+                      bar.get_x() + bar.get_width() / 2,  # Center horizontally
+                      bar.get_height(),                   # Position at the top of the bar
+                      label,                              # The proportion label
+                      ha='center',                        # Horizontal alignment
+                      va='bottom'                         # Vertical alignment
+                  )
 
-        plt.title("Final Signal Usage Proportions by Observation")
-        plt.ylabel("Proportion")
-        plt.xticks(rotation=90)
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
-        
-        plt.figure(figsize=(8, 5))  # (width, height)
-        # Dataset 1
-        proportions1 = calculate_proportions(urn_histories[0])
-        for key, values in proportions1.items():
-            smoothed_values = smooth(values)
-            plt.plot(range(len(values)), smoothed_values, marker='o', markersize=1, label=f'Agent 0 - Key {key}')
-            plt.text(len(values)-1, smoothed_values[-1], f'{smoothed_values[-1]:.2f}', fontsize=10, ha='right')
-            
-        # Dataset 2
-        proportions2 = calculate_proportions(urn_histories[1])
-        for key, values in proportions2.items():
-            smoothed_values = smooth(values)
-            plt.plot(range(len(values)), smoothed_values, marker='x', markersize=1, label=f'Agent 1 - Key {key}')
-            plt.text(len(values)-1, smoothed_values[-1], f'{smoothed_values[-1]:.2f}', fontsize=10, ha='right')
-            
-        plt.title('(Smoothed) Signal Urn Proportions History for Agent and Observation')
-        plt.xlabel('Episode')
-        plt.ylabel('Proportion')
-        plt.grid(True)
-        plt.legend()
+      plt.title("Final Signal Usage Proportions by Observation")
+      plt.ylabel("Proportion")
+      plt.xticks(rotation=90)
+      plt.legend()
+      plt.tight_layout()
+      plt.show()
+      
+      plt.figure(figsize=(8, 5))  # (width, height)
+      # Dataset 1
+      proportions1 = calculate_proportions(urn_histories[0])
+      for key, values in proportions1.items():
+          smoothed_values = smooth(values)
+          plt.plot(range(len(values)), smoothed_values, marker='o', markersize=1, label=f'Agent 0 - Key {key}')
+          plt.text(len(values)-1, smoothed_values[-1], f'{smoothed_values[-1]:.2f}', fontsize=10, ha='right')
+          
+      # Dataset 2
+      proportions2 = calculate_proportions(urn_histories[1])
+      for key, values in proportions2.items():
+          smoothed_values = smooth(values)
+          plt.plot(range(len(values)), smoothed_values, marker='x', markersize=1, label=f'Agent 1 - Key {key}')
+          plt.text(len(values)-1, smoothed_values[-1], f'{smoothed_values[-1]:.2f}', fontsize=10, ha='right')
+          
+      plt.title('(Smoothed) Signal Urn Proportions History for Agent and Observation')
+      plt.xlabel('Episode')
+      plt.ylabel('Proportion')
+      plt.grid(True)
+      plt.legend()
 
     return signal_usage, rewards_history, signal_information_history, urn_histories, nature_history

@@ -281,7 +281,7 @@ def create_directed_graph(n):
 
 # Plot Smoothing
 # Prepare data for plotting
-def calculate_proportions(data,urn_type='signal_urns_history'):
+def calculate_proportions(data,urn_type='signal_history'):
     proportions = {key: [] for key in data[urn_type][-1].keys()}
     for d in data[urn_type]:
         for key, value in d.items():

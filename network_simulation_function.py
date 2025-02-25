@@ -1,6 +1,6 @@
 from imports import *
 from utils import *
-from agents import UrnAgent
+from agents import UrnAgent, QLearningAgent
 from network_environment import NetMultiAgentEnv
 
 n_agents = 2
@@ -28,7 +28,7 @@ def net_simulation_function(n_agents=n_agents, n_features=n_features,
     # namely their signalling and action urns as they get more complex
     urn_histories = {}
     for i, agent in enumerate(env.agents):
-      urn_histories[i] = {'signal_urns_history':[],'action_urns_history':[]}
+      urn_histories[i] = {'signal_history':[],'action_history':[]}
 
     nature_history = []
 
@@ -92,16 +92,25 @@ def net_simulation_function(n_agents=n_agents, n_features=n_features,
           agent.update_actions(agents_observations[i], final_actions[i], rewards[i])
 
         if verbose:
-          print(f'agent {i} signalling_urns are {agent.signalling_urns}')
-          print(f'agent {i} action_urns are {agent.action_urns}')
+          if env.agent_type == UrnAgent:
+            print(f'agent {i} signalling_urns are {agent.signalling_urns}')
+            print(f'agent {i} action_urns are {agent.action_urns}')
+          if env.agent_type == QLearningAgent:
+              print(f'agent {i} signalling_counts are {agent.signalling_counts}')
+              print(f'agent {i} action_counts are {agent.action_counts}')
 
       # Update urn histories
       # copy.deepcopy() is a function in Python's copy module that creates a deep copy of an object.
       # A deep copy means that the new object is a completely independent copy of the original,
       # including any nested objects it contains.
-      for i, agent in enumerate(env.agents):
-        urn_histories[i]['signal_urns_history'].append(copy.deepcopy(agent.signalling_urns))
-        urn_histories[i]['action_urns_history'].append(copy.deepcopy(agent.action_urns))
+      if env.agent_type == UrnAgent:
+        for i, agent in enumerate(env.agents):
+          urn_histories[i]['signal_history'].append(copy.deepcopy(agent.signalling_urns))
+          urn_histories[i]['action_history'].append(copy.deepcopy(agent.action_urns))
+      if env.agent_type == QLearningAgent:
+        for i, agent in enumerate(env.agents):
+          urn_histories[i]['signal_history'].append(copy.deepcopy(agent.signalling_counts))
+          urn_histories[i]['action_history'].append(copy.deepcopy(agent.action_counts))
 
       if verbose:
         print('Episode ended')
@@ -173,7 +182,7 @@ def net_simulation_function(n_agents=n_agents, n_features=n_features,
       plt.show()
       
       # Plot final signal usage
-      final_signal_usage = [urn_histories[0]['signal_urns_history'][-1],urn_histories[1]['signal_urns_history'][-1]]
+      final_signal_usage = [urn_histories[0]['signal_history'][-1],urn_histories[1]['signal_history'][-1]]
       plt.figure(figsize=(8, 5))  # (width, height)
       for i, usage in enumerate(final_signal_usage):
           for state, counts in usage.items():
