@@ -181,6 +181,67 @@ def plot_histograms_with_kde(df, variable, bins=100, figsize=(6, 3),
     # Display the plot
     plt.show()
 
+
+def plot_basecase_kde(df, variable, bins=100, figsize=(6, 3),
+                             alpha=0.5, kde=True,variables = [(True, False), (False, True), (False, False)]):
+    # Initialize the figure
+    plt.figure(figsize=figsize)
+    
+    # Loop over the combinations of conditions
+    subset_df = df[(df['full_information'] == False) & (df['with_signals'] == True)]
+
+    # Plot the histogram for each subset
+    plt.hist(
+        subset_df[variable],
+        bins=bins,
+        alpha=alpha,
+        color='orange',
+        label=f'signals={True}, full_info={False}',
+        density=True  # Normalize histogram to show density
+    )
+
+    # Plot KDE curve if enabled
+    if kde:
+        sns.kdeplot(
+            subset_df[variable],
+            color='orange',
+            linewidth=2#,
+            #label=f'KDE: signals={with_signals}, full_infon={full_information}'
+        )
+
+    # Add a vertical line for the mean
+    mean_value = subset_df[variable].mean()
+    std_dev = subset_df[variable].std()
+
+    plt.axvline(mean_value, color='orange', linestyle='--', linewidth=1.5, 
+        label=f'Mean: {mean_value:.2f}, Std Dev: {std_dev:.2f}')
+    #plt.axvline(mean_value, color=colors[idx], linestyle='--', linewidth=1.5)#,
+                #label=f'Mean: signals={with_signals}, full_info={full_information}')
+
+    # Initialize an offset value to adjust text positions
+    vertical_offset = 0.07  # Adjust as needed to prevent overlap
+
+    # Annotate the mean value on the plot
+    plt.text(
+        mean_value,
+        plt.gca().get_ylim()[1] * (0.9 - vertical_offset),  # Incrementally adjust position
+        f'{mean_value:.2f}',
+        color='orange',
+        fontsize=10,
+        ha='center',
+        bbox=dict(facecolor='white', edgecolor='orange', boxstyle='round,pad=0.3'))
+
+    # Add labels, legend, and title
+    plt.title(f'Histogram and KDE of {variable} by Setup', fontsize=12)
+    plt.xlabel(variable, fontsize=10)
+    plt.ylabel('Density', fontsize=10)
+    plt.legend(title="Setup", fontsize=9, title_fontsize=10)
+    plt.gca().spines[['top', 'right']].set_visible(False)
+
+    # Display the plot
+    plt.show()
+
+
 def plot_all_histograms(df,bins=75):
     plot_histograms_with_kde(df,'Agent_0_final_reward',bins=75)
     plot_histograms_with_kde(df,'Agent_0_avg_reward',bins=75)
