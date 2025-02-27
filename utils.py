@@ -295,3 +295,21 @@ def smooth(values, window_size=3):
     padded_values = np.pad(values, (pad_width, pad_width), mode='edge')
     smoothed = np.convolve(padded_values, np.ones(window_size)/window_size, mode='valid')
     return smoothed
+
+def count_negative_nmi(file_path):
+    """
+    Reads a CSV file and counts the number of negative values in NMI columns.
+    
+    :param file_path: Path to the input CSV file
+    :return: Dictionary with column names as keys and counts of negative values as values
+    """
+    # Load the CSV file
+    df = pd.read_csv(file_path)
+    
+    # Identify all NMI-related columns (containing 'NMI' in the name)
+    nmi_columns = [col for col in df.columns if 'NMI' in col]
+    
+    # Count negative values in each NMI column
+    negative_counts = {col: (df[col] < 0).sum() for col in nmi_columns}
+    
+    return negative_counts
