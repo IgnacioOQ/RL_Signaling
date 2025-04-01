@@ -14,7 +14,6 @@ for i in range(n_agents):
 
 agents_observed_variables = {0:[0],1:[1]}
 
-
 def simulation_function(n_agents=n_agents, n_features=n_features,
                         n_signaling_actions=n_signaling_actions, n_final_actions=n_final_actions,
                         n_episodes=6000, with_signals = True,
@@ -26,97 +25,51 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
 
     # History of the information status of the agent after each episode
     # namely their signalling and action urns as they get more complex
-    urn_histories = {}
-    for i, agent in enumerate(env.agents):
-      urn_histories[i] = {'signal_history':[],'action_history':[]}
-
-    nature_history = []
 
     for episode in range(n_episodes):
       if verbose:
         print(f'episode number is {episode}')
+        
+      # Step 1: Nature samples state at random and we assign observations to agents
       # Reset the environment for a new episode
-      nature_vector = tuple(env.reset())  # Convert nature vector to a tuple for Q-table indexing
-      nature_history.append(nature_vector)
-      if verbose:
-        print(f'nature vector is {nature_vector}')
-
-      # Pre Step: Assign observations
+      nature_vector = tuple(env.nature_sample())  # Convert nature vector to a tuple for Q-table indexing
+      # list of observations for each agent, and updates environment nature history
       agents_observations = env.assign_observations(nature_vector)
       if verbose:
-        print(f'environment step {env.current_step}')
+        print(f'nature vector is {nature_vector}')
         print(f'agents direct observations are {agents_observations}')
+        print(f'environment step is {env.current_step}')
 
-      # Step 0: Agents choose signaling actions based on Q-learning policy
-      signals = [agent.get_signal(observation) for agent, observation in zip(env.agents, agents_observations)]
+      # Step 2: Agents choose signaling actions based on learning policy, and 
       # step to store signaling history, and move to the next step in the episode
-      _ = env.signals_step(signals,nature_vector)
-      if verbose:
-        print(f'agents signals are {signals}')
-
-      # Step 1: Agents choose final actions based on Q-learning policy
-      # this step is different depending on whether agents they get each other's signals or not
+      signals = env.encoding_signals(agents_observations)
       if with_signals:
         # here I use the environment graph
         # crucial is that the index of the agent corresponds to the name of the node in the graph corresponding to that agent
-        new_observations = agents_observations.copy()
-        for i, agent in enumerate(env.agents):
-          in_neighbors = env.graph.predecessors(i)
-          for neig in in_neighbors:
-            new_observations[i]=new_observations[i]+(signals[neig],)
-
-        #new_observations = [obs + (signal,) for obs, signal in zip(agents_observations,signals)]
-        if verbose:
-          print(f'environment step {env.current_step}')
-          print(f'agents new_observations are {new_observations}')
-        final_actions = [agent.get_action(new_obs) for agent,new_obs in zip(env.agents,new_observations)]
-      else: #
-        final_actions = [agent.get_action(observation) for agent,observation in zip(env.agents,agents_observations)]
-
-      rewards, done = env.actions_step(final_actions)
+        new_observations = env.send_signals(signals,agents_observations)
+      else:
+        new_observations = copy.deepcopy(agents_observations)
+      if verbose:
+        print(f'agents signals are {signals}')
+        print(f'agents new_observations are {new_observations}')
+        print(f'environment step is {env.current_step}')
+        
+      # Step 3: Agents choose final actions based new observations
+      final_actions = env.get_actions(new_observations)
       if verbose:
         print(f'agents final_actions are {final_actions}')
-
-
-      # Update Q-tables for signaling and final actions
-      # update_urns(self, state, action, reward, is_signaling=True):
-      for i, agent in enumerate(env.agents):
-        # updating the signaling q_table
-        if with_signals:
-          # important that the state is the agents_observations and not the new observations
-          # because this us updating the signal payoff, and the signal inputs are the initial observations
-          agent.update_signals(agents_observations[i], signals[i], rewards[i])
-          # now we update the action q_table, the input being the new_observations
-          agent.update_actions(new_observations[i], final_actions[i], rewards[i])
-        else: # if with_signals = False then there is no updating of signal q_table, but yes for action q_table
-          agent.update_actions(agents_observations[i], final_actions[i], rewards[i])
-
-        if verbose:
-          if env.agent_type == UrnAgent:
-            print(f'agent {i} signalling_urns are {agent.signalling_urns}')
-            print(f'agent {i} action_urns are {agent.action_urns}')
-          if env.agent_type == QLearningAgent:
-              print(f'agent {i} signalling_counts are {agent.signalling_counts}')
-              print(f'agent {i} action_counts are {agent.action_counts}')
-
-      # Update urn histories
-      # copy.deepcopy() is a function in Python's copy module that creates a deep copy of an object.
-      # A deep copy means that the new object is a completely independent copy of the original,
-      # including any nested objects it contains.
-      if env.agent_type == UrnAgent:
-        for i, agent in enumerate(env.agents):
-          urn_histories[i]['signal_history'].append(copy.deepcopy(agent.signalling_urns))
-          urn_histories[i]['action_history'].append(copy.deepcopy(agent.action_urns))
-      if env.agent_type == QLearningAgent:
-        for i, agent in enumerate(env.agents):
-          urn_histories[i]['signal_history'].append(copy.deepcopy(agent.signalling_counts))
-          urn_histories[i]['action_history'].append(copy.deepcopy(agent.action_counts))
-
+        print(f'environment step is {env.current_step}')
+        
+      # Step 4: Agents receive rewards
+      rewards, done = env.play_step(final_actions)
+      
+      # Step 5: Update agents' signaling and action urns and histories
+      env.update_agents(agents_observations,new_observations,signals, final_actions, rewards)
       if verbose:
-        print('Episode ended')
-        print('\n')
-
-    signal_usage, rewards_history, signal_information_history = env.report_metrics()
+        print(f'agents rewards are {rewards}')
+        print(f'environment step is {env.current_step}')
+        
+    signal_usage, rewards_history, signal_information_history, nature_history, histories = env.report_metrics()
 
     if plot:
       # Plot rewards over episodes
@@ -181,7 +134,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       plt.show()
       
       # Plot final signal usage
-      final_signal_usage = [urn_histories[0]['signal_history'][-1],urn_histories[1]['signal_history'][-1]]
+      final_signal_usage = [histories[0]['signal_history'][-1],histories[1]['signal_history'][-1]]
       plt.figure(figsize=(8, 5))  # (width, height)
       for i, usage in enumerate(final_signal_usage):
           for state, counts in usage.items():
@@ -215,14 +168,14 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       
       plt.figure(figsize=(8, 5))  # (width, height)
       # Dataset 1
-      proportions1 = calculate_proportions(urn_histories[0])
+      proportions1 = calculate_proportions(histories[0])
       for key, values in proportions1.items():
           smoothed_values = smooth(values)
           plt.plot(range(len(values)), smoothed_values, marker='o', markersize=1, label=f'Agent 0 - Key {key}')
           plt.text(len(values)-1, smoothed_values[-1], f'{smoothed_values[-1]:.2f}', fontsize=10, ha='right')
           
       # Dataset 2
-      proportions2 = calculate_proportions(urn_histories[1])
+      proportions2 = calculate_proportions(histories[1])
       for key, values in proportions2.items():
           smoothed_values = smooth(values)
           plt.plot(range(len(values)), smoothed_values, marker='x', markersize=1, label=f'Agent 1 - Key {key}')
@@ -234,4 +187,4 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       plt.grid(True)
       plt.legend()
 
-    return signal_usage, rewards_history, signal_information_history, urn_histories, nature_history
+    return signal_usage, rewards_history, signal_information_history, histories, env.nature_history

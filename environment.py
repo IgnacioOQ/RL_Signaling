@@ -1,6 +1,6 @@
 from imports import *
 from utils import *
-from agents import UrnAgent
+from agents import UrnAgent, QLearningAgent
 
 # Networked Multi-Agent Environment Class
 # Environment input
@@ -23,7 +23,7 @@ class NetMultiAgentEnv:
                 full_information=False, game_dicts=None,
                 observed_variables=None,
                 agent_type=UrnAgent,
-                initialize=None,
+                initialize=None,initialization_weights = [1,0],
                 graph=None):
         """
         Initialize the multi-agent environment with specified parameters.
@@ -54,7 +54,7 @@ class NetMultiAgentEnv:
         
         # Initialize agents using the specified agent type
         self.agents = [agent_type(n_signaling_actions, n_final_actions,
-                       initialize=initialize) for _ in range(self.n_agents)]
+                       initialize=initialize,initialization_weights=initialization_weights) for _ in range(self.n_agents)]
         
         # Graph structure representing agent relationships
         self.graph = graph
@@ -81,8 +81,12 @@ class NetMultiAgentEnv:
         self.rewards_history = [[] for _ in range(self.n_agents)]  # Store rewards per episode
         self.signal_usage = [{} for _ in range(self.n_agents)]  # Track signal counts per observation
         self.signal_information_history = [[] for _ in range(self.n_agents)]  # Track mutual information history
-
-    def reset(self):
+        self.nature_history = []  # Track nature vector history
+        self.histories = {}
+        for i, agent in enumerate(self.agents):
+            self.histories[i] = {'signal_history':[],'action_history':[]}
+      
+    def nature_sample(self):
         """
         Reset the environment to its initial state and return the new nature vector.
 
@@ -92,20 +96,16 @@ class NetMultiAgentEnv:
         self.nature_vector = np.random.randint(0, 2, size=self.n_features)  # Generate random binary vector
         return self.nature_vector
 
-    def signals_step(self, signals, nature_vector):
+    def encoding_signals(self, agents_observations):
         """
-        Execute the signaling step where agents select their signals.
-
-        :param signals: List of signals chosen by the agents.
-        :param nature_vector: The current nature vector.
-        :return: Boolean indicating if the step is complete.
+        Execute the signaling step where agents select their signals on the basis of their observations.
+        :param agents_observations: List of observations made by each agent.
         """
-        # Assign observations based on agent-specific visibility
-        assigned_observations = self.assign_observations(nature_vector)
-        
+        # Assign signals based on agent-specific visibility
+        signals = [agent.get_signal(observation) for agent, observation in zip(self.agents, agents_observations)]
         # Update signal usage tracking
         for i in range(self.n_agents):
-            agent_observation = assigned_observations[i]
+            agent_observation = agents_observations[i]
             
             # Initialize tracking for this observation if it does not exist
             if agent_observation not in self.signal_usage[i]:
@@ -117,49 +117,41 @@ class NetMultiAgentEnv:
             else:
                 self.signal_usage[i][agent_observation][signals[i]] += 1
         
-        self.current_step = 1
-        return False  # Step not yet complete, waiting for final actions
-
-    def actions_step(self, actions):
-        """
-        Execute the final action step where agents make their decisions.
-
-        :param actions: List of actions performed by the agents.
-        :return: Tuple of rewards and completion status.
-        """
-        # Compute rewards based on actions
-        rewards = self.calculate_rewards(actions)
-        
-        # Store reward history
-        for i in range(self.n_agents):
-            self.rewards_history[i].append(rewards[i])
-        
         # Compute and record mutual information of signals
         for i in range(self.n_agents):
             mutual_info, normalized_mutual_info = compute_mutual_information(self.signal_usage[i])
             self.signal_information_history[i].append(normalized_mutual_info)
+        
+        # encoding signals is step 2, independently on whether it was sent or not
+        self.current_step = 2
+        return signals  # Step not yet complete, waiting for final actions
 
-        return rewards, True  # Step complete, episode ends
-
-    def report_metrics(self):
+    def send_signals(self, signals,agents_observations):
         """
-        Report key metrics from the environment, including signal usage, rewards history,
-        and mutual information history.
-
-        :return: Tuple containing signal usage, rewards history, and signal information history.
+        Send signals to neighboring agents based on the graph structure.
+        Outputs new observations for each agent based on received signals plus old observations.
         """
-        return self.signal_usage, self.rewards_history, self.signal_information_history
+        new_observations = copy.deepcopy(agents_observations)
+        for i, agent in enumerate(self.agents):
+            # each agent looks at all the agents that are sending signals to it
+          in_neighbors = self.graph.predecessors(i)
+          for neig in in_neighbors:
+            new_observations[i]=new_observations[i]+(signals[neig],)       
+        return new_observations
 
-    def calculate_rewards(self, actions):
-        """
-        Calculate the rewards for each agent based on the final actions and nature vector.
-
-        :param actions: List of actions chosen by the agents.
-        :return: List of rewards for each agent.
-        """
+    def get_actions(self, agents_observations):
+        final_actions = [agent.get_action(observation) for agent, observation in zip(self.agents, agents_observations)]
+        
+        # get_actions is step 3
+        self.current_step = 3
+        return final_actions
+    
+    def play_step(self, final_actions):       
+        # get rewards
+        # rewards = self.calculate_rewards(final_actions)
         rewards = []
         for i in range(self.n_agents):
-            agent_action = actions[i]
+            agent_action = final_actions[i]
             state_key = tuple(self.nature_vector)  # Convert nature vector to tuple for dictionary lookup
             
             if state_key in self.internal_game_dicts[i] and agent_action in self.internal_game_dicts[i][state_key]:
@@ -167,7 +159,39 @@ class NetMultiAgentEnv:
             else:
                 raise KeyError(f"Invalid state-action pair ({state_key}, {agent_action}) for agent {i}")
         
-        return rewards
+        # update rewards history
+        for i in range(self.n_agents):
+            self.rewards_history[i].append(rewards[i])
+        
+        # play_step is step 4
+        self.current_step = 5
+        return rewards, True
+    
+    def update_agents(self, nature_observations,new_observations, signals, final_actions, rewards):
+        for i in range(self.n_agents):
+            self.agents[i].update_signals(nature_observations[i],signals[i], rewards[i])
+            self.agents[i].update_actions(new_observations[i],final_actions[i], rewards[i])
+
+        if self.agent_type == UrnAgent:
+            for i, agent in enumerate(self.agents):
+                self.histories[i]['signal_history'].append(copy.deepcopy(agent.signalling_urns))
+                self.histories[i]['action_history'].append(copy.deepcopy(agent.action_urns))
+        if self.agent_type == QLearningAgent:
+            for i, agent in enumerate(self.agents):
+                self.histories[i]['signal_history'].append(copy.deepcopy(agent.signalling_counts))
+                self.histories[i]['action_history'].append(copy.deepcopy(agent.action_counts))
+        
+        # update_agents is step 5
+        self.current_step = 5
+        
+    def report_metrics(self):
+        """
+        Report key metrics from the environment, including signal usage, rewards history,
+        and mutual information history.
+
+        :return: Tuple containing signal usage, rewards history, and signal information history.
+        """
+        return self.signal_usage, self.rewards_history, self.signal_information_history, self.nature_history, self.histories
 
     def render(self):
         """
@@ -185,6 +209,7 @@ class NetMultiAgentEnv:
         :param nature_vector: The environment's nature vector.
         :return: List of observed feature subsets per agent.
         """
+        self.nature_history.append(tuple(nature_vector))
         agents_observations = []
         if self.full_information:
             # Each agent sees the full nature vector
@@ -196,5 +221,6 @@ class NetMultiAgentEnv:
                 observed_indexes = self.agents_observed_variables[i]
                 subset = tuple(nature_vector[j] for j in observed_indexes)
                 agents_observations.append(subset)
-
+        # Giving observations is step 1
+        self.current_step = 1
         return agents_observations
