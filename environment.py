@@ -164,7 +164,7 @@ class NetMultiAgentEnv:
             self.rewards_history[i].append(rewards[i])
         
         # play_step is step 4
-        self.current_step = 5
+        self.current_step = 4
         return rewards, True
     
     def update_agents(self, nature_observations,new_observations, signals, final_actions, rewards):
