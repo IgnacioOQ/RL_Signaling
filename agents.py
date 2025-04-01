@@ -3,7 +3,8 @@ from utils import *
 
 # Urn-Learning Agent
 class UrnAgent:
-    def __init__(self, n_signaling_actions, n_final_actions, n_observed_features=1, initialize=False):
+    def __init__(self, n_signaling_actions, n_final_actions, n_observed_features=1, 
+                 initialize=False,initialization_weights = [1,0]):
         """
         Initialize the UrnAgent.
 
@@ -18,7 +19,8 @@ class UrnAgent:
 
         if initialize:
             self.signalling_urns = create_initial_signals(n_observed_features=n_observed_features,
-                                                          n_signals=n_signaling_actions, n=1, m=0)
+                                                          n_signals=n_signaling_actions, n=initialization_weights[0], 
+                                                          m=initialization_weights[1])
         else:
             self.signalling_urns = {}
         self.action_urns = {}
@@ -85,7 +87,7 @@ class UrnAgent:
 class QLearningAgent:
     def __init__(self, n_signaling_actions, n_final_actions,
                  exploration_rate=1, exploration_decay=0.995, 
-                 min_exploration_rate=0.001, initialize=False,
+                 min_exploration_rate=0.001, initialize=False,initialization_weights = [1,0],
                  n_observed_features=1):
         """
         Initialize the QLearningAgent.
@@ -110,7 +112,8 @@ class QLearningAgent:
         self.action_counts = {}
         if initialize:
             self.q_table_signaling = create_initial_signals(n_observed_features=n_observed_features,
-                                                            n_signals=n_signaling_actions, n=1, m=0)
+                                                            n_signals=n_signaling_actions, n=initialization_weights[0], 
+                                                            m=initialization_weights[1])
             for state in self.q_table_signaling:
                 self.signalling_counts[state] = np.zeros(self.n_signaling_actions)
         else:
