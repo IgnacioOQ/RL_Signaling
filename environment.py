@@ -79,9 +79,12 @@ class NetMultiAgentEnv:
         
         # Tracking history of the environment
         self.rewards_history = [[] for _ in range(self.n_agents)]  # Store rewards per episode
-        self.signal_usage = [{} for _ in range(self.n_agents)]  # Track signal counts per observation
+        # Trackings signals and actions
+        self.signal_usage = [{} for _ in range(self.n_agents)] # accumulated signal counts for each observation
+        self.action_usage = [{} for _ in range(self.n_agents)] # accumulated action counts for each observation
         self.signal_information_history = [[] for _ in range(self.n_agents)]  # Track mutual information history
         self.nature_history = []  # Track nature vector history
+        # History of signal and action usage at the end of each episode
         self.histories = {}
         for i, agent in enumerate(self.agents):
             self.histories[i] = {'signal_history':[],'action_history':[]}
@@ -109,7 +112,7 @@ class NetMultiAgentEnv:
             
             # Initialize tracking for this observation if it does not exist
             if agent_observation not in self.signal_usage[i]:
-                self.signal_usage[i][agent_observation] = [0] * self.n_signaling_actions
+                self.signal_usage[i][agent_observation] = np.zeros(self.n_signaling_actions)
             
             # Ensure valid signal selection
             if not (0 <= signals[i] < self.n_signaling_actions):
@@ -142,6 +145,20 @@ class NetMultiAgentEnv:
     def get_actions(self, agents_observations):
         final_actions = [agent.get_action(observation) for agent, observation in zip(self.agents, agents_observations)]
         
+        # update action usage tracking
+        for i in range(self.n_agents):
+            agent_observation = agents_observations[i]
+            # Initialize tracking for this observation if it does not exist
+            if agent_observation not in self.action_usage[i]:
+                self.action_usage[i][agent_observation] = np.zeros(self.n_final_actions)
+            
+            # Ensure valid action selection
+            if not (0 <= final_actions[i] < self.n_final_actions):
+                raise ValueError(f"Action {final_actions[i]} is out of range for agent {i}")
+            else:
+                self.action_usage[i][agent_observation][final_actions[i]] += 1    
+            
+                
         # get_actions is step 3
         self.current_step = 3
         return final_actions
@@ -171,16 +188,10 @@ class NetMultiAgentEnv:
         for i in range(self.n_agents):
             self.agents[i].update_signals(nature_observations[i],signals[i], rewards[i])
             self.agents[i].update_actions(new_observations[i],final_actions[i], rewards[i])
-
-        if self.agent_type == UrnAgent:
-            for i, agent in enumerate(self.agents):
-                self.histories[i]['signal_history'].append(copy.deepcopy(agent.signalling_urns))
-                self.histories[i]['action_history'].append(copy.deepcopy(agent.action_urns))
-        if self.agent_type == QLearningAgent:
-            for i, agent in enumerate(self.agents):
-                self.histories[i]['signal_history'].append(copy.deepcopy(agent.signalling_counts))
-                self.histories[i]['action_history'].append(copy.deepcopy(agent.action_counts))
         
+        for i, agent in enumerate(self.agents):
+            self.histories[i]['signal_history'].append(copy.deepcopy(self.signal_usage[i]))
+            self.histories[i]['action_history'].append(copy.deepcopy(self.action_usage[i]))
         # update_agents is step 5
         self.current_step = 5
         
