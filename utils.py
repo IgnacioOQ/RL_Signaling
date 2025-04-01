@@ -241,7 +241,6 @@ def plot_basecase_kde(df, variable, bins=100, figsize=(6, 3),
     # Display the plot
     plt.show()
 
-
 def plot_all_histograms(df,bins=75):
     plot_histograms_with_kde(df,'Agent_0_final_reward',bins=75)
     plot_histograms_with_kde(df,'Agent_0_avg_reward',bins=75)
