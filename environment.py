@@ -20,6 +20,8 @@ G.add_edges_from([(0, 1), (1, 0)])  # Adds multiple edges
 
 class NetMultiAgentEnv:
     def __init__(self, n_agents=2, n_features=2, n_signaling_actions=2, n_final_actions=4,
+                exploration_rate=1.0,
+                exploration_decay=0.995, min_exploration_rate=0.001,
                 full_information=False, game_dicts=None,
                 observed_variables=None,
                 agent_type=UrnAgent,
@@ -53,7 +55,8 @@ class NetMultiAgentEnv:
         self.agent_type = agent_type
         
         # Initialize agents using the specified agent type
-        self.agents = [agent_type(n_signaling_actions, n_final_actions,
+        self.agents = [agent_type(n_signaling_actions, n_final_actions,exploration_rate=exploration_rate,
+                        exploration_decay=exploration_decay, min_exploration_rate=min_exploration_rate,
                        initialize=initialize,initialization_weights=initialization_weights) for _ in range(self.n_agents)]
         
         # Graph structure representing agent relationships
@@ -239,6 +242,8 @@ class NetMultiAgentEnv:
 class TempNetMultiAgentEnv:
     def __init__(self, n_agents=2, n_features=2,
                  n_signaling_actions=2, n_final_actions=4,
+                 learning_rate=0.1, exploration_rate=1.0,
+                 exploration_decay=0.995, min_exploration_rate=0.001,
                  full_information=False, game_dicts=None,
                  observed_variables=None,
                  agent_type=None,
@@ -260,7 +265,8 @@ class TempNetMultiAgentEnv:
         self.agent_type = agent_type
 
         self.max_actions = max(n_signaling_actions, n_final_actions)
-        self.agents = [agent_type(n_actions=self.max_actions) for _ in range(n_agents)]
+        self.agents = [agent_type(n_actions=self.max_actions,learning_rate=learning_rate, exploration_rate=exploration_rate,
+                 exploration_decay=exploration_decay, min_exploration_rate=min_exploration_rate) for _ in range(n_agents)]
 
         self.nature_vector = None
         self.rewards_history = [[] for _ in range(n_agents)]
@@ -315,7 +321,10 @@ class TempNetMultiAgentEnv:
                     self.signal_usage[i][obs] = np.zeros(self.n_signaling_actions)
                 self.signal_usage[i][obs][action] += 1
                 # Placeholder for mutual info
-                self.signal_information_history[i].append(0.0)
+                # Compute and record mutual information of signals
+                for i in range(self.n_agents):
+                    mutual_info, normalized_mutual_info = compute_mutual_information(self.signal_usage[i])
+                    self.signal_information_history[i].append(normalized_mutual_info)
             else:
                 if obs not in self.action_usage[i]:
                     self.action_usage[i][obs] = np.zeros(self.n_final_actions)
