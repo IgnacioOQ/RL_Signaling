@@ -1,7 +1,7 @@
 from imports import *
 from utils import *
 from agents import UrnAgent, QLearningAgent
-from environment import NetMultiAgentEnv
+from environment import NetMultiAgentEnv, NetTempMultiAgentEnvTemporal
 
 n_agents = 2
 n_features = 2
