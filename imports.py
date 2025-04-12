@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import random
+import itertools
 from itertools import combinations
 from itertools import product
 from tqdm import tqdm
