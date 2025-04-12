@@ -3,7 +3,13 @@ from utils import *
 
 # Urn-Learning Agent
 class UrnAgent:
-    def __init__(self, n_signaling_actions, n_final_actions, n_observed_features=1, 
+    def __init__(self, n_signaling_actions, n_final_actions, 
+                 # these are dummy parameters for the urn agent, but they help with generalization
+                 # and are used in the QLearningAgent
+                 # and TDLearningAgent
+                 exploration_rate=1.0,
+                exploration_decay=0.995, min_exploration_rate=0.001,
+                 n_observed_features=1, 
                  initialize=False,initialization_weights = [1,0]):
         """
         Initialize the UrnAgent.
@@ -201,6 +207,7 @@ class QLearningAgent:
 class TDLearningAgent:
     def __init__(self, n_actions, learning_rate=0.1, exploration_rate=1.0,
                  exploration_decay=0.995, min_exploration_rate=0.001):
+        # n_actions: Max Number of possible actions max(n_signaling_actions, n_final_actions)
         self.n_actions = n_actions
         self.learning_rate = learning_rate
         self.exploration_rate = exploration_rate
@@ -213,6 +220,7 @@ class TDLearningAgent:
         if state not in self.q_table:
             self.q_table[state] = np.zeros(self.n_actions)
             self.action_counts[state] = np.zeros(self.n_actions)
+
 
         if available_actions is None:
             available_actions = list(range(self.n_actions))

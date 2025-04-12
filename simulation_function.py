@@ -211,10 +211,24 @@ def temp_simulation_function(n_agents, n_features,
         # Step 2: Signal phase
         env.step_type = "signal"
         signals = env.get_actions(agents_observations)
+
+        # Call play_step to get dummy reward and advance environment step
+        signal_rewards, _ = env.play_step(signals)
+
+        # Communication (optional)
         if with_signals:
             new_observations = env.communicate(agents_observations)
         else:
             new_observations = agents_observations[:]
+
+        # Update agent's signaling Q-table
+        env.update_agents(
+            old_obs=agents_observations,
+            actions=signals,
+            rewards=signal_rewards,
+            new_obs=new_observations,
+            done=False
+        )
 
         if verbose:
             print(f'Signals: {signals}')
@@ -231,7 +245,14 @@ def temp_simulation_function(n_agents, n_features,
         rewards, done = env.play_step(final_actions)
 
         # Step 5: Update agent knowledge
-        env.update_agents(agents_observations, final_actions, rewards, new_observations, done)
+        # done=True here (end of episode)
+        env.update_agents(
+            old_obs=new_observations,
+            actions=final_actions,
+            rewards=rewards,
+            new_obs=new_observations,  # or next obs in a multi-step setup
+            done=True
+        )
 
         if verbose:
             print(f'Rewards: {rewards}')
