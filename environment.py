@@ -1,6 +1,6 @@
 from imports import *
 from utils import *
-from agents import UrnAgent, QLearningAgent, QLearningAgentTemporal
+from agents import UrnAgent, QLearningAgent, TDLearningAgent
 
 # Networked Multi-Agent Environment Class
 # Environment input
@@ -236,13 +236,14 @@ class NetMultiAgentEnv:
         self.current_step = 1
         return agents_observations
 
-
-class NetTempMultiAgentEnvTemporal:
-    def __init__(self, n_agents=2, n_features=2, n_actions=4,
+class TempNetMultiAgentEnv:
+    def __init__(self, n_agents=2, n_features=2,
+                 n_signaling_actions=2, n_final_actions=4,
                  full_information=False, game_dicts=None,
                  observed_variables=None,
                  agent_type=None,
                  graph=None):
+
         if graph is None:
             raise ValueError("Graph cannot be None.")
         if len(graph.nodes) != n_agents:
@@ -250,20 +251,26 @@ class NetTempMultiAgentEnvTemporal:
 
         self.n_agents = n_agents
         self.n_features = n_features
-        self.n_actions = n_actions
+        self.n_signaling_actions = n_signaling_actions
+        self.n_final_actions = n_final_actions
         self.full_information = full_information
         self.graph = graph
         self.game_dicts = game_dicts or {}
         self.observed_variables = observed_variables or {}
+        self.agent_type = agent_type
 
-        # Initialize agents
-        self.agents = [agent_type(n_actions=n_actions) for _ in range(n_agents)]
+        self.max_actions = max(n_signaling_actions, n_final_actions)
+        self.agents = [agent_type(n_actions=self.max_actions) for _ in range(n_agents)]
 
-        # Internal state
         self.nature_vector = None
         self.rewards_history = [[] for _ in range(n_agents)]
         self.action_usage = [{} for _ in range(n_agents)]
+        self.signal_usage = [{} for _ in range(n_agents)]
+        self.signal_information_history = [[] for _ in range(n_agents)]
+        self.histories = {i: {'signal_history': [], 'action_history': []} for i in range(n_agents)}
         self.nature_history = []
+        self.step_type = "signal"
+        self.signals = [None] * n_agents
 
     def nature_sample(self):
         self.nature_vector = np.random.randint(0, 2, size=self.n_features)
@@ -282,48 +289,81 @@ class NetTempMultiAgentEnvTemporal:
         return agents_observations
 
     def communicate(self, observations):
-        """Agents receive messages from their neighbors based on graph."""
         new_obs = list(observations)
         for i in range(self.n_agents):
             for neighbor in self.graph.predecessors(i):
-                new_obs[i] = new_obs[i] + (observations[neighbor],)
+                signal = self.signals[neighbor]
+                new_obs[i] = new_obs[i] + (signal,)
         return new_obs
+
+    def get_available_actions(self):
+        if self.step_type == "signal":
+            return list(range(self.n_signaling_actions))
+        elif self.step_type == "act":
+            return list(range(self.n_final_actions))
+        return []
 
     def get_actions(self, observations):
         actions = []
+        available_actions = self.get_available_actions()
         for i, (agent, obs) in enumerate(zip(self.agents, observations)):
-            action = agent.get_action(obs)
+            action = agent.get_action(obs, available_actions)
             actions.append(action)
 
-            # Track usage
-            if obs not in self.action_usage[i]:
-                self.action_usage[i][obs] = np.zeros(self.n_actions)
-            self.action_usage[i][obs][action] += 1
+            if self.step_type == "signal":
+                if obs not in self.signal_usage[i]:
+                    self.signal_usage[i][obs] = np.zeros(self.n_signaling_actions)
+                self.signal_usage[i][obs][action] += 1
+                # Placeholder for mutual info
+                self.signal_information_history[i].append(0.0)
+            else:
+                if obs not in self.action_usage[i]:
+                    self.action_usage[i][obs] = np.zeros(self.n_final_actions)
+                self.action_usage[i][obs][action] += 1
+
         return actions
 
     def play_step(self, actions):
-        rewards = []
-        for i, action in enumerate(actions):
-            state_key = tuple(self.nature_vector)
-            reward = self.game_dicts[i].get(state_key, {}).get(action, 0)
-            rewards.append(reward)
-            self.rewards_history[i].append(reward)
-        return rewards, True  # Step done
+        if self.step_type == "signal":
+            self.signals = actions
+            self.step_type = "act"
+            return [0.0] * self.n_agents, False
 
-    def update_agents(self, old_observations, actions, rewards, new_observations, done):
+        elif self.step_type == "act":
+            rewards = []
+            for i, action in enumerate(actions):
+                key = tuple(self.nature_vector)
+                reward = self.game_dicts[i].get(key, {}).get(action, 0)
+                rewards.append(reward)
+                self.rewards_history[i].append(reward)
+            self.step_type = "done"
+            return rewards, True
+
+        else:
+            raise RuntimeError("Environment is already done.")
+
+    def update_agents(self, old_obs, actions, rewards, new_obs, done):
         for i in range(self.n_agents):
             self.agents[i].update(
-                state=old_observations[i],
+                state=old_obs[i],
                 action=actions[i],
                 reward=rewards[i],
-                next_state=new_observations[i],
+                next_state=new_obs[i],
                 done=done
             )
+            self.histories[i]['signal_history'].append(copy.deepcopy(self.signal_usage[i]))
+            self.histories[i]['action_history'].append(copy.deepcopy(self.action_usage[i]))
 
     def report_metrics(self):
-        return self.action_usage, self.rewards_history, self.nature_history
+        return (
+            self.signal_usage,
+            self.rewards_history,
+            self.signal_information_history,
+            self.nature_history,
+            self.histories
+        )
 
     def render(self):
+        print(f"Step type: {self.step_type}")
         print(f"Nature Vector: {self.nature_vector}")
-        print(f"Rewards History: {self.rewards_history}")
-        print(f"Action Usage: {self.action_usage}")
+        print(f"Signals: {self.signals}")
