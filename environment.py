@@ -1,6 +1,6 @@
 from imports import *
 from utils import *
-from agents import UrnAgent, QLearningAgent
+from agents import UrnAgent, QLearningAgent, QLearningAgentTemporal
 
 # Networked Multi-Agent Environment Class
 # Environment input
@@ -235,3 +235,95 @@ class NetMultiAgentEnv:
         # Giving observations is step 1
         self.current_step = 1
         return agents_observations
+
+
+class NetTempMultiAgentEnvTemporal:
+    def __init__(self, n_agents=2, n_features=2, n_actions=4,
+                 full_information=False, game_dicts=None,
+                 observed_variables=None,
+                 agent_type=None,
+                 graph=None):
+        if graph is None:
+            raise ValueError("Graph cannot be None.")
+        if len(graph.nodes) != n_agents:
+            raise ValueError("Number of agents must match number of graph nodes.")
+
+        self.n_agents = n_agents
+        self.n_features = n_features
+        self.n_actions = n_actions
+        self.full_information = full_information
+        self.graph = graph
+        self.game_dicts = game_dicts or {}
+        self.observed_variables = observed_variables or {}
+
+        # Initialize agents
+        self.agents = [agent_type(n_actions=n_actions) for _ in range(n_agents)]
+
+        # Internal state
+        self.nature_vector = None
+        self.rewards_history = [[] for _ in range(n_agents)]
+        self.action_usage = [{} for _ in range(n_agents)]
+        self.nature_history = []
+
+    def nature_sample(self):
+        self.nature_vector = np.random.randint(0, 2, size=self.n_features)
+        return self.nature_vector
+
+    def assign_observations(self, nature_vector):
+        self.nature_history.append(tuple(nature_vector))
+        agents_observations = []
+        for i in range(self.n_agents):
+            if self.full_information:
+                obs = tuple(nature_vector)
+            else:
+                idxs = self.observed_variables[i]
+                obs = tuple(nature_vector[j] for j in idxs)
+            agents_observations.append(obs)
+        return agents_observations
+
+    def communicate(self, observations):
+        """Agents receive messages from their neighbors based on graph."""
+        new_obs = list(observations)
+        for i in range(self.n_agents):
+            for neighbor in self.graph.predecessors(i):
+                new_obs[i] = new_obs[i] + (observations[neighbor],)
+        return new_obs
+
+    def get_actions(self, observations):
+        actions = []
+        for i, (agent, obs) in enumerate(zip(self.agents, observations)):
+            action = agent.get_action(obs)
+            actions.append(action)
+
+            # Track usage
+            if obs not in self.action_usage[i]:
+                self.action_usage[i][obs] = np.zeros(self.n_actions)
+            self.action_usage[i][obs][action] += 1
+        return actions
+
+    def play_step(self, actions):
+        rewards = []
+        for i, action in enumerate(actions):
+            state_key = tuple(self.nature_vector)
+            reward = self.game_dicts[i].get(state_key, {}).get(action, 0)
+            rewards.append(reward)
+            self.rewards_history[i].append(reward)
+        return rewards, True  # Step done
+
+    def update_agents(self, old_observations, actions, rewards, new_observations, done):
+        for i in range(self.n_agents):
+            self.agents[i].update(
+                state=old_observations[i],
+                action=actions[i],
+                reward=rewards[i],
+                next_state=new_observations[i],
+                done=done
+            )
+
+    def report_metrics(self):
+        return self.action_usage, self.rewards_history, self.nature_history
+
+    def render(self):
+        print(f"Nature Vector: {self.nature_vector}")
+        print(f"Rewards History: {self.rewards_history}")
+        print(f"Action Usage: {self.action_usage}")

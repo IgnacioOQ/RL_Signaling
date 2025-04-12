@@ -197,3 +197,81 @@ class QLearningAgent:
         self.q_table_action[state][action] += td_error/self.action_counts[state][action]
 
         self.action_exploration_rate = max(self.min_exploration_rate, self.action_exploration_rate * self.exploration_decay)
+
+class QLearningAgentTemporal:
+    def __init__(self, n_actions, learning_rate=0.1,
+                 exploration_rate=1.0, exploration_decay=0.995,
+                 min_exploration_rate=0.001):
+        """
+        Initialize the QLearningAgent with actions over time.
+
+        Parameters:
+        - n_actions (int): Number of possible actions at each time step.
+        - learning_rate (float): Learning rate for Q-learning updates.
+        - exploration_rate (float): Initial epsilon for epsilon-greedy strategy.
+        - exploration_decay (float): Rate at which exploration decays.
+        - min_exploration_rate (float): Minimum exploration threshold.
+        """
+        self.n_actions = n_actions
+        self.learning_rate = learning_rate
+        self.exploration_rate = exploration_rate
+        self.exploration_decay = exploration_decay
+        self.min_exploration_rate = min_exploration_rate
+
+        self.q_table = {}  # State -> action values
+        self.action_counts = {}
+
+    def reset(self):
+        """Reset the agent’s Q-table and action counts."""
+        self.q_table = {}
+        self.action_counts = {}
+
+    def get_action(self, state):
+        """
+        Choose an action using epsilon-greedy strategy.
+
+        Parameters:
+        - state: Current state.
+
+        Returns:
+        - action (int): Selected action.
+        """
+        if state not in self.q_table:
+            self.q_table[state] = np.zeros(self.n_actions)
+            self.action_counts[state] = np.zeros(self.n_actions)
+
+        if random.random() < self.exploration_rate:
+            action = random.randint(0, self.n_actions - 1)
+        else:
+            action = np.argmax(self.q_table[state])
+
+        self.action_counts[state][action] += 1
+        return action
+
+    def update(self, state, action, reward, next_state, done):
+        """
+        Update Q-value based on transition.
+
+        Parameters:
+        - state: Previous state.
+        - action: Action taken.
+        - reward: Reward received.
+        - next_state: Resulting state.
+        - done: Whether the episode ended.
+        """
+        if state not in self.q_table:
+            self.q_table[state] = np.zeros(self.n_actions)
+            self.action_counts[state] = np.zeros(self.n_actions)
+        if next_state not in self.q_table:
+            self.q_table[next_state] = np.zeros(self.n_actions)
+            self.action_counts[next_state] = np.zeros(self.n_actions)
+
+        td_target = reward
+        if not done:
+            td_target += np.max(self.q_table[next_state])
+        td_error = td_target - self.q_table[state][action]
+
+        self.q_table[state][action] += self.learning_rate * td_error
+
+        self.exploration_rate = max(self.min_exploration_rate,
+                                    self.exploration_rate * self.exploration_decay)
