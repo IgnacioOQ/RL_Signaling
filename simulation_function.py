@@ -1,7 +1,7 @@
 from imports import *
 from utils import *
-from agents import UrnAgent, QLearningAgent
-from environment import NetMultiAgentEnv, NetTempMultiAgentEnvTemporal
+from agents import UrnAgent, QLearningAgent, TDLearningAgent
+from environment import NetMultiAgentEnv, TempNetMultiAgentEnv
 
 n_agents = 2
 n_features = 2
@@ -188,3 +188,70 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       plt.legend()
 
     return signal_usage, rewards_history, signal_information_history, histories, env.nature_history
+  
+
+
+def temp_simulation_function(n_agents, n_features,
+                        n_signaling_actions, n_final_actions,
+                        n_episodes=6000, with_signals=True,
+                        plot=True, env=None, verbose=False):
+
+    for episode in range(n_episodes):
+        if verbose:
+            print(f'Episode {episode}')
+
+        # Step 1: Sample nature and assign direct observations
+        nature_vector = tuple(env.nature_sample())
+        agents_observations = env.assign_observations(nature_vector)
+
+        if verbose:
+            print(f'Nature vector: {nature_vector}')
+            print(f'Initial observations: {agents_observations}')
+
+        # Step 2: Signal phase
+        env.step_type = "signal"
+        signals = env.get_actions(agents_observations)
+        if with_signals:
+            new_observations = env.communicate(agents_observations)
+        else:
+            new_observations = agents_observations[:]
+
+        if verbose:
+            print(f'Signals: {signals}')
+            print(f'Post-communication observations: {new_observations}')
+
+        # Step 3: Final action phase
+        env.step_type = "act"
+        final_actions = env.get_actions(new_observations)
+
+        if verbose:
+            print(f'Final actions: {final_actions}')
+
+        # Step 4: Get rewards
+        rewards, done = env.play_step(final_actions)
+
+        # Step 5: Update agent knowledge
+        env.update_agents(agents_observations, final_actions, rewards, new_observations, done)
+
+        if verbose:
+            print(f'Rewards: {rewards}')
+
+    signal_usage, rewards_history, signal_information_history, nature_history, histories = env.report_metrics()
+
+    if plot:
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        plt.figure(figsize=(8, 5))
+        for i in range(n_agents):
+            window_size = 100
+            smoothed_rewards = np.convolve(rewards_history[i], np.ones(window_size)/window_size, mode='valid')
+            plt.plot(range(window_size - 1, n_episodes), smoothed_rewards, label=f"Agent {i}")
+
+        plt.title("Average Rewards (Smoothed)")
+        plt.xlabel("Episode")
+        plt.ylabel("Average Reward")
+        plt.legend()
+        plt.show()
+
+    return signal_usage, rewards_history, signal_information_history, histories, nature_history
