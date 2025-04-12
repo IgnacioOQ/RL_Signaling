@@ -9,6 +9,7 @@ class UrnAgent:
                  # and TDLearningAgent
                  exploration_rate=1.0,
                 exploration_decay=0.995, min_exploration_rate=0.001,
+                # these are not dummy
                  n_observed_features=1, 
                  initialize=False,initialization_weights = [1,0]):
         """
