@@ -207,13 +207,14 @@ class QLearningAgent:
 
 class TDLearningAgent:
     def __init__(self, n_actions, learning_rate=0.1, exploration_rate=1.0,
-                 exploration_decay=0.995, min_exploration_rate=0.001):
+                 exploration_decay=0.995, min_exploration_rate=0.001, gamma=1):
         # n_actions: Max Number of possible actions max(n_signaling_actions, n_final_actions)
         self.n_actions = n_actions
         self.learning_rate = learning_rate
         self.exploration_rate = exploration_rate
         self.exploration_decay = exploration_decay
         self.min_exploration_rate = min_exploration_rate
+        self.gamma = gamma
         self.q_table = {}
         self.action_counts = {}
 
@@ -247,7 +248,7 @@ class TDLearningAgent:
 
         td_target = reward
         if not done:
-            td_target += np.max(self.q_table[next_state])
+            td_target += self.gamma*np.max(self.q_table[next_state])
         td_error = td_target - self.q_table[state][action]
         # self.q_table[state][action] += self.learning_rate * td_error
         # This does satisfy the Robbins-Monro condition
