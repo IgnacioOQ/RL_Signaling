@@ -249,7 +249,11 @@ class TDLearningAgent:
         if not done:
             td_target += np.max(self.q_table[next_state])
         td_error = td_target - self.q_table[state][action]
-        self.q_table[state][action] += self.learning_rate * td_error
+        # self.q_table[state][action] += self.learning_rate * td_error
+        # This does satisfy the Robbins-Monro condition
+        self.q_table[state][action] += (1.0 / (1.0 + self.action_counts[state][action])) * td_error
 
         self.exploration_rate = max(self.min_exploration_rate,
                                     self.exploration_rate * self.exploration_decay)
+        
+        # self.learning_rate = max(self.min_exploration_rate, self.learning_rate * self.exploration_decay)
