@@ -186,7 +186,16 @@ class QLearningAgent:
         """
         td_target = reward
         td_error = td_target - self.q_table_signaling[state][signal]
+        # These do satisfy the Robbins-Monro condition (provided exploration has a minimum rate 
+        # # and Every state-action pair is visited infinitely often
+        # Option 1: self.action_counts[state][action] > 0 because we increased in get action
         self.q_table_signaling[state][signal] += td_error/self.signalling_counts[state][signal]
+        # Option 2
+        # alpha = 1.0 / (1.0 + self.signalling_counts[state][signal])  # avoids div by zero
+        # self.q_table[state][signal] += alpha * td_error
+        # Option 3
+        # self.q_table_signaling[state][signal] += td_error / np.sqrt(self.signalling_counts[state][signal])
+
 
         self.signal_exploration_rate = max(self.min_exploration_rate, self.signal_exploration_rate * self.exploration_decay)
 
@@ -250,9 +259,17 @@ class TDLearningAgent:
         if not done:
             td_target += self.gamma*np.max(self.q_table[next_state])
         td_error = td_target - self.q_table[state][action]
-        # self.q_table[state][action] += self.learning_rate * td_error
-        # This does satisfy the Robbins-Monro condition
-        self.q_table[state][action] += (1.0 / (1.0 + self.action_counts[state][action])) * td_error
+
+        # These do satisfy the Robbins-Monro condition (provided exploration has a minimum rate 
+        # # and Every state-action pair is visited infinitely often
+        # Option 1: self.action_counts[state][action] > 0 because we increased in get action
+        self.q_table[state][action] += td_error/self.action_counts[state][action]
+        # Option 2
+        # alpha = 1.0 / (1.0 + self.action_counts[state][action])  # avoids div by zero
+        # self.q_table[state][action] += alpha * td_error
+        # Option 3
+        # self.q_table[state][action] += td_error / np.sqrt(self.action_counts[state][action])
+
 
         self.exploration_rate = max(self.min_exploration_rate,
                                     self.exploration_rate * self.exploration_decay)
