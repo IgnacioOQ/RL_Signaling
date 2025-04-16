@@ -182,7 +182,7 @@ def plot_histograms_with_kde(df, variable, bins=100, figsize=(6, 3),
     plt.show()
 
 
-def plot_basecase_kde(df, variable, bins=100, figsize=(6, 3),
+def plot_basecase_kde(df, variable, file_path='dummy_plot.png',bins=100, figsize=(6, 3),
                              alpha=0.5, kde=True,variables = [(True, False), (False, True), (False, False)]):
     # Initialize the figure
     plt.figure(figsize=figsize)
@@ -237,6 +237,9 @@ def plot_basecase_kde(df, variable, bins=100, figsize=(6, 3),
     plt.ylabel('Density', fontsize=10)
     plt.legend(title="Setup", fontsize=9, title_fontsize=10)
     plt.gca().spines[['top', 'right']].set_visible(False)
+
+    # Save the plot to a file
+    plt.savefig(file_path, bbox_inches='tight', dpi=300)
 
     # Display the plot
     plt.show()
