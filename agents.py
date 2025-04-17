@@ -222,10 +222,10 @@ class QLearningAgent:
         # These do satisfy the Robbins-Monro condition (provided exploration has a minimum rate 
         # # and Every state-action pair is visited infinitely often
         # Option 1: self.action_counts[state][action] > 0 because we increased in get action
-        self.q_table_signaling[state][signal] += td_error/self.signaling_counts[state][signal]
-        # Option 2
-        # alpha = 1.0 / (1.0 + self.signaling_counts[state][signal])  # avoids div by zero
-        # self.q_table[state][signal] += alpha * td_error
+        # self.q_table_signaling[state][signal] += td_error/self.signaling_counts[state][signal]
+        # Option 2: Smoother
+        alpha = 1.0 / (1.0 + self.signaling_counts[state][signal])  # avoids div by zero
+        self.q_table_signaling[state][signal] += alpha * td_error
         # Option 3
         # self.q_table_signaling[state][signal] += td_error / np.sqrt(self.signaling_counts[state][signal])
 
@@ -243,7 +243,17 @@ class QLearningAgent:
         """
         td_target = reward
         td_error = td_target - self.q_table_action[state][action]
-        self.q_table_action[state][action] += td_error/self.action_counts[state][action]
+        # These do satisfy the Robbins-Monro condition (provided exploration has a minimum rate 
+        # # and Every state-action pair is visited infinitely often
+        # Option 1: self.action_counts[state][action] > 0 because we increased in get action
+        # self.q_table_action[state][action] += td_error/self.action_counts[state][action]        
+        # Option 2: Smoother
+        alpha = 1.0 / (1.0 + self.action_counts[state][action])  # avoids div by zero
+        self.q_table_action[state][action] += alpha * td_error
+        # Option 3
+        # self.q_table_signaling[state][signal] += td_error / np.sqrt(self.signaling_counts[state][signal])
+        
+        
 
         self.action_exploration_rate = max(self.min_exploration_rate, self.action_exploration_rate * self.exploration_decay)
 
