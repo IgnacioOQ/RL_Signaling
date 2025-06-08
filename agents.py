@@ -113,10 +113,7 @@ class QLearningAgent:
         self.n_final_actions = n_final_actions
         self.choice = choice
         self.signal_exploration_rate = exploration_rate
-        self.action_exploration_rate = exploration_rate
-        # if self.choice == 'ucb':
-        #     self.signal_exploration_rate = 2.0  # UCB does not use epsilon-greedy, so we set it to 2.0
-        #     self.action_exploration_rate = 2.0  # UCB does not use epsilon-greedy, so we set it to 2.0
+        self.action_exploration_rate = exploration_rate 
         self.exploration_decay = exploration_decay
         self.min_exploration_rate = min_exploration_rate
         self.signaling_counts = {}
@@ -269,8 +266,6 @@ class TDLearningAgent:
         self.learning_rate = learning_rate
         self.exploration_rate = exploration_rate
         self.exploration_decay = exploration_decay
-        # if self.choice == 'ucb':
-        #     self.exploration_rate = 2.0  # UCB does not use epsilon-greedy, so we set it to 2.0
         self.min_exploration_rate = min_exploration_rate
         self.gamma = gamma
         self.q_table = {}
