@@ -259,7 +259,6 @@ def temp_simulation_function(n_agents, n_features,
 
     signal_usage, rewards_history, signal_information_history, nature_history, histories = env.report_metrics()
 
-
     if plot:
       # Plot rewards over episodes
       plt.figure(figsize=(8, 5)) # (width, height)
