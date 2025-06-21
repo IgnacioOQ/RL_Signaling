@@ -256,6 +256,7 @@ class QLearningAgent:
         
 
         self.action_exploration_rate = max(self.min_exploration_rate, self.action_exploration_rate * self.exploration_decay)
+          
 
 class TDLearningAgent:
     def __init__(self, n_actions, learning_rate=0.1, exploration_rate=1.0,
@@ -324,7 +325,15 @@ class TDLearningAgent:
 
         td_target = reward
         if not done:
+            # Regular update
             td_target += self.gamma*np.max(self.q_table[next_state])
+            # UCB update (commented out, can be used if needed)
+            # counts = self.action_counts[next_state] + 1e-5  # avoid division by zero
+            # total_counts = np.sum(self.action_counts[next_state]) + 1
+            # ucb_bonus = self.exploration_rate * np.sqrt(np.log(total_counts) / counts)
+            # ucb_scores = self.q_table[next_state] + ucb_bonus
+            # td_target += self.gamma * np.max(ucb_scores)
+
         td_error = td_target - self.q_table[state][action]
 
         # These do satisfy the Robbins-Monro condition (provided exploration has a minimum rate 
