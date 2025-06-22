@@ -28,6 +28,9 @@ class UrnAgent:
             self.signaling_urns = create_initial_signals(n_observed_features=n_observed_features,
                                                           n_signals=n_signaling_actions, n=initialization_weights[0], 
                                                           m=initialization_weights[1])
+            self.action_urns = create_initial_signals(n_observed_features=n_observed_features+1,
+                                                       n_signals=n_final_actions, n=initialization_weights[0], 
+                                                       m=initialization_weights[1])
         else:
             self.signaling_urns = {}
         self.action_urns = {}
@@ -46,7 +49,7 @@ class UrnAgent:
 
         Returns:
         - int: The chosen signaling action.
-        """
+        # """
         if state not in self.signaling_urns:
             self.signaling_urns[state] = np.ones(self.n_signaling_actions)
         probability_weights = self.signaling_urns[state] / (np.sum(self.signaling_urns[state]))

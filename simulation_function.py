@@ -47,6 +47,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
         # here I use the environment graph
         # crucial is that the index of the agent corresponds to the name of the node in the graph corresponding to that agent
         new_observations = env.send_signals(signals,agents_observations)
+        # print(f'new observations are {new_observations}')
       else:
         new_observations = copy.deepcopy(agents_observations)
       if verbose:
