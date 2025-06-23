@@ -59,8 +59,8 @@ class NetMultiAgentEnv:
                         exploration_decay=exploration_decay, min_exploration_rate=min_exploration_rate,
                        initialize=initialize,initialization_weights=initialization_weights) for _ in range(self.n_agents)]
         
-        for agent in self.agents:
-            print(agent.action_urns)
+        # for agent in self.agents:
+        #     print(agent.action_urns)
         # Graph structure representing agent relationships
         self.graph = graph
         
