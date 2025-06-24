@@ -42,14 +42,19 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
 
       # Step 2: Agents choose signaling actions based on learning policy, and 
       # step to store signaling history, and move to the next step in the episode
-      signals = env.encoding_signals(agents_observations)
+    #   signals = env.encoding_signals(agents_observations)
+    #   print(f'agents signals are {signals}')
+    #   print(type(signals))
       if with_signals:
+        signals = env.encoding_signals(agents_observations)
         # here I use the environment graph
         # crucial is that the index of the agent corresponds to the name of the node in the graph corresponding to that agent
         new_observations = env.send_signals(signals,agents_observations)
         # print(f'new observations are {new_observations}')
       else:
+        signals = None
         new_observations = copy.deepcopy(agents_observations)
+        
       if verbose:
         print(f'agents signals are {signals}')
         print(f'agents new_observations are {new_observations}')
