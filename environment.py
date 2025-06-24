@@ -191,7 +191,9 @@ class NetMultiAgentEnv:
     
     def update_agents(self, nature_observations,new_observations, signals, final_actions, rewards):
         for i in range(self.n_agents):
-            self.agents[i].update_signals(nature_observations[i],signals[i], rewards[i])
+            if signals != None:
+                self.agents[i].update_signals(nature_observations[i], signals[i], rewards[i])
+            # self.agents[i].update_signals(nature_observations[i],signals[i], rewards[i])
             self.agents[i].update_actions(new_observations[i],final_actions[i], rewards[i])
         
         for i, agent in enumerate(self.agents):
