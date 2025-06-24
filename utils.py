@@ -244,17 +244,17 @@ def plot_basecase_kde(df, variable, file_path='dummy_plot.png',bins=100, figsize
     # Display the plot
     plt.show()
 
-def plot_all_histograms(df,bins=75):
-    plot_histograms_with_kde(df,'Agent_0_final_reward',bins=75)
-    plot_histograms_with_kde(df,'Agent_0_avg_reward',bins=75)
-    plot_histograms_with_kde(df,'Agent_1_final_reward',bins=75)
-    plot_histograms_with_kde(df,'Agent_1_avg_reward',bins=75)
-    plot_histograms_with_kde(df,'Agent_0_NMI',bins=75)
-    plot_histograms_with_kde(df,'Agent_1_NMI',bins=75)
+def plot_all_histograms(df,bins=75,variables = [(False, True), (True, False), (False, False),(True, True)]):
+    plot_histograms_with_kde(df,'Agent_0_final_reward',bins=75,variables=variables)
+    plot_histograms_with_kde(df,'Agent_0_avg_reward',bins=75,variables=variables)
+    plot_histograms_with_kde(df,'Agent_1_final_reward',bins=75,variables=variables)
+    plot_histograms_with_kde(df,'Agent_1_avg_reward',bins=75,variables=variables)
+    plot_histograms_with_kde(df,'Agent_0_NMI',bins=75,variables=variables)
+    plot_histograms_with_kde(df,'Agent_1_NMI',bins=75,variables=variables)
     df['Agent_0_NMI_Difference'] = df['Agent_0_NMI'] - df['Agent_0_Initial_NMI']
     df['Agent_1_NMI_Difference'] = df['Agent_1_NMI'] - df['Agent_1_Initial_NMI']
-    plot_histograms_with_kde(df,'Agent_0_NMI_Difference',bins=50, variables = [(True, True), (True, False)])
-    plot_histograms_with_kde(df,'Agent_1_NMI_Difference',bins=50, variables = [(True, True), (True, False)])
+    plot_histograms_with_kde(df,'Agent_0_NMI_Difference',bins=50, variables=variables)
+    plot_histograms_with_kde(df,'Agent_1_NMI_Difference',bins=50, variables = variables)
     
 # Helper function to calculate reward differences
 def calculate_reward_difference(df, agent_col):
