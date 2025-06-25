@@ -14,3 +14,6 @@ import unittest
 from unittest.mock import patch
 import networkx as nx
 import warnings
+import matplotlib.ticker as mticker
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
