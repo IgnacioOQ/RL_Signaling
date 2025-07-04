@@ -362,8 +362,7 @@ class TempNetMultiAgentEnv:
                 action=actions[i],
                 reward=rewards[i],
                 next_state=new_obs[i],
-                done=done
-            )
+                done=done)
             self.histories[i]['signal_history'].append(copy.deepcopy(self.signal_usage[i]))
             self.histories[i]['action_history'].append(copy.deepcopy(self.action_usage[i]))
 
