@@ -98,7 +98,7 @@ class QLearningAgent:
     def __init__(self, n_signaling_actions, n_final_actions,
                  exploration_rate=1, exploration_decay=0.995, 
                  min_exploration_rate=0.001, initialize=False,initialization_weights = [1,0],
-                 n_observed_features=1,choice='egreedy'):
+                 n_observed_features=1,choice='egreedy',exp_smoothing=False):
         """
         Initialize the QLearningAgent.
 
@@ -115,6 +115,7 @@ class QLearningAgent:
         self.n_signaling_actions = n_signaling_actions
         self.n_final_actions = n_final_actions
         self.choice = choice
+        self.exp_smoothing = exp_smoothing
         self.signal_exploration_rate = exploration_rate
         self.action_exploration_rate = exploration_rate 
         self.exploration_decay = exploration_decay
@@ -220,17 +221,23 @@ class QLearningAgent:
         - signal (int): The signaling action taken.
         - reward (float): The reward received.
         """
-        td_target = reward
-        td_error = td_target - self.q_table_signaling[state][signal]
-        # These do satisfy the Robbins-Monro condition (provided exploration has a minimum rate 
-        # # and Every state-action pair is visited infinitely often
-        # Option 1: self.action_counts[state][action] > 0 because we increased in get action
-        # self.q_table_signaling[state][signal] += td_error/self.signaling_counts[state][signal]
-        # Option 2: Smoother
-        alpha = 1.0 / (1.0 + self.signaling_counts[state][signal])  # avoids div by zero
-        self.q_table_signaling[state][signal] += alpha * td_error
-        # Option 3
-        # self.q_table_signaling[state][signal] += td_error / np.sqrt(self.signaling_counts[state][signal])
+        if self.exp_smoothing:
+            # Exponential smoothing update
+            alpha = 0.1  # or any fixed value in (0, 1)
+            self.q_table_signaling[state][signal] = (
+                (1 - alpha) * self.q_table_signaling[state][signal] + alpha * reward)
+        else:
+            td_target = reward
+            td_error = td_target - self.q_table_signaling[state][signal]
+            # These do satisfy the Robbins-Monro condition (provided exploration has a minimum rate 
+            # # and Every state-action pair is visited infinitely often
+            # Option 1: self.action_counts[state][action] > 0 because we increased in get action
+            # self.q_table_signaling[state][signal] += td_error/self.signaling_counts[state][signal]
+            # Option 2: Smoother
+            alpha = 1.0 / (1.0 + self.signaling_counts[state][signal])  # avoids div by zero
+            self.q_table_signaling[state][signal] += alpha * td_error
+            # Option 3
+            # self.q_table_signaling[state][signal] += td_error / np.sqrt(self.signaling_counts[state][signal])
 
 
         self.signal_exploration_rate = max(self.min_exploration_rate, self.signal_exploration_rate * self.exploration_decay)
@@ -244,15 +251,21 @@ class QLearningAgent:
         - action (int): The final action taken.
         - reward (float): The reward received.
         """
-        td_target = reward
-        td_error = td_target - self.q_table_action[state][action]
-        # These do satisfy the Robbins-Monro condition (provided exploration has a minimum rate 
-        # # and Every state-action pair is visited infinitely often
-        # Option 1: self.action_counts[state][action] > 0 because we increased in get action
-        # self.q_table_action[state][action] += td_error/self.action_counts[state][action]        
-        # Option 2: Smoother
-        alpha = 1.0 / (1.0 + self.action_counts[state][action])  # avoids div by zero
-        self.q_table_action[state][action] += alpha * td_error
+        if self.exp_smoothing:
+            # Exponential smoothing update
+            alpha = 0.1  # or any fixed value in (0, 1)
+            self.q_table_action[state][action] = (
+                (1 - alpha) * self.q_table_action[state][action] + alpha * reward)
+        else:   
+            td_target = reward
+            td_error = td_target - self.q_table_action[state][action]
+            # These do satisfy the Robbins-Monro condition (provided exploration has a minimum rate 
+            # # and Every state-action pair is visited infinitely often
+            # Option 1: self.action_counts[state][action] > 0 because we increased in get action
+            # self.q_table_action[state][action] += td_error/self.action_counts[state][action]        
+            # Option 2: Smoother
+            alpha = 1.0 / (1.0 + self.action_counts[state][action])  # avoids div by zero
+            self.q_table_action[state][action] += alpha * td_error
         # Option 3
         # self.q_table_signaling[state][signal] += td_error / np.sqrt(self.signaling_counts[state][signal])
         
