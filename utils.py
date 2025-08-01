@@ -120,7 +120,8 @@ def plot_hist(df,variable,with_signal=True,full_information=False):
 
 
 def plot_histograms_with_kde(df, variable, bins=100, figsize=(5, 3),
-                             alpha=0.5, kde=True,variables = [(False, True), (True, False), (False, False)]):#, (False, True), (False, False)]):
+                             alpha=0.5, kde=True,variables = [(False, True), (True, False), (False, False)],
+                             dump_path = './plots_and_results/'):#, (False, True), (False, False)]):
     # Initialize the figure
     plt.figure(figsize=figsize)
 
@@ -205,6 +206,7 @@ def plot_histograms_with_kde(df, variable, bins=100, figsize=(5, 3),
 
     # Display the plot
     plt.tight_layout()
+    # plt.savefig(f'{dump_path}/hist_{variable}.png', dpi=300)
     plt.show()
 
 def plot_basecase_kde(df, variable, file_path='dummy_plot.png',bins=100, figsize=(6, 3),

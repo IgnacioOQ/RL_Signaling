@@ -196,7 +196,6 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
     return signal_usage, rewards_history, signal_information_history, histories, env.nature_history
   
 
-
 def temp_simulation_function(n_agents, n_features,
                         n_signaling_actions, n_final_actions,
                         n_episodes=6000, with_signals=True,
