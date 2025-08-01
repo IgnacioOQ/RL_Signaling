@@ -121,7 +121,8 @@ def plot_hist(df,variable,with_signal=True,full_information=False):
 
 def plot_histograms_with_kde(df, variable, bins=100, figsize=(5, 3),
                              alpha=0.5, kde=True,variables = [(False, True), (True, False), (False, False)],
-                             dump_path = './plots_and_results/'):#, (False, True), (False, False)]):
+                             dump_path = './plots_and_results/',
+                             filename_prefix = 'test'):#, (False, True), (False, False)]):
     # Initialize the figure
     plt.figure(figsize=figsize)
 
@@ -206,7 +207,7 @@ def plot_histograms_with_kde(df, variable, bins=100, figsize=(5, 3),
 
     # Display the plot
     plt.tight_layout()
-    # plt.savefig(f'{dump_path}/hist_{variable}.png', dpi=300)
+    plt.savefig(f'{dump_path}/{filename_prefix}_{variable}.png', dpi=300)
     plt.show()
 
 def plot_basecase_kde(df, variable, file_path='dummy_plot.png',bins=100, figsize=(6, 3),
@@ -271,17 +272,22 @@ def plot_basecase_kde(df, variable, file_path='dummy_plot.png',bins=100, figsize
     # Display the plot
     plt.show()
 
-def plot_all_histograms(df,bins=75,variables = [(False, True), (True, False), (False, False),(True, True)]):
-    plot_histograms_with_kde(df,'Agent_0_final_reward',bins=75,variables=[(False, True), (True, False), (False, False),(True, True)])
-    plot_histograms_with_kde(df,'Agent_0_avg_reward',bins=75,variables=[(False, True), (True, False), (False, False),(True, True)])
-    plot_histograms_with_kde(df,'Agent_1_final_reward',bins=75,variables=[(False, True), (True, False), (False, False),(True, True)])
-    plot_histograms_with_kde(df,'Agent_1_avg_reward',bins=75,variables=[(False, True), (True, False), (False, False),(True, True)])
-    plot_histograms_with_kde(df,'Agent_0_NMI',bins=75,variables=[ (True, False),(True, True)])
-    plot_histograms_with_kde(df,'Agent_1_NMI',bins=75,variables=[(True, False), (True, True)])
-    df['Agent_0_NMI_Difference'] = df['Agent_0_NMI'] - df['Agent_0_Initial_NMI']
-    df['Agent_1_NMI_Difference'] = df['Agent_1_NMI'] - df['Agent_1_Initial_NMI']
-    plot_histograms_with_kde(df,'Agent_0_NMI_Difference',bins=50, variables=[(True, False), (True, True)])
-    plot_histograms_with_kde(df,'Agent_1_NMI_Difference',bins=50, variables = [(True, False), (True, True)])
+def plot_all_histograms(df,bins=75,variables = [(False, True), (True, False), (False, False),(True, True)],
+                        filename_prefix = 'test'):
+    plot_histograms_with_kde(df,'Agent_0_final_reward',bins=75,variables=[(False, True), (True, False), (False, False),(True, True)],
+                             filename_prefix=filename_prefix)
+    plot_histograms_with_kde(df,'Agent_0_avg_reward',bins=75,variables=[(False, True), (True, False), (False, False),(True, True)],
+                             filename_prefix=filename_prefix)
+    # plot_histograms_with_kde(df,'Agent_1_final_reward',bins=75,variables=[(False, True), (True, False), (False, False),(True, True)])
+    # plot_histograms_with_kde(df,'Agent_1_avg_reward',bins=75,variables=[(False, True), (True, False), (False, False),(True, True)])
+    plot_histograms_with_kde(df,'Agent_0_NMI',bins=75,variables=[ (True, False),(True, True)],
+                             filename_prefix=filename_prefix)
+    # plot_histograms_with_kde(df,'Agent_1_NMI',bins=75,variables=[(True, False), (True, True)])
+    # df['Agent_0_NMI_Difference'] = df['Agent_0_NMI'] - df['Agent_0_Initial_NMI']
+    # # df['Agent_1_NMI_Difference'] = df['Agent_1_NMI'] - df['Agent_1_Initial_NMI']
+    # plot_histograms_with_kde(df,'Agent_0_NMI_Difference',bins=50, variables=[(True, False), (True, True)],
+    #                          filename_prefix=filename_prefix)
+    # plot_histograms_with_kde(df,'Agent_1_NMI_Difference',bins=50, variables = [(True, False), (True, True)])
     
 # Helper function to calculate reward differences
 def calculate_reward_difference(df, agent_col):
@@ -405,30 +411,12 @@ def count_negative_nmi(file_path):
     return negative_counts
 
 
-# def plot_regression(df, x_var='Agent_0_NMI', y_var='Agent_0_final_reward', figsize=(6, 4)):
-#     """
-#     Plot a regression line between two variables using Seaborn.
-
-#     Parameters:
-#     - df: pd.DataFrame containing the data
-#     - x_var: str, column name for the x-axis
-#     - y_var: str, column name for the y-axis
-#     - figsize: tuple, size of the figure
-#     """
-    
-#     subset_df = df[(df['full_information'] == False) & (df['with_signals'] == True)]
-
-#     plt.figure(figsize=figsize)
-#     sns.regplot(data=subset_df, x=x_var, y=y_var, scatter_kws={'alpha': 0.5}, line_kws={'color': 'red'})
-#     plt.title(f'Regression: NMI vs. Rewards')
-#     plt.xlabel('Final NMI')
-#     plt.ylabel('Final Reward')
-#     plt.grid(True)
-#     plt.tight_layout()
-#     plt.show()
+import os
 
 def plot_regression(df, x_var='Agent_0_NMI', y_var='Agent_0_final_reward', figsize=(6, 4), 
-                    model_type='linear', filter_condition=[(True, True),(True, False)]):
+                    model_type='linear', filter_condition=[(True, True),(True, False)],
+                    dump_path='./plots_and_results/',
+                    filename_prefix='test'):
     """
     Plot a regression line between two variables and show regression coefficients and R².
 
@@ -438,12 +426,15 @@ def plot_regression(df, x_var='Agent_0_NMI', y_var='Agent_0_final_reward', figsi
     - y_var: str, column name for the y-axis
     - figsize: tuple, size of the figure
     - model_type: 'linear' (default), can be extended to support other types later
-    - filter_condition: tuple (full_information, with_signals) to filter the dataset
+    - filter_condition: list of tuples [(with_signals, full_information)] to filter the dataset
     """
+    
+    # Ensure output directory exists
+    os.makedirs(dump_path, exist_ok=True)
 
-    # Filter data
-    for tuple in filter_condition:
-        subset_df = df[(df['full_information'] == tuple[1]) & (df['with_signals'] == tuple[0])].copy()
+    for with_signals, full_information in filter_condition:
+        subset_df = df[(df['full_information'] == full_information) & 
+                       (df['with_signals'] == with_signals)].copy()
 
         # Drop NaNs
         subset_df = subset_df[[x_var, y_var]].dropna()
@@ -465,16 +456,80 @@ def plot_regression(df, x_var='Agent_0_NMI', y_var='Agent_0_final_reward', figsi
         # Plot
         plt.figure(figsize=figsize)
         sns.regplot(x=X.flatten(), y=y, scatter_kws={'alpha': 0.5}, line_kws={'color': 'red'})
-        plt.title(f'Regression: NMI vs. Rewards (full info = {tuple[1]})')  # Fixed title
-        plt.xlabel('Final NMI')                   # Fixed x-label
-        plt.ylabel('Final Reward')                # Fixed y-label
+        plt.title(f'Regression: NMI vs. Rewards (full info = {full_information}, signals = {with_signals})')
+        plt.xlabel('Final NMI')
+        plt.ylabel('Final Reward')
         plt.grid(True)
 
         # Annotate with regression info
         eq_str = f"$y = {intercept:.2f} + {slope:.2f}x$\n$R^2 = {r2:.3f}$"
         plt.text(0.05, 0.95, eq_str, transform=plt.gca().transAxes,
-                fontsize=10, verticalalignment='top',
-                bbox=dict(boxstyle="round", facecolor='white', edgecolor='gray'))
+                 fontsize=10, verticalalignment='top',
+                 bbox=dict(boxstyle="round", facecolor='white', edgecolor='gray'))
 
         plt.tight_layout()
+
+        # Build filename
+        filename = f"{filename_prefix}_regression_signals_{with_signals}_fullinfo_{full_information}.png"
+        filepath = os.path.join(dump_path, filename)
+
+        # Save figure
+        plt.savefig(filepath, dpi=300)
+        print(f"[Saved] {filepath}")
+
         plt.show()
+
+
+# def plot_regression(df, x_var='Agent_0_NMI', y_var='Agent_0_final_reward', figsize=(6, 4), 
+#                     model_type='linear', filter_condition=[(True, True),(True, False)],
+#                     dump_path='./plots_and_results/',
+#                     filename_prefix='regression_plot'):
+#     """
+#     Plot a regression line between two variables and show regression coefficients and R².
+
+#     Parameters:
+#     - df: pd.DataFrame containing the data
+#     - x_var: str, column name for the x-axis
+#     - y_var: str, column name for the y-axis
+#     - figsize: tuple, size of the figure
+#     - model_type: 'linear' (default), can be extended to support other types later
+#     - filter_condition: tuple (full_information, with_signals) to filter the dataset
+#     """
+
+#     # Filter data
+#     for tuple in filter_condition:
+#         subset_df = df[(df['full_information'] == tuple[1]) & (df['with_signals'] == tuple[0])].copy()
+
+#         # Drop NaNs
+#         subset_df = subset_df[[x_var, y_var]].dropna()
+
+#         # Prepare X, y
+#         X = subset_df[[x_var]].values
+#         y = subset_df[y_var].values
+
+#         # Fit model
+#         model = LinearRegression()
+#         model.fit(X, y)
+#         y_pred = model.predict(X)
+#         r2 = r2_score(y, y_pred)
+
+#         # Get coefficients
+#         slope = model.coef_[0]
+#         intercept = model.intercept_
+
+#         # Plot
+#         plt.figure(figsize=figsize)
+#         sns.regplot(x=X.flatten(), y=y, scatter_kws={'alpha': 0.5}, line_kws={'color': 'red'})
+#         plt.title(f'Regression: NMI vs. Rewards (full info = {tuple[1]})')  # Fixed title
+#         plt.xlabel('Final NMI')                   # Fixed x-label
+#         plt.ylabel('Final Reward')                # Fixed y-label
+#         plt.grid(True)
+
+#         # Annotate with regression info
+#         eq_str = f"$y = {intercept:.2f} + {slope:.2f}x$\n$R^2 = {r2:.3f}$"
+#         plt.text(0.05, 0.95, eq_str, transform=plt.gca().transAxes,
+#                 fontsize=10, verticalalignment='top',
+#                 bbox=dict(boxstyle="round", facecolor='white', edgecolor='gray'))
+
+#         plt.tight_layout()
+#         plt.show()
