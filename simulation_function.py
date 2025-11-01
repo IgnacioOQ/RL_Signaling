@@ -19,6 +19,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
                         n_episodes=6000, with_signals = True,
                         plot=True,env=None,
                         costly_signaling=False,
+                        signal_cost = 0.25,
                         verbose=False):
 
     # agents = [agent_type(n_signaling_actions, n_final_actions,
@@ -70,7 +71,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       # Step 4: Agents receive rewards
       rewards, done = env.play_step(final_actions)
       if costly_signaling and with_signals:
-        rewards = [reward - 0.1 for reward in rewards]
+        rewards = [reward - signal_cost for reward in rewards]
         
       # Step 5: Update agents' signaling and action urns and histories
       env.update_agents(agents_observations,new_observations,signals, final_actions, rewards)

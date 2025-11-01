@@ -57,7 +57,9 @@ class UrnAgent:
                 self.signaling_urns[state] = np.ones(self.n_signaling_actions)
             else:
                 self.signaling_urns[state] = np.ones(self.n_signaling_actions+1)
+                
         probability_weights = self.signaling_urns[state] / (np.sum(self.signaling_urns[state]))
+        
         if not self.costly_signaling:
             return np.random.choice(self.n_signaling_actions, p=probability_weights)
         else:
