@@ -28,6 +28,8 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
     # History of the information status of the agent after each episode
     # namely their signalling and action urns as they get more complex
 
+    effective_n_signaling_actions = n_signaling_actions + 1 if costly_signaling else n_signaling_actions
+
     for episode in range(n_episodes):
       if verbose:
         print(f'episode number is {episode}')
@@ -70,8 +72,13 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
         
       # Step 4: Agents receive rewards
       rewards, done = env.play_step(final_actions)
+      
       if costly_signaling and with_signals:
-        rewards = [reward - signal_cost for reward in rewards]
+        # Apply signal cost only if the agent did not send the "null signal"
+        # The null signal is at index n_signaling_actions
+        rewards = [rewards[i] - signal_cost if signals[i] != n_signaling_actions 
+                   else rewards[i] 
+                   for i in range(n_agents)]
         
       # Step 5: Update agents' signaling and action urns and histories
       env.update_agents(agents_observations,new_observations,signals, final_actions, rewards)
@@ -83,21 +90,22 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
 
     if plot:
       # Plot rewards over episodes
-      plt.figure(figsize=(8, 5)) # (width, height)
+      plt.figure(figsize=(10, 6))  # (width, height)
       for i in range(n_agents):
-        # first smoothing
-        #smoothed_rewards = [sum(rewards_history[i][j:j+100]) / 100 for j in range(0, n_episodes, 100)]
-        #plt.plot(range(0, n_episodes, 100), smoothed_rewards, label=f"Agent {i}")
-        # second smoothing
+        # Plot raw rewards as a scatter plot to show individual episode outcomes
+        plt.scatter(range(n_episodes), rewards_history[i], label=f"Agent {i} (Raw)", alpha=0.05, s=10)
+
+        # Plot smoothed rewards as a line plot to show the trend
         window_size = 100
         smoothed_rewards = np.convolve(rewards_history[i], np.ones(window_size)/window_size, mode='valid')
-        plt.plot(range(window_size - 1, n_episodes), smoothed_rewards, label=f"Agent {i}")
+        plt.plot(range(window_size - 1, n_episodes), smoothed_rewards, label=f"Agent {i} (Smoothed Trend)")
 
-
-      plt.title("Average Rewards (Smoothed)")
+      # Update plot details for clarity
+      plt.title("Agent Rewards Over Episodes")
       plt.xlabel("Episode")
-      plt.ylabel("Average Reward")
+      plt.ylabel("Reward")
       plt.legend()
+      plt.grid(True, which='both', linestyle='--', linewidth=0.5)
 
       # Plot NMI over episodes
       plt.figure(figsize=(8, 5)) # (width, height)
@@ -114,20 +122,13 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       for i, usage in enumerate(signal_usage):
           for state, counts in usage.items():
               bar_labels = [f"{count:.2f}" for count in counts]  # Format proportion labels
-              if not costly_signaling:
-                bars = plt.bar(
-                    [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
+              bars = plt.bar(
+                    [f"A{i}-{state}-Sig {s}" for s in range(effective_n_signaling_actions)],
                     counts,
                     label=f"A{i}, State {state}",
                     alpha=0.7
                 )
-              else: 
-                bars = plt.bar(
-                    [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions+1)],
-                    counts,
-                    label=f"A{i}, State {state}",
-                    alpha=0.7
-                )
+
 
               # Add proportion labels on top of each bar
               for bar, label in zip(bars, bar_labels):
@@ -152,6 +153,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       plt.show()
       
       # Plot final signal usage
+      # NOTE: This history tracking is memory-inefficient. See environment.py.
       final_signal_usage = [histories[0]['signal_history'][-1],histories[1]['signal_history'][-1]]
       plt.figure(figsize=(8, 5))  # (width, height)
       for i, usage in enumerate(final_signal_usage):
@@ -160,20 +162,13 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
               proportions = counts / total_counts  # Normalize to proportions
 
               bar_labels = [f"{prop:.2f}" for prop in proportions]  # Format proportion labels
-              if not costly_signaling:
-                bars = plt.bar(
-                    [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
-                    proportions,
-                    label=f"A{i}, State {state}",
-                    alpha=0.7
-                )
-              else: 
-                bars = plt.bar(
-                    [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions+1)],
-                    proportions,
-                    label=f"A{i}, State {state}",
-                    alpha=0.7
-                )
+              bars = plt.bar(
+                  [f"A{i}-{state}-Sig {s}" for s in range(effective_n_signaling_actions)],
+                  proportions,
+                  label=f"A{i}, State {state}",
+                  alpha=0.7
+              )
+
 
               # Add proportion labels on top of each bar
               for bar, label in zip(bars, bar_labels):
@@ -220,6 +215,8 @@ def temp_simulation_function(n_agents, n_features,
                         n_signaling_actions, n_final_actions,
                         n_episodes=6000, with_signals=True,
                         plot=True, env=None, verbose=False):
+
+    # NOTE: This function appears to be an alternative implementation and is not currently called.
 
     for episode in range(n_episodes):
         if verbose:

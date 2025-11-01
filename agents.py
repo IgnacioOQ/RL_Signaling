@@ -10,8 +10,7 @@ class UrnAgent:
                  exploration_rate=1.0,
                 exploration_decay=0.995, min_exploration_rate=0.001,
                 # these are not dummy
-                 n_observed_features=1, 
-                 initialize=False,initialization_weights = [1,0],
+                 n_observed_features=1, initialize=False,initialization_weights = [1,0], 
                  costly_signaling=False):
         """
         Initialize the UrnAgent.
@@ -19,7 +18,7 @@ class UrnAgent:
         Parameters:
         - n_signaling_actions (int): Number of possible signaling actions.
         - n_final_actions (int): Number of possible final actions.
-        - n_observed_features (int): Number of observed features (default is 1).
+        - n_observed_features (int): Number of observed features.
         - initialize (bool): Whether to initialize the signaling urns with predefined values.
         """
         self.n_signaling_actions = n_signaling_actions
@@ -53,18 +52,12 @@ class UrnAgent:
         - int: The chosen signaling action.
         # """
         if state not in self.signaling_urns:
-            if not self.costly_signaling:
-                self.signaling_urns[state] = np.ones(self.n_signaling_actions)
-            else:
-                self.signaling_urns[state] = np.ones(self.n_signaling_actions+1)
+            # The notebook/environment provides the effective number of actions.
+            self.signaling_urns[state] = np.ones(self.n_signaling_actions)
                 
         probability_weights = self.signaling_urns[state] / (np.sum(self.signaling_urns[state]))
         
-        if not self.costly_signaling:
-            return np.random.choice(self.n_signaling_actions, p=probability_weights)
-        else:
-            return np.random.choice(self.n_signaling_actions+1, p=probability_weights)
-
+        return np.random.choice(self.n_signaling_actions, p=probability_weights)
 
     def get_action(self, state):
         """
@@ -90,7 +83,8 @@ class UrnAgent:
         - signal (int): The signaling action taken.
         - reward (float): The reward received.
         """
-        self.signaling_urns[state][signal] += reward
+        # Ensure urn counts do not become negative
+        self.signaling_urns[state][signal] = max(0, self.signaling_urns[state][signal] + reward)
 
     def update_actions(self, state, action, reward):
         """
@@ -101,7 +95,8 @@ class UrnAgent:
         - action (int): The final action taken.
         - reward (float): The reward received.
         """
-        self.action_urns[state][action] += reward
+        # Ensure urn counts do not become negative
+        self.action_urns[state][action] = max(0, self.action_urns[state][action] + reward)
 
 
 # Q-Learning Agent
@@ -162,11 +157,11 @@ class QLearningAgent:
         - int: The chosen signaling action.
         """
         if state not in self.q_table_signaling:
-            if not self.costly_signaling:
-                self.q_table_signaling[state] = np.zeros(self.n_signaling_actions)
-            else:
-                self.q_table_signaling[state] = np.zeros(self.n_signaling_actions+1)
+            # The environment already provides the effective number of actions
+            self.q_table_signaling[state] = np.zeros(self.n_signaling_actions)
             self.signaling_counts[state] = np.zeros(self.n_signaling_actions)
+
+
         if self.choice == 'egreedy':
             if random.uniform(0, 1) < self.signal_exploration_rate:
                 signal = random.randint(0, self.n_signaling_actions - 1)
@@ -226,7 +221,6 @@ class QLearningAgent:
         self.action_counts[state][action] += 1
         return action
 
-
     def update_signals(self, state, signal, reward):
         """
         Update the Q-table for signaling actions based on the received reward.
@@ -244,13 +238,9 @@ class QLearningAgent:
         else:
             td_target = reward
             td_error = td_target - self.q_table_signaling[state][signal]
-            # These do satisfy the Robbins-Monro condition (provided exploration has a minimum rate 
-            # # and Every state-action pair is visited infinitely often
-            # Option 1: self.action_counts[state][action] > 0 because we increased in get action
-            # self.q_table_signaling[state][signal] += td_error/self.signaling_counts[state][signal]
-            # Option 2: Smoother
-            alpha = 1.0 / (1.0 + self.signaling_counts[state][signal])  # avoids div by zero
-            self.q_table_signaling[state][signal] += alpha * td_error
+            # A constant learning rate is more stable than one that decays to zero.
+            learning_rate = 0.1
+            self.q_table_signaling[state][signal] += learning_rate * td_error
             # Option 3
             # self.q_table_signaling[state][signal] += td_error / np.sqrt(self.signaling_counts[state][signal])
 
@@ -274,13 +264,9 @@ class QLearningAgent:
         else:   
             td_target = reward
             td_error = td_target - self.q_table_action[state][action]
-            # These do satisfy the Robbins-Monro condition (provided exploration has a minimum rate 
-            # # and Every state-action pair is visited infinitely often
-            # Option 1: self.action_counts[state][action] > 0 because we increased in get action
-            # self.q_table_action[state][action] += td_error/self.action_counts[state][action]        
-            # Option 2: Smoother
-            alpha = 1.0 / (1.0 + self.action_counts[state][action])  # avoids div by zero
-            self.q_table_action[state][action] += alpha * td_error
+            # A constant learning rate is more stable than one that decays to zero.
+            learning_rate = 0.1
+            self.q_table_action[state][action] += learning_rate * td_error
         # Option 3
         # self.q_table_signaling[state][signal] += td_error / np.sqrt(self.signaling_counts[state][signal])
         

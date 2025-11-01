@@ -55,13 +55,14 @@ class NetMultiAgentEnv:
         # Agent type
         self.agent_type = agent_type
         
-        # Costly signaling flag
-        self.costly_signaling = costly_signaling
+        # If signaling is costly, add an extra "null signal" action.
+        effective_n_signaling_actions = n_signaling_actions + 1 if costly_signaling else n_signaling_actions
         
         # Initialize agents using the specified agent type
-        self.agents = [agent_type(n_signaling_actions, n_final_actions,exploration_rate=exploration_rate,
+        self.agents = [agent_type(n_signaling_actions=effective_n_signaling_actions, n_final_actions=n_final_actions,
+                        exploration_rate=exploration_rate,
                         exploration_decay=exploration_decay, min_exploration_rate=min_exploration_rate,
-                       initialize=initialize,initialization_weights=initialization_weights, costly_signaling=self.costly_signaling) 
+                       initialize=initialize,initialization_weights=initialization_weights)
                        for _ in range(self.n_agents)]
         
         # for agent in self.agents:
@@ -69,14 +70,14 @@ class NetMultiAgentEnv:
         # Graph structure representing agent relationships
         self.graph = graph
         
-        # # Signal cost flag
-        # self.costly_signaling = costly_signaling
-        
         # Environment parameters
         self.n_features = n_features  # Number of features in the nature vector
-        self.n_signaling_actions = n_signaling_actions  # Number of available signaling actions
+        self.n_signaling_actions = effective_n_signaling_actions  # Number of available signaling actions
         self.n_final_actions = n_final_actions  # Number of available final actions
         self.current_step = 0  # Track current step in the environment
+        # self.n_features = n_features
+        self.costly_signaling = costly_signaling
+
         self.full_information = full_information  # Indicates if agents have full knowledge
 
         # Internal game dictionaries for each agent
@@ -118,22 +119,19 @@ class NetMultiAgentEnv:
         :param agents_observations: List of observations made by each agent.
         """
         # Assign signals based on agent-specific visibility
-        signals = [agent.get_signal(observation) for agent, observation in zip(self.agents, agents_observations)]
+        signals = [agent.get_signal(observation) 
+                   for agent, observation in zip(self.agents, agents_observations)]
         # Update signal usage tracking
         for i in range(self.n_agents):
             agent_observation = agents_observations[i]
             
             # Initialize tracking for this observation if it does not exist
-            if not self.costly_signaling and agent_observation not in self.signal_usage[i]:
+            if agent_observation not in self.signal_usage[i]:
                 self.signal_usage[i][agent_observation] = np.zeros(self.n_signaling_actions)
-            if self.costly_signaling and agent_observation not in self.signal_usage[i]:
-                self.signal_usage[i][agent_observation] = np.zeros(self.n_signaling_actions+1)
             
             # Ensure valid signal selection
-            if not self.costly_signaling and not (0 <= signals[i] < self.n_signaling_actions):
-                raise ValueError(f"Signal {signals[i]} is out of range for agent {i}")
-            elif self.costly_signaling and not (0 <= signals[i] <= self.n_signaling_actions):
-                raise ValueError(f"Signal {signals[i]} is out of range for agent {i}, even with null signal")
+            if not (0 <= signals[i] < self.n_signaling_actions):
+                raise ValueError(f"Signal {signals[i]} is out of range ({self.n_signaling_actions}) for agent {i}")
             else:
                 self.signal_usage[i][agent_observation][signals[i]] += 1
         
@@ -156,10 +154,14 @@ class NetMultiAgentEnv:
             # each agent looks at all the agents that are sending signals to it
           in_neighbors = self.graph.predecessors(i)
           for neig in in_neighbors:
-              # Important: only add the signal if it is not the null signal, which appears in the final position
-              if (signals[neig] != self.n_signaling_actions): 
+              # If signaling is costly, the null signal (which has the highest index) should not be added to the observation.
+              if self.costly_signaling:
+                null_signal_index = self.n_signaling_actions - 1
+                if signals[neig] != null_signal_index:
+                  new_observations[i]=new_observations[i]+(signals[neig],)
+              else:
+                # If not costly, all signals are added.
                 new_observations[i]=new_observations[i]+(signals[neig],)       
-                
         return new_observations
 
     def get_actions(self, agents_observations):
@@ -177,8 +179,7 @@ class NetMultiAgentEnv:
                 raise ValueError(f"Action {final_actions[i]} is out of range for agent {i}")
             else:
                 self.action_usage[i][agent_observation][final_actions[i]] += 1    
-            
-                
+
         # get_actions is step 3
         self.current_step = 3
         return final_actions
@@ -196,23 +197,26 @@ class NetMultiAgentEnv:
             else:
                 raise KeyError(f"Invalid state-action pair ({state_key}, {agent_action}) for agent {i}")
         
-        # update rewards history
-        for i in range(self.n_agents):
-            self.rewards_history[i].append(rewards[i])
-        
         # play_step is step 4
         self.current_step = 4
         return rewards, True
     
     def update_agents(self, nature_observations,new_observations, signals, final_actions, rewards):
+        # Update rewards history with the final, potentially penalized, rewards
+        for i in range(self.n_agents):
+            self.rewards_history[i].append(rewards[i])
+
         for i in range(self.n_agents):
             if signals != None:
                 self.agents[i].update_signals(nature_observations[i], signals[i], rewards[i])
             # self.agents[i].update_signals(nature_observations[i],signals[i], rewards[i])
             self.agents[i].update_actions(new_observations[i],final_actions[i], rewards[i])
         
+        # This is memory-inefficient as signal_usage grows over time.
+        # A better approach would be to log only the data for the current episode.
+        # However, keeping the logic as is for now to avoid breaking plotting functions.
         for i, agent in enumerate(self.agents):
-            self.histories[i]['signal_history'].append(copy.deepcopy(self.signal_usage[i]))
+            self.histories[i]['signal_history'].append(copy.deepcopy(self.signal_usage[i])) # Inefficient
             self.histories[i]['action_history'].append(copy.deepcopy(self.action_usage[i]))
         # update_agents is step 5
         self.current_step = 5
