@@ -26,6 +26,7 @@ class NetMultiAgentEnv:
                 observed_variables=None,
                 agent_type=UrnAgent,
                 initialize=None,initialization_weights = [1,0],
+                costly_signaling=False,
                 graph=None):
         """
         Initialize the multi-agent environment with specified parameters.
@@ -63,6 +64,9 @@ class NetMultiAgentEnv:
         #     print(agent.action_urns)
         # Graph structure representing agent relationships
         self.graph = graph
+        
+        # Signal cost flag
+        self.costly_signaling = costly_signaling
         
         # Environment parameters
         self.n_features = n_features  # Number of features in the nature vector
