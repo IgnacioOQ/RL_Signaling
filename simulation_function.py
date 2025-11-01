@@ -18,6 +18,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
                         n_signaling_actions=n_signaling_actions, n_final_actions=n_final_actions,
                         n_episodes=6000, with_signals = True,
                         plot=True,env=None,
+                        costly_signaling=False,
                         verbose=False):
 
     # agents = [agent_type(n_signaling_actions, n_final_actions,
@@ -68,7 +69,9 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
         
       # Step 4: Agents receive rewards
       rewards, done = env.play_step(final_actions)
-      
+      if costly_signaling and with_signals:
+        rewards = [reward - 0.1 for reward in rewards]
+        
       # Step 5: Update agents' signaling and action urns and histories
       env.update_agents(agents_observations,new_observations,signals, final_actions, rewards)
       if verbose:
@@ -110,12 +113,20 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       for i, usage in enumerate(signal_usage):
           for state, counts in usage.items():
               bar_labels = [f"{count:.2f}" for count in counts]  # Format proportion labels
-              bars = plt.bar(
-                  [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
-                  counts,
-                  label=f"A{i}, State {state}",
-                  alpha=0.7
-              )
+              if not costly_signaling:
+                bars = plt.bar(
+                    [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
+                    counts,
+                    label=f"A{i}, State {state}",
+                    alpha=0.7
+                )
+              else: 
+                bars = plt.bar(
+                    [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions+1)],
+                    counts,
+                    label=f"A{i}, State {state}",
+                    alpha=0.7
+                )
 
               # Add proportion labels on top of each bar
               for bar, label in zip(bars, bar_labels):
@@ -148,12 +159,20 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
               proportions = counts / total_counts  # Normalize to proportions
 
               bar_labels = [f"{prop:.2f}" for prop in proportions]  # Format proportion labels
-              bars = plt.bar(
-                  [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
-                  proportions,
-                  label=f"A{i}, State {state}",
-                  alpha=0.7
-              )
+              if not costly_signaling:
+                bars = plt.bar(
+                    [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
+                    proportions,
+                    label=f"A{i}, State {state}",
+                    alpha=0.7
+                )
+              else: 
+                bars = plt.bar(
+                    [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions+1)],
+                    proportions,
+                    label=f"A{i}, State {state}",
+                    alpha=0.7
+                )
 
               # Add proportion labels on top of each bar
               for bar, label in zip(bars, bar_labels):

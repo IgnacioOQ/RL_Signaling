@@ -55,18 +55,22 @@ class NetMultiAgentEnv:
         # Agent type
         self.agent_type = agent_type
         
+        # Costly signaling flag
+        self.costly_signaling = costly_signaling
+        
         # Initialize agents using the specified agent type
         self.agents = [agent_type(n_signaling_actions, n_final_actions,exploration_rate=exploration_rate,
                         exploration_decay=exploration_decay, min_exploration_rate=min_exploration_rate,
-                       initialize=initialize,initialization_weights=initialization_weights) for _ in range(self.n_agents)]
+                       initialize=initialize,initialization_weights=initialization_weights, costly_signaling=self.costly_signaling) 
+                       for _ in range(self.n_agents)]
         
         # for agent in self.agents:
         #     print(agent.action_urns)
         # Graph structure representing agent relationships
         self.graph = graph
         
-        # Signal cost flag
-        self.costly_signaling = costly_signaling
+        # # Signal cost flag
+        # self.costly_signaling = costly_signaling
         
         # Environment parameters
         self.n_features = n_features  # Number of features in the nature vector
@@ -120,12 +124,16 @@ class NetMultiAgentEnv:
             agent_observation = agents_observations[i]
             
             # Initialize tracking for this observation if it does not exist
-            if agent_observation not in self.signal_usage[i]:
+            if not self.costly_signaling and agent_observation not in self.signal_usage[i]:
                 self.signal_usage[i][agent_observation] = np.zeros(self.n_signaling_actions)
+            if self.costly_signaling and agent_observation not in self.signal_usage[i]:
+                self.signal_usage[i][agent_observation] = np.zeros(self.n_signaling_actions+1)
             
             # Ensure valid signal selection
-            if not (0 <= signals[i] < self.n_signaling_actions):
+            if not self.costly_signaling and not (0 <= signals[i] < self.n_signaling_actions):
                 raise ValueError(f"Signal {signals[i]} is out of range for agent {i}")
+            elif self.costly_signaling and not (0 <= signals[i] <= self.n_signaling_actions):
+                raise ValueError(f"Signal {signals[i]} is out of range for agent {i}, even with null signal")
             else:
                 self.signal_usage[i][agent_observation][signals[i]] += 1
         
@@ -148,7 +156,10 @@ class NetMultiAgentEnv:
             # each agent looks at all the agents that are sending signals to it
           in_neighbors = self.graph.predecessors(i)
           for neig in in_neighbors:
-            new_observations[i]=new_observations[i]+(signals[neig],)       
+              # Important: only add the signal if it is not the null signal, which appears in the final position
+              if (signals[neig] != self.n_signaling_actions): 
+                new_observations[i]=new_observations[i]+(signals[neig],)       
+                
         return new_observations
 
     def get_actions(self, agents_observations):

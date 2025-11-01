@@ -11,7 +11,8 @@ class UrnAgent:
                 exploration_decay=0.995, min_exploration_rate=0.001,
                 # these are not dummy
                  n_observed_features=1, 
-                 initialize=False,initialization_weights = [1,0]):
+                 initialize=False,initialization_weights = [1,0],
+                 costly_signaling=False):
         """
         Initialize the UrnAgent.
 
@@ -23,7 +24,8 @@ class UrnAgent:
         """
         self.n_signaling_actions = n_signaling_actions
         self.n_final_actions = n_final_actions
-
+        self.costly_signaling = costly_signaling
+        
         if initialize:
             self.signaling_urns = create_initial_signals(n_observed_features=n_observed_features,
                                                           n_signals=n_signaling_actions, n=initialization_weights[0], 
@@ -51,9 +53,16 @@ class UrnAgent:
         - int: The chosen signaling action.
         # """
         if state not in self.signaling_urns:
-            self.signaling_urns[state] = np.ones(self.n_signaling_actions)
+            if not self.costly_signaling:
+                self.signaling_urns[state] = np.ones(self.n_signaling_actions)
+            else:
+                self.signaling_urns[state] = np.ones(self.n_signaling_actions+1)
         probability_weights = self.signaling_urns[state] / (np.sum(self.signaling_urns[state]))
-        return np.random.choice(self.n_signaling_actions, p=probability_weights)
+        if not self.costly_signaling:
+            return np.random.choice(self.n_signaling_actions, p=probability_weights)
+        else:
+            return np.random.choice(self.n_signaling_actions+1, p=probability_weights)
+
 
     def get_action(self, state):
         """
@@ -98,7 +107,7 @@ class QLearningAgent:
     def __init__(self, n_signaling_actions, n_final_actions,
                  exploration_rate=1, exploration_decay=0.995, 
                  min_exploration_rate=0.001, initialize=False,initialization_weights = [1,0],
-                 n_observed_features=1,choice='egreedy',exp_smoothing=False):
+                 n_observed_features=1,choice='egreedy',exp_smoothing=False, costly_signaling=False):
         """
         Initialize the QLearningAgent.
 
@@ -114,6 +123,7 @@ class QLearningAgent:
         """
         self.n_signaling_actions = n_signaling_actions
         self.n_final_actions = n_final_actions
+        self.costly_signaling = costly_signaling
         self.choice = choice
         self.exp_smoothing = exp_smoothing
         self.signal_exploration_rate = exploration_rate
@@ -150,7 +160,10 @@ class QLearningAgent:
         - int: The chosen signaling action.
         """
         if state not in self.q_table_signaling:
-            self.q_table_signaling[state] = np.zeros(self.n_signaling_actions)
+            if not self.costly_signaling:
+                self.q_table_signaling[state] = np.zeros(self.n_signaling_actions)
+            else:
+                self.q_table_signaling[state] = np.zeros(self.n_signaling_actions+1)
             self.signaling_counts[state] = np.zeros(self.n_signaling_actions)
         if self.choice == 'egreedy':
             if random.uniform(0, 1) < self.signal_exploration_rate:
