@@ -507,8 +507,7 @@ def plot_reward_vs_cost(df, plot_title="Final Reward vs. Signal Cost"):
         intercept = model.intercept_
         r2 = model.score(X, y) # R-squared
         
-    stats_text = f"SKLearn Stats:\n" \
-                 f"Slope: {slope:.4f}\n" \
+    stats_text = f"Slope: {slope:.4f}\n" \
                  f"Intercept: {intercept:.4f}\n" \
                  f"R-squared: {r2:.4f}"
     # --- End SKLearn ---
@@ -564,8 +563,7 @@ def plot_nmi_vs_cost(df, plot_title="Final NMI vs. Signal Cost"):
         intercept = model.intercept_
         r2 = model.score(X, y) # R-squared
         
-    stats_text = f"SKLearn Stats:\n" \
-                 f"Slope: {slope:.4f}\n" \
+    stats_text = f"Slope: {slope:.4f}\n" \
                  f"Intercept: {intercept:.4f}\n" \
                  f"R-squared: {r2:.4f}"
     # --- End SKLearn ---
