@@ -410,9 +410,6 @@ def count_negative_nmi(file_path):
     
     return negative_counts
 
-
-import os
-
 def plot_regression(df, x_var='Agent_0_NMI', y_var='Agent_0_final_reward', figsize=(6, 4), 
                     model_type='linear', filter_condition=[(True, True),(True, False)],
                     dump_path='./plots_and_results/',
@@ -479,57 +476,116 @@ def plot_regression(df, x_var='Agent_0_NMI', y_var='Agent_0_final_reward', figsi
 
         plt.show()
 
+def plot_reward_vs_cost(df, plot_title="Final Reward vs. Signal Cost"):
+    """
+    Visualizes the relationship between Signal_Cost and Agent_0_final_reward.
+    Also calculates and displays sklearn regression stats (slope, intercept, R^2).
 
-# def plot_regression(df, x_var='Agent_0_NMI', y_var='Agent_0_final_reward', figsize=(6, 4), 
-#                     model_type='linear', filter_condition=[(True, True),(True, False)],
-#                     dump_path='./plots_and_results/',
-#                     filename_prefix='regression_plot'):
-#     """
-#     Plot a regression line between two variables and show regression coefficients and R².
+    Args:
+        df (pd.DataFrame): The DataFrame containing the data.
+        plot_title (str): The title for the plot.
+    """
+    if 'Signal_Cost' not in df.columns or 'Agent_0_final_reward' not in df.columns:
+        print(f"Error: DataFrame is missing 'Signal_Cost' or 'Agent_0_final_reward' column.", file=sys.stderr)
+        return
 
-#     Parameters:
-#     - df: pd.DataFrame containing the data
-#     - x_var: str, column name for the x-axis
-#     - y_var: str, column name for the y-axis
-#     - figsize: tuple, size of the figure
-#     - model_type: 'linear' (default), can be extended to support other types later
-#     - filter_condition: tuple (full_information, with_signals) to filter the dataset
-#     """
+    # --- SKLearn Regression ---
+    # Drop NaNs for regression calculation
+    temp_df = df[['Signal_Cost', 'Agent_0_final_reward']].dropna()
+    
+    if temp_df.empty:
+        print(f"Warning: No valid data for regression in '{plot_title}' after dropping NaNs.", file=sys.stderr)
+        slope, intercept, r2 = np.nan, np.nan, np.nan
+    else:
+        X = temp_df[['Signal_Cost']]
+        y = temp_df['Agent_0_final_reward']
+        
+        model = LinearRegression()
+        model.fit(X, y)
+        
+        slope = model.coef_[0]
+        intercept = model.intercept_
+        r2 = model.score(X, y) # R-squared
+        
+    stats_text = f"SKLearn Stats:\n" \
+                 f"Slope: {slope:.4f}\n" \
+                 f"Intercept: {intercept:.4f}\n" \
+                 f"R-squared: {r2:.4f}"
+    # --- End SKLearn ---
 
-#     # Filter data
-#     for tuple in filter_condition:
-#         subset_df = df[(df['full_information'] == tuple[1]) & (df['with_signals'] == tuple[0])].copy()
+    plt.figure(figsize=(10, 6))
+    ax = sns.regplot(
+        data=df,
+        x='Signal_Cost',
+        y='Agent_0_final_reward',
+        scatter_kws={'alpha': 0.3, 's': 15}, # Make points smaller and semi-transparent
+        line_kws={'color': 'red', 'linewidth': 2} # Make regression line red
+    )
+    
+    # Add the stats text to the plot
+    ax.text(0.05, 0.95, stats_text, transform=ax.transAxes, fontsize=10,
+            verticalalignment='top', bbox=dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.7))
 
-#         # Drop NaNs
-#         subset_df = subset_df[[x_var, y_var]].dropna()
+    plt.title(plot_title, fontsize=16)
+    plt.xlabel("Signal Cost", fontsize=12)
+    plt.ylabel("Agent 0 Final Reward", fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.tight_layout()
+    plt.show()
 
-#         # Prepare X, y
-#         X = subset_df[[x_var]].values
-#         y = subset_df[y_var].values
+def plot_nmi_vs_cost(df, plot_title="Final NMI vs. Signal Cost"):
+    """
+    Visualizes the relationship between Signal_Cost and Agent_0_NMI.
+    Also calculates and displays sklearn regression stats (slope, intercept, R^2).
 
-#         # Fit model
-#         model = LinearRegression()
-#         model.fit(X, y)
-#         y_pred = model.predict(X)
-#         r2 = r2_score(y, y_pred)
+    Args:
+        df (pd.DataFrame): The DataFrame containing the data.
+        plot_title (str): The title for the plot.
+    """
+    if 'Signal_Cost' not in df.columns or 'Agent_0_NMI' not in df.columns:
+        print(f"Error: DataFrame is missing 'Signal_Cost' or 'Agent_0_NMI' column.", file=sys.stderr)
+        return
+        
+    # --- SKLearn Regression ---
+    # Drop NaNs for regression calculation
+    temp_df = df[['Signal_Cost', 'Agent_0_NMI']].dropna()
+    
+    if temp_df.empty:
+        print(f"Warning: No valid data for regression in '{plot_title}' after dropping NaNs.", file=sys.stderr)
+        slope, intercept, r2 = np.nan, np.nan, np.nan
+    else:
+        X = temp_df[['Signal_Cost']]
+        y = temp_df['Agent_0_NMI']
+        
+        model = LinearRegression()
+        model.fit(X, y)
+        
+        slope = model.coef_[0]
+        intercept = model.intercept_
+        r2 = model.score(X, y) # R-squared
+        
+    stats_text = f"SKLearn Stats:\n" \
+                 f"Slope: {slope:.4f}\n" \
+                 f"Intercept: {intercept:.4f}\n" \
+                 f"R-squared: {r2:.4f}"
+    # --- End SKLearn ---
 
-#         # Get coefficients
-#         slope = model.coef_[0]
-#         intercept = model.intercept_
+    plt.figure(figsize=(10, 6))
+    ax = sns.regplot(
+        data=df,
+        x='Signal_Cost',
+        y='Agent_0_NMI',
+        scatter_kws={'alpha': 0.3, 's': 15},
+        line_kws={'color': 'blue', 'linewidth': 2}
+    )
 
-#         # Plot
-#         plt.figure(figsize=figsize)
-#         sns.regplot(x=X.flatten(), y=y, scatter_kws={'alpha': 0.5}, line_kws={'color': 'red'})
-#         plt.title(f'Regression: NMI vs. Rewards (full info = {tuple[1]})')  # Fixed title
-#         plt.xlabel('Final NMI')                   # Fixed x-label
-#         plt.ylabel('Final Reward')                # Fixed y-label
-#         plt.grid(True)
+    # Add the stats text to the plot
+    ax.text(0.05, 0.95, stats_text, transform=ax.transAxes, fontsize=10,
+            verticalalignment='top', bbox=dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.7))
 
-#         # Annotate with regression info
-#         eq_str = f"$y = {intercept:.2f} + {slope:.2f}x$\n$R^2 = {r2:.3f}$"
-#         plt.text(0.05, 0.95, eq_str, transform=plt.gca().transAxes,
-#                 fontsize=10, verticalalignment='top',
-#                 bbox=dict(boxstyle="round", facecolor='white', edgecolor='gray'))
-
-#         plt.tight_layout()
-#         plt.show()
+    plt.title(plot_title, fontsize=16)
+    plt.xlabel("Signal Cost", fontsize=12)
+    plt.ylabel("Agent 0 Final NMI", fontsize=12)
+    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.tight_layout()
+    plt.show()
