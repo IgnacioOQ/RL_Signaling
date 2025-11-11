@@ -478,26 +478,26 @@ def plot_regression(df, x_var='Agent_0_NMI', y_var='Agent_0_final_reward', figsi
 
 def plot_reward_vs_cost(df, plot_title="Final Reward vs. Signal Cost"):
     """
-    Visualizes the relationship between Signal_Cost and Agent_0_final_reward.
+    Visualizes the relationship between Signal_Cost_A0 and Agent_0_final_reward.
     Also calculates and displays sklearn regression stats (slope, intercept, R^2).
 
     Args:
         df (pd.DataFrame): The DataFrame containing the data.
         plot_title (str): The title for the plot.
     """
-    if 'Signal_Cost' not in df.columns or 'Agent_0_final_reward' not in df.columns:
-        print(f"Error: DataFrame is missing 'Signal_Cost' or 'Agent_0_final_reward' column.", file=sys.stderr)
+    if 'Signal_Cost_A0' not in df.columns or 'Agent_0_final_reward' not in df.columns:
+        print(f"Error: DataFrame is missing 'Signal_Cost_A0' or 'Agent_0_final_reward' column.", file=sys.stderr)
         return
 
     # --- SKLearn Regression ---
     # Drop NaNs for regression calculation
-    temp_df = df[['Signal_Cost', 'Agent_0_final_reward']].dropna()
+    temp_df = df[['Signal_Cost_A0', 'Agent_0_final_reward']].dropna()
     
     if temp_df.empty:
         print(f"Warning: No valid data for regression in '{plot_title}' after dropping NaNs.", file=sys.stderr)
         slope, intercept, r2 = np.nan, np.nan, np.nan
     else:
-        X = temp_df[['Signal_Cost']]
+        X = temp_df[['Signal_Cost_A0']]
         y = temp_df['Agent_0_final_reward']
         
         model = LinearRegression()
@@ -516,7 +516,7 @@ def plot_reward_vs_cost(df, plot_title="Final Reward vs. Signal Cost"):
     plt.figure(figsize=(10, 6))
     ax = sns.regplot(
         data=df,
-        x='Signal_Cost',
+        x='Signal_Cost_A0',
         y='Agent_0_final_reward',
         scatter_kws={'alpha': 0.3, 's': 15}, # Make points smaller and semi-transparent
         line_kws={'color': 'red', 'linewidth': 2} # Make regression line red
@@ -535,26 +535,26 @@ def plot_reward_vs_cost(df, plot_title="Final Reward vs. Signal Cost"):
 
 def plot_nmi_vs_cost(df, plot_title="Final NMI vs. Signal Cost"):
     """
-    Visualizes the relationship between Signal_Cost and Agent_0_NMI.
+    Visualizes the relationship between Signal_Cost_A0 and Agent_0_NMI.
     Also calculates and displays sklearn regression stats (slope, intercept, R^2).
 
     Args:
         df (pd.DataFrame): The DataFrame containing the data.
         plot_title (str): The title for the plot.
     """
-    if 'Signal_Cost' not in df.columns or 'Agent_0_NMI' not in df.columns:
-        print(f"Error: DataFrame is missing 'Signal_Cost' or 'Agent_0_NMI' column.", file=sys.stderr)
+    if 'Signal_Cost_A0' not in df.columns or 'Agent_0_NMI' not in df.columns:
+        print(f"Error: DataFrame is missing 'Signal_Cost_A0' or 'Agent_0_NMI' column.", file=sys.stderr)
         return
         
     # --- SKLearn Regression ---
     # Drop NaNs for regression calculation
-    temp_df = df[['Signal_Cost', 'Agent_0_NMI']].dropna()
+    temp_df = df[['Signal_Cost_A0', 'Agent_0_NMI']].dropna()
     
     if temp_df.empty:
         print(f"Warning: No valid data for regression in '{plot_title}' after dropping NaNs.", file=sys.stderr)
         slope, intercept, r2 = np.nan, np.nan, np.nan
     else:
-        X = temp_df[['Signal_Cost']]
+        X = temp_df[['Signal_Cost_A0']]
         y = temp_df['Agent_0_NMI']
         
         model = LinearRegression()
@@ -573,7 +573,7 @@ def plot_nmi_vs_cost(df, plot_title="Final NMI vs. Signal Cost"):
     plt.figure(figsize=(10, 6))
     ax = sns.regplot(
         data=df,
-        x='Signal_Cost',
+        x='Signal_Cost_A0',
         y='Agent_0_NMI',
         scatter_kws={'alpha': 0.3, 's': 15},
         line_kws={'color': 'blue', 'linewidth': 2}
