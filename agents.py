@@ -72,7 +72,7 @@ class UrnAgent:
         if state not in self.action_urns:
             self.action_urns[state] = np.ones(self.n_final_actions)
         probability_weights = self.action_urns[state] / (np.sum(self.action_urns[state]))
-        print("Probability weights:", probability_weights)
+        # print("Probability weights:", probability_weights)
         return np.random.choice(self.n_final_actions, p=probability_weights)
 
     def update_signals(self, state, signal, reward):

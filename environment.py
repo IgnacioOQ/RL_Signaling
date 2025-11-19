@@ -359,7 +359,9 @@ class TempNetMultiAgentEnv:
         if self.step_type == "signal":
             self.signals = actions
             self.step_type = "act"
-            return [0.0] * self.n_agents, False
+            rewards = [0.0] * self.n_agents
+            # print("Rewards:", rewards)
+            return rewards, False
 
         elif self.step_type == "act":
             rewards = []
@@ -369,6 +371,7 @@ class TempNetMultiAgentEnv:
                 rewards.append(reward)
                 self.rewards_history[i].append(reward)
             self.step_type = "done"
+            # print("Rewards:", rewards)
             return rewards, True
 
         else:

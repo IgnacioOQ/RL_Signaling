@@ -76,6 +76,10 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
       if costly_signaling and with_signals:
         # Apply signal cost only if the agent did not send the "null signal"
         # The null signal is at index n_signaling_actions
+        if verbose:
+          print('signals:', signals)
+          print('rewards before cost:', rewards)
+          print('signal_cost:', signal_cost)
         rewards = [rewards[i] - signal_cost[i] if signals[i] != n_signaling_actions 
                    else rewards[i] 
                    for i in range(n_agents)]
