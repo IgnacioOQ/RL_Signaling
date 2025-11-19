@@ -55,7 +55,17 @@ class UrnAgent:
             # The notebook/environment provides the effective number of actions.
             self.signaling_urns[state] = np.ones(self.n_signaling_actions)
                 
-        probability_weights = self.signaling_urns[state] / (np.sum(self.signaling_urns[state]))
+        # probability_weights = self.signaling_urns[state] / (np.sum(self.signaling_urns[state]))
+        urn_values = self.signaling_urns[state]
+        total_sum = np.sum(urn_values)
+        
+        # SAFETY CHECK: If urn is empty (sum is 0), reset to uniform to avoid NaN/Division by Zero
+        if total_sum <= 0:
+            urn_values = np.ones(self.n_signaling_actions)
+            self.signaling_urns[state] = urn_values
+            total_sum = self.n_signaling_actions
+
+        probability_weights = urn_values / total_sum
         
         return np.random.choice(self.n_signaling_actions, p=probability_weights)
 
@@ -71,8 +81,21 @@ class UrnAgent:
         """
         if state not in self.action_urns:
             self.action_urns[state] = np.ones(self.n_final_actions)
-        probability_weights = self.action_urns[state] / (np.sum(self.action_urns[state]))
+            
+            
+        # probability_weights = self.action_urns[state] / (np.sum(self.action_urns[state]))
         # print("Probability weights:", probability_weights)
+        urn_values = self.action_urns[state]
+        total_sum = np.sum(urn_values)
+        
+        # SAFETY CHECK: If urn is empty (sum is 0), reset to uniform to avoid NaN/Division by Zero
+        if total_sum <= 0:
+            urn_values = np.ones(self.n_final_actions)
+            self.action_urns[state] = urn_values
+            total_sum = self.n_final_actions
+
+        probability_weights = urn_values / total_sum
+        
         return np.random.choice(self.n_final_actions, p=probability_weights)
 
     def update_signals(self, state, signal, reward):
