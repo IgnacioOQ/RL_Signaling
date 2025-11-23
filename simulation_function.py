@@ -186,7 +186,7 @@ def simulation_function(n_agents=n_agents, n_features=n_features,
 
       plt.title("Final Signal Usage Proportions by Observation")
       plt.ylabel("Proportion")
-      plt.xticks(rotation=90)
+      plt.xticks(rotation=45)
       plt.legend()
       plt.tight_layout()
       plt.show()
