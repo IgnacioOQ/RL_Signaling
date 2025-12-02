@@ -128,7 +128,7 @@ class QLearningAgent:
     def __init__(self, n_signaling_actions, n_final_actions,
                  exploration_rate=1, exploration_decay=0.995, 
                  min_exploration_rate=0.001, initialize=False,initialization_weights = [1,0],
-                 n_observed_features=1,choice='egreedy',exp_smoothing=False, costly_signaling=False):
+                 n_observed_features=1,choice='ucb',exp_smoothing=False, costly_signaling=False):
         """
         Initialize the QLearningAgent.
 
