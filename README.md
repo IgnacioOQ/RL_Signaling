@@ -33,27 +33,35 @@ When `costly_signaling=True`, an extra "null signal" action is added; sending an
 ## Repository layout
 
 ```
-rl_signaling/
-  __init__.py        # package public surface
-  agents.py          # UrnAgent, QLearningAgent, TDLearningAgent
-  env.py             # NetMultiAgentEnv, TempNetMultiAgentEnv
-  simulation.py      # simulation_function, temp_simulation_function
-  games.py           # canonical & random game generators, signal-urn initializers
-  info_theory.py     # mutual-information / NMI metrics
-  plotting.py        # plot helpers, post-processing utilities
-notebooks/           # experiment notebooks (see table below)
-results/             # saved CSVs and PNG figures from each experiment
-tests/               # pytest suite (under construction)
+rl_signaling/                   # the package
+  __init__.py                   # public surface
+  agents.py                     # BaseAgent ABC + UrnAgent, QLearningAgent, TDLearningAgent
+  env.py                        # MultiAgentEnv (canonical) + deprecated NetMultiAgentEnv, TempNetMultiAgentEnv
+  simulation.py                 # run_simulation (canonical) + deprecated simulation_function, temp_simulation_function
+  games.py                      # canonical & random game generators, signal-urn initializers
+  info_theory.py                # mutual-information / NMI metrics
+  plotting.py                   # plot helpers, post-processing utilities, plot_simulation_summary
+notebooks/                      # experiment notebooks (see table below)
+results/                        # saved CSVs and PNG figures from each experiment
+tests/                          # pytest suite (50 tests, ~5 s); includes a golden-run regression against tests/golden/baseline.json
+README.md                       # this file
+REFACTOR_PLAN.md                # phased refactor plan (Phases 1–7 complete)
+WORKLOG.md                      # append-only history of significant changes
+TODO_WORKFLOW.md                # cross-session task backlog
+HOUSEKEEPING.md                 # recurring repo health check
+LEGACY_BUGS_LOG.md              # catalog of bugs surfaced by the refactor
+DEBUGGING_PLAN.md               # phased audit of code vs intended model (next session)
+pyproject.toml, requirements.txt, LICENSE, .gitignore
 ```
 
 | Module | Purpose |
 |---|---|
-| [rl_signaling/agents.py](rl_signaling/agents.py) | Agent classes: `UrnAgent` (Roth–Erev), `QLearningAgent` (`egreedy` / `softmax` / `ucb`), `TDLearningAgent` |
-| [rl_signaling/env.py](rl_signaling/env.py) | `NetMultiAgentEnv` (main, single-step episodes) and `TempNetMultiAgentEnv` (two-step formulation used by the TD-learning agent) |
-| [rl_signaling/simulation.py](rl_signaling/simulation.py) | `simulation_function` for `NetMultiAgentEnv`; `temp_simulation_function` for `TempNetMultiAgentEnv` |
+| [rl_signaling/agents.py](rl_signaling/agents.py) | `BaseAgent` ABC + three concrete agents: `UrnAgent` (Roth–Erev), `QLearningAgent` (`egreedy` / `softmax` / `ucb`), `TDLearningAgent` |
+| [rl_signaling/env.py](rl_signaling/env.py) | Canonical `MultiAgentEnv` (single-step shape, drives any `BaseAgent`); legacy `NetMultiAgentEnv` and `TempNetMultiAgentEnv` retained as deprecated wrappers |
+| [rl_signaling/simulation.py](rl_signaling/simulation.py) | Canonical `run_simulation(env, n_episodes, …)`; legacy `simulation_function` and `temp_simulation_function` retained as deprecated wrappers |
 | [rl_signaling/games.py](rl_signaling/games.py) | Random and canonical game generators; signal-urn initializers |
 | [rl_signaling/info_theory.py](rl_signaling/info_theory.py) | Mutual information and normalized mutual information |
-| [rl_signaling/plotting.py](rl_signaling/plotting.py) | KDE histograms, regression plots, reward/NMI-vs-cost plots, smoothing, CSV post-processing |
+| [rl_signaling/plotting.py](rl_signaling/plotting.py) | KDE histograms, regression plots, reward/NMI-vs-cost plots, smoothing, CSV post-processing, the `plot_simulation_summary` helper used by `run_simulation` |
 
 ### Notebooks
 
@@ -159,6 +167,7 @@ Each agent's payoff is independent of the others' actions, so there is no immedi
 
 ## Status and known limitations
 
+- The seven-phase refactor described in [REFACTOR_PLAN.md](REFACTOR_PLAN.md) is **complete**. The next active workstream is the model-vs-implementation audit in [DEBUGGING_PLAN.md](DEBUGGING_PLAN.md). See [TODO_WORKFLOW.md](TODO_WORKFLOW.md) for the active cross-session task and [WORKLOG.md](WORKLOG.md) for the full history.
 - `signal_usage` history in [rl_signaling/env.py](rl_signaling/env.py) is appended every episode via `deepcopy`, which is memory-inefficient for long runs but kept for plotting compatibility.
 - **Legacy and canonical APIs diverge slightly for `TDLearningAgent`.** In the legacy two-step flow (`TempNetMultiAgentEnv` + `temp_simulation_function`), the signal-phase update decays `exploration_rate` **before** the action-phase `get_action` runs. In the canonical `MultiAgentEnv` + `run_simulation` flow, both TD updates run at end-of-episode inside `update_episode`. As a result, the action-phase `get_action` sees a slightly higher `exploration_rate` in the new flow, which causes roughly 1 in 100 episodes to take a different explore/exploit branch and produce a different reward. The Q-value math is unchanged — this is purely an exploration-schedule ordering difference. The golden-run baseline at [tests/golden/baseline.json](tests/golden/baseline.json) is captured against the canonical API; the deprecated path is no longer the reference. `UrnAgent` and `QLearningAgent` produce byte-identical output across both APIs.
-- An ongoing structural refactor is tracked in [REFACTOR_PLAN.md](REFACTOR_PLAN.md). See `WORKLOG.md` for completed phases and `TODO_WORKFLOW.md` for the active task.
+- Known legacy-code bugs are catalogued in [LEGACY_BUGS_LOG.md](LEGACY_BUGS_LOG.md). The `UrnAgent` action-urn initialization bug (Bug 1) was fixed during the refactor and changes the output of [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) — the saved `initializations_*.png` figures reflect the pre-fix behavior and need to be regenerated to reflect the corrected experiment.
