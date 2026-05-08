@@ -337,6 +337,154 @@ def smooth(values: Sequence[float], window_size: int = 3) -> NDArray[np.float64]
     return smoothed
 
 
+def plot_simulation_summary(
+    signal_usage: list[dict],
+    rewards_history: list[list[float]],
+    signal_information_history: list[list[float]],
+    histories: dict,
+    n_signaling_actions: int,
+    n_episodes: int,
+) -> None:
+    """Render the canonical five-panel per-episode summary.
+
+    Replaces the ~120-line plotting block that used to be duplicated at
+    the bottom of ``simulation_function`` and ``temp_simulation_function``.
+
+    Parameters
+    ----------
+    signal_usage, rewards_history, signal_information_history, histories
+        The first four elements of the per-episode metrics 5-tuple
+        returned by :meth:`rl_signaling.env.MultiAgentEnv.report_metrics`.
+    n_signaling_actions
+        Effective signaling action count (already includes the null
+        signal when ``costly_signaling=True``).
+    n_episodes
+        Number of episodes that were run; used as the x-axis upper bound.
+    """
+    n_agents = len(rewards_history)
+
+    # Panel 1: rewards over episodes
+    plt.figure(figsize=(10, 6))
+    for i in range(n_agents):
+        plt.scatter(
+            range(n_episodes),
+            rewards_history[i],
+            label=f"Agent {i} (Raw)",
+            alpha=0.05,
+            s=10,
+        )
+        window_size = 100
+        smoothed = np.convolve(
+            rewards_history[i], np.ones(window_size) / window_size, mode="valid"
+        )
+        plt.plot(
+            range(window_size - 1, n_episodes),
+            smoothed,
+            label=f"Agent {i} (Smoothed Trend)",
+        )
+    plt.title("Agent Rewards Over Episodes")
+    plt.xlabel("Episode")
+    plt.ylabel("Reward")
+    plt.legend()
+    plt.grid(True, which="both", linestyle="--", linewidth=0.5)
+
+    # Panel 2: NMI over episodes
+    plt.figure(figsize=(8, 5))
+    for i in range(n_agents):
+        smoothed_nmi = [
+            sum(signal_information_history[i][j : j + 10]) / 10
+            for j in range(0, n_episodes, 10)
+        ]
+        plt.plot(range(0, n_episodes, 10), smoothed_nmi, label=f"Agent {i}")
+    plt.title("Average Normalized Mutual Information (Smoothed)")
+    plt.xlabel("Episode")
+    plt.ylabel("Average NMI")
+    plt.legend()
+
+    # Panel 3: accumulated signal usage by observation
+    plt.figure(figsize=(8, 5))
+    for i, usage in enumerate(signal_usage):
+        for state, counts in usage.items():
+            bar_labels = [f"{count:.2f}" for count in counts]
+            bars = plt.bar(
+                [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
+                counts,
+                label=f"A{i}, State {state}",
+                alpha=0.7,
+            )
+            for bar, label in zip(bars, bar_labels):
+                plt.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    bar.get_height(),
+                    label,
+                    ha="center",
+                    va="bottom",
+                )
+    plt.title("Accumulated Signal Usage Count by Observation")
+    plt.ylabel("Frequency")
+    plt.xticks(rotation=90)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    # Panel 4: final signal usage proportions
+    final_signal_usage = [histories[i]["signal_history"][-1] for i in range(n_agents)]
+    plt.figure(figsize=(8, 5))
+    for i, usage in enumerate(final_signal_usage):
+        for state, counts in usage.items():
+            total_counts = counts.sum()
+            proportions = counts / total_counts if total_counts else counts
+            bar_labels = [f"{prop:.2f}" for prop in proportions]
+            bars = plt.bar(
+                [f"A{i}-{state}-Sig {s}" for s in range(n_signaling_actions)],
+                proportions,
+                label=f"A{i}, State {state}",
+                alpha=0.7,
+            )
+            for bar, label in zip(bars, bar_labels):
+                plt.text(
+                    bar.get_x() + bar.get_width() / 2,
+                    bar.get_height(),
+                    label,
+                    ha="center",
+                    va="bottom",
+                )
+    plt.title("Final Signal Usage Proportions by Observation")
+    plt.ylabel("Proportion")
+    plt.xticks(rotation=45)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+    # Panel 5: smoothed urn proportions over episodes
+    plt.figure(figsize=(8, 5))
+    markers = ["o", "x", "+", "s"]
+    for agent_idx in range(n_agents):
+        proportions = calculate_proportions(histories[agent_idx])
+        marker = markers[agent_idx % len(markers)]
+        for key, values in proportions.items():
+            smoothed = smooth(values)
+            plt.plot(
+                range(len(values)),
+                smoothed,
+                marker=marker,
+                markersize=1,
+                label=f"Agent {agent_idx} - Key {key}",
+            )
+            plt.text(
+                len(values) - 1,
+                smoothed[-1],
+                f"{smoothed[-1]:.2f}",
+                fontsize=10,
+                ha="right",
+            )
+    plt.title("(Smoothed) Signal Urn Proportions History for Agent and Observation")
+    plt.xlabel("Episode")
+    plt.ylabel("Proportion")
+    plt.grid(True)
+    plt.legend()
+
+
 def count_negative_nmi(file_path: str) -> dict[str, int]:
     """Count negative values in every NMI-bearing column of a results CSV."""
     df = pd.read_csv(file_path)

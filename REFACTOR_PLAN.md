@@ -148,7 +148,7 @@ REFACTOR_PLAN.md     # this file
 | 3. Module split | **Done** | uncommitted on `refactor` |
 | 3.5. Docstrings + type hints | **Done** | uncommitted on `refactor` |
 | 4. Unified agent interface (+ urn-init bug fix) | **Done** | uncommitted on `refactor` |
-| 5. Unified Env + runner | Pending | – |
+| 5. Unified Env + runner | **Done** | uncommitted on `refactor` |
 | 6. Tests | Pending | – |
 | 7. Docs polish | Pending | – |
 
@@ -415,7 +415,7 @@ After Phase 4, re-run with the same seeds and diff against `baseline.json`. Acce
 
 ---
 
-## Phase 5 — Unified Env + runner (Pending)
+## Phase 5 — Unified Env + runner (Done)
 
 ### Scope
 
@@ -428,6 +428,21 @@ After Phase 4, re-run with the same seeds and diff against `baseline.json`. Acce
 
 - Golden-run diff matches Phase 4 baseline (new code reproduces old behavior).
 - All notebooks run unmodified through the deprecated wrappers; one notebook (`basic_unit_test.ipynb`) is migrated to the new API as a reference example.
+
+### Notes from execution
+
+- **`MultiAgentEnv`** (new) is the canonical env. Single-step shape with methods `reset` → `step_signal` → `step_action` → `reward` → `update`. Replaces both legacy classes for new code.
+- **`run_simulation(env, n_episodes, ...)`** (new) is the canonical runner. ~50 lines vs the ~200-line legacy functions thanks to the extracted plotting helper.
+- **`plot_simulation_summary(metrics, ...)`** (new) in `plotting.py` consolidates the ~120-line plotting block that was duplicated near-verbatim between the two legacy runners.
+- **`update_episode(signal_state, signal, action_state, action, reward)`** is the new canonical agent update method; added to `BaseAgent` ABC and implemented by all three concrete agents. `TDLearningAgent` now subclasses `BaseAgent` (closing the gap left by Phase 4): its `update_episode` performs both TD updates internally — bootstrap-from-`action_state` for the signal phase, terminal for the action phase. Equivalent to the original interleaved per-phase updates because signal-phase and action-phase Q-table writes target different state keys (action-phase observation is signal-phase observation with received signals appended → tuple lengths differ).
+- **`TDLearningAgent.__init__`** accepts both the legacy form (`n_actions=...`) used by `TempNetMultiAgentEnv` and the canonical form (`n_signaling_actions=`, `n_final_actions=`) used by `MultiAgentEnv`. `get_signal(state)` dispatches to `range(n_signaling_actions)`, `get_action(state)` defaults to `range(n_final_actions)`, and the legacy `get_action(state, available_actions=...)` overload still works for `TempNetMultiAgentEnv`.
+- **Deprecation:** `NetMultiAgentEnv`, `TempNetMultiAgentEnv`, `simulation_function`, `temp_simulation_function` all emit `DeprecationWarning` on first use.
+- **Reference notebook migrated:** `notebooks/basic_unit_test.ipynb` now uses `MultiAgentEnv` + `run_simulation` for all three agent types. The other five experiment notebooks are unchanged and still functional via the deprecated wrappers.
+- **Golden run results:** The legacy path (still using `simulation_function` / `temp_simulation_function` via the existing `tests/golden/save_baseline.py`) reproduces the Phase 4 baseline numbers to 17 decimals. A parallel run through `MultiAgentEnv` + `run_simulation` produces byte-identical NMI fingerprints for all three agents:
+  - `UrnAgent`: `[0.33048306794974175, 0.25771413310420815]` ✓
+  - `QLearningAgent`: `[0.0008225415618804895, 0.07222377371082053]` ✓
+  - `TDLearningAgent`: `[0.03053978680986014, 0.02159203634366577]` ✓
+- **README** updated: minimal example uses the new `MultiAgentEnv` + `run_simulation` API; legacy classes mentioned as deprecated for backward compat.
 
 ---
 

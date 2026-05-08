@@ -1,25 +1,28 @@
-"""Episode-loop runners for the two environment shapes.
+"""Episode-loop runners.
 
-- :func:`simulation_function` drives :class:`NetMultiAgentEnv` (single-step,
-  ``UrnAgent`` / ``QLearningAgent``).
-- :func:`temp_simulation_function` drives :class:`TempNetMultiAgentEnv`
-  (two-step, ``TDLearningAgent``).
-
-Both produce the same 5-tuple of metrics. The plotting block at the bottom
-of each is duplicated near-verbatim and is scheduled for extraction into
-``rl_signaling.plotting`` in Phase 5 of ``REFACTOR_PLAN.md``.
+The canonical runner is :func:`run_simulation`, which drives any
+:class:`rl_signaling.env.MultiAgentEnv` instance. The two legacy runners
+(:func:`simulation_function` for ``NetMultiAgentEnv``,
+:func:`temp_simulation_function` for ``TempNetMultiAgentEnv``) are kept
+for backward compatibility with the existing notebooks and emit a
+:class:`DeprecationWarning` on call.
 """
 
 from __future__ import annotations
 
 import copy
+import warnings
 from typing import Any, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rl_signaling.env import NetMultiAgentEnv, TempNetMultiAgentEnv
-from rl_signaling.plotting import calculate_proportions, smooth
+from rl_signaling.env import MultiAgentEnv, NetMultiAgentEnv, TempNetMultiAgentEnv
+from rl_signaling.plotting import (
+    calculate_proportions,
+    plot_simulation_summary,
+    smooth,
+)
 
 
 SimulationResult = tuple[
@@ -29,6 +32,80 @@ SimulationResult = tuple[
     dict,                # per-agent histories of signal/action usage snapshots
     list[tuple],         # nature_history (tuple per episode)
 ]
+
+
+def run_simulation(
+    env: MultiAgentEnv,
+    n_episodes: int,
+    with_signals: bool = True,
+    signal_cost: Sequence[float] | None = None,
+    plot: bool = True,
+    verbose: bool = False,
+) -> SimulationResult:
+    """Drive ``n_episodes`` of the unified env.
+
+    Parameters
+    ----------
+    env
+        A :class:`rl_signaling.env.MultiAgentEnv` instance. The env's
+        ``costly_signaling`` flag determines whether ``signal_cost`` is
+        applied to each episode's reward.
+    n_episodes
+        Number of episodes to run.
+    with_signals
+        If False, agents skip the signaling step; ``new_observations`` is
+        a deep copy of the direct observations.
+    signal_cost
+        Per-agent signaling cost. Required when ``env.costly_signaling``
+        is True and ``with_signals`` is True; ignored otherwise.
+    plot
+        If True, render the canonical five-panel summary at the end.
+    verbose
+        If True, print per-step traces.
+
+    Returns
+    -------
+    SimulationResult
+        ``(signal_usage, rewards_history, signal_information_history,
+        histories, nature_history)``.
+    """
+    for episode in range(n_episodes):
+        if verbose:
+            print(f"episode {episode}")
+        _, observations = env.reset()
+
+        if with_signals:
+            signals, new_observations = env.step_signal(observations)
+        else:
+            signals = None
+            new_observations = copy.deepcopy(observations)
+
+        actions = env.step_action(new_observations)
+        rewards = env.reward(
+            actions,
+            signals=signals if env.costly_signaling and with_signals else None,
+            signal_cost=signal_cost if env.costly_signaling and with_signals else None,
+        )
+        env.update(observations, signals, new_observations, actions, rewards)
+
+        if verbose:
+            print(f"  signals={signals} actions={actions} rewards={rewards}")
+
+    signal_usage, rewards_history, nmi_history, nature_history, histories = (
+        env.report_metrics()
+    )
+
+    if plot:
+        plot_simulation_summary(
+            signal_usage=signal_usage,
+            rewards_history=rewards_history,
+            signal_information_history=nmi_history,
+            histories=histories,
+            n_signaling_actions=env.n_signaling_actions,
+            n_episodes=n_episodes,
+        )
+
+    return signal_usage, rewards_history, nmi_history, histories, nature_history
 
 
 def simulation_function(
@@ -78,6 +155,12 @@ def simulation_function(
         ``(signal_usage, rewards_history, signal_information_history,
         histories, nature_history)``.
     """
+    warnings.warn(
+        "simulation_function is deprecated; use rl_signaling.simulation.run_simulation "
+        "with rl_signaling.env.MultiAgentEnv instead. See REFACTOR_PLAN.md Phase 5.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     effective_n_signaling_actions = (
         n_signaling_actions + 1 if costly_signaling else n_signaling_actions
     )
@@ -287,6 +370,12 @@ def temp_simulation_function(
     Parameters mirror :func:`simulation_function` minus ``costly_signaling``
     and ``signal_cost`` (which are not implemented for the two-step path).
     """
+    warnings.warn(
+        "temp_simulation_function is deprecated; use rl_signaling.simulation.run_simulation "
+        "with rl_signaling.env.MultiAgentEnv instead. See REFACTOR_PLAN.md Phase 5.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     for episode in range(n_episodes):
         if verbose:
             print(f'Episode {episode}')

@@ -92,47 +92,37 @@ A 2-agent run on the canonical game with the urn agent:
 
 ```python
 import networkx as nx
-from rl_signaling.agents import UrnAgent
-from rl_signaling.env import NetMultiAgentEnv
+from rl_signaling import MultiAgentEnv, UrnAgent, run_simulation
 from rl_signaling.games import create_random_canonical_game
-from rl_signaling.simulation import simulation_function
-
-n_agents, n_features = 2, 2
-n_signaling_actions, n_final_actions = 2, 4
-agents_observed_variables = {0: [0], 1: [1]}
 
 # Fully connected directed graph between the two agents
-G = nx.DiGraph()
-G.add_nodes_from([0, 1])
-G.add_edges_from([(0, 1), (1, 0)])
+graph = nx.DiGraph()
+graph.add_nodes_from([0, 1])
+graph.add_edges_from([(0, 1), (1, 0)])
 
-game_dicts = {i: create_random_canonical_game(n_features, n_final_actions)
-              for i in range(n_agents)}
+game_dicts = {i: create_random_canonical_game(n_features=2, n_final_actions=4)
+              for i in range(2)}
 
-env = NetMultiAgentEnv(
-    n_agents=n_agents, n_features=n_features,
-    n_signaling_actions=n_signaling_actions,
-    n_final_actions=n_final_actions,
+env = MultiAgentEnv(
+    n_agents=2,
+    n_features=2,
+    n_signaling_actions=2,
+    n_final_actions=4,
     full_information=False,
     game_dicts=game_dicts,
-    observed_variables=agents_observed_variables,
+    observed_variables={0: [0], 1: [1]},
     agent_type=UrnAgent,
-    initialize=False,
-    costly_signaling=False,
-    graph=G,
+    graph=graph,
 )
 
-signal_usage, rewards_history, signal_information_history, histories, nature_history = \
-    simulation_function(
-        n_agents=n_agents, n_features=n_features,
-        n_signaling_actions=n_signaling_actions,
-        n_final_actions=n_final_actions,
-        n_episodes=10000, with_signals=True,
-        plot=True, env=env,
-    )
+signal_usage, rewards_history, nmi_history, histories, nature_history = run_simulation(
+    env, n_episodes=10000, with_signals=True, plot=True
+)
 ```
 
-For the TD-learning agent, swap in `TempNetMultiAgentEnv` and `temp_simulation_function` instead — see [notebooks/basic_unit_test.ipynb](notebooks/basic_unit_test.ipynb) for a working example.
+The same scaffolding works for the other two agent types — just swap `agent_type=QLearningAgent` or `agent_type=TDLearningAgent`. See [notebooks/basic_unit_test.ipynb](notebooks/basic_unit_test.ipynb) for the canonical reference.
+
+The legacy `NetMultiAgentEnv` / `TempNetMultiAgentEnv` classes and `simulation_function` / `temp_simulation_function` runners are still available for backward compatibility with the experiment notebooks but emit a `DeprecationWarning`.
 
 To reproduce the published figures, run the experiment notebooks first to generate CSVs in `results/`, then run [notebooks/plotting_results.ipynb](notebooks/plotting_results.ipynb).
 

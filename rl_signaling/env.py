@@ -1,30 +1,299 @@
 """Multi-agent signaling environments.
 
-Two environments share the role of running episodes over a directed graph
-of agents:
-
-- :class:`NetMultiAgentEnv` — single-step environment where signaling and
-  the final action are chosen by separate methods on the agent
-  (``get_signal`` / ``get_action``). Used with :class:`UrnAgent` and
-  :class:`QLearningAgent`.
-- :class:`TempNetMultiAgentEnv` — two-step environment that exposes a
-  unified ``get_action(state, available_actions)`` API, used by
-  :class:`TDLearningAgent`.
-
-Unifying the two is tracked as Phase 5 in ``REFACTOR_PLAN.md``.
+The canonical environment for new code is :class:`MultiAgentEnv` — a
+single-step, single-update-call shape that drives any agent satisfying
+:class:`rl_signaling.agents.BaseAgent`. The legacy
+:class:`NetMultiAgentEnv` and :class:`TempNetMultiAgentEnv` are kept for
+backward compatibility with the existing experiment notebooks; both emit
+a :class:`DeprecationWarning` on construction.
 """
 
 from __future__ import annotations
 
 import copy
-from typing import Any
+import warnings
+from typing import Any, Sequence
 
 import networkx as nx
 import numpy as np
 from numpy.typing import NDArray
 
-from rl_signaling.agents import QLearningAgent, TDLearningAgent, UrnAgent
+from rl_signaling.agents import BaseAgent, QLearningAgent, TDLearningAgent, UrnAgent
 from rl_signaling.info_theory import compute_mutual_information
+
+
+class MultiAgentEnv:
+    """Unified multi-agent signaling environment.
+
+    Replaces the two legacy classes (:class:`NetMultiAgentEnv` and
+    :class:`TempNetMultiAgentEnv`) with a single shape: every episode is
+    one ``reset → step_signal → step_action → reward → update`` cycle,
+    and every agent receives a single :meth:`update_episode` call carrying
+    everything needed for both Roth–Erev/Q-learning and TD-bootstrap
+    update rules.
+
+    Parameters
+    ----------
+    n_agents : int
+        Number of agents (must match ``len(graph.nodes)``).
+    n_features : int
+        Number of binary features in the nature vector.
+    n_signaling_actions : int
+        Base size of the signaling action space. When ``costly_signaling``
+        is True, the agents are constructed with ``n_signaling_actions + 1``
+        — the extra index is the null signal.
+    n_final_actions : int
+        Size of the final action space.
+    full_information : bool, default False
+        If True, every agent observes the full nature vector.
+    game_dicts : dict
+        Mapping ``agent_index -> {state -> {action -> reward}}``.
+    observed_variables : dict
+        Mapping ``agent_index -> list[int]`` selecting which features each
+        agent observes when ``full_information=False``.
+    agent_factory : Callable[..., BaseAgent], optional
+        Custom factory for constructing agents. When ``None`` (the default),
+        ``agent_type`` is used with the standard kwargs.
+    agent_type : type, default :class:`UrnAgent`
+        Agent class. Ignored if ``agent_factory`` is provided.
+    agent_kwargs : dict, optional
+        Extra kwargs forwarded to ``agent_type`` (e.g. ``choice="ucb"``).
+    costly_signaling : bool, default False
+        If True, append a null-signal action and let the runner deduct the
+        per-signal cost from the reward (see :func:`apply_signal_cost`).
+    graph : networkx.DiGraph
+        Directed graph of agent connectivity. Required.
+
+    Raises
+    ------
+    ValueError
+        If ``graph is None``, ``len(graph.nodes) != n_agents``, or
+        ``agent_type`` does not satisfy :class:`BaseAgent`.
+    """
+
+    def __init__(
+        self,
+        n_agents: int,
+        n_features: int,
+        n_signaling_actions: int,
+        n_final_actions: int,
+        graph: nx.DiGraph,
+        game_dicts: dict,
+        observed_variables: dict,
+        full_information: bool = False,
+        agent_type: type = UrnAgent,
+        agent_factory=None,
+        agent_kwargs: dict | None = None,
+        costly_signaling: bool = False,
+    ) -> None:
+        if graph is None:
+            raise ValueError("graph cannot be None.")
+        if len(graph.nodes) != n_agents:
+            raise ValueError(
+                f"Mismatch: n_agents={n_agents}, graph has {len(graph.nodes)} nodes."
+            )
+
+        self.n_agents = n_agents
+        self.n_features = n_features
+        self.n_final_actions = n_final_actions
+        self.costly_signaling = costly_signaling
+        self.full_information = full_information
+        self.graph = graph
+        self.game_dicts = game_dicts
+        self.observed_variables = observed_variables
+
+        # When signaling is costly, append the null-signal action.
+        self.n_signaling_actions = (
+            n_signaling_actions + 1 if costly_signaling else n_signaling_actions
+        )
+        self._null_signal_index = self.n_signaling_actions - 1 if costly_signaling else None
+
+        if agent_factory is not None:
+            self.agents = [agent_factory(i) for i in range(n_agents)]
+        else:
+            kwargs = dict(agent_kwargs or {})
+            kwargs.setdefault("n_signaling_actions", self.n_signaling_actions)
+            kwargs.setdefault("n_final_actions", self.n_final_actions)
+            self.agents = [agent_type(**kwargs) for _ in range(n_agents)]
+
+        for agent in self.agents:
+            if not isinstance(agent, BaseAgent):
+                raise ValueError(
+                    f"Agent of type {type(agent).__name__} does not subclass BaseAgent."
+                )
+
+        # Episode state
+        self.nature_vector: NDArray[np.int_] | None = None
+        self.current_step = 0
+
+        # Per-agent metric buffers
+        self.rewards_history: list[list[float]] = [[] for _ in range(n_agents)]
+        self.signal_usage: list[dict] = [{} for _ in range(n_agents)]
+        self.action_usage: list[dict] = [{} for _ in range(n_agents)]
+        self.signal_information_history: list[list[float]] = [[] for _ in range(n_agents)]
+        self.nature_history: list[tuple[int, ...]] = []
+
+        # Per-episode usage snapshots (memory-inefficient by design — used by
+        # the existing plotting helpers; see REFACTOR_PLAN Status).
+        self.histories: dict[int, dict[str, list]] = {
+            i: {"signal_history": [], "action_history": []} for i in range(n_agents)
+        }
+
+    # ------------------------------------------------------------------ episode
+
+    def reset(self) -> tuple[NDArray[np.int_], list[tuple]]:
+        """Sample a fresh nature vector and return ``(nature, observations)``."""
+        self.current_step = 0
+        self.nature_vector = np.random.randint(0, 2, size=self.n_features)
+        self.nature_history.append(tuple(self.nature_vector))
+        if self.full_information:
+            obs = [tuple(self.nature_vector) for _ in range(self.n_agents)]
+        else:
+            obs = [
+                tuple(self.nature_vector[j] for j in self.observed_variables[i])
+                for i in range(self.n_agents)
+            ]
+        self.current_step = 1
+        return self.nature_vector, obs
+
+    def step_signal(self, observations: list[tuple]) -> tuple[list[int], list[tuple]]:
+        """Run the signaling step: choose signals, propagate along the graph.
+
+        Returns
+        -------
+        (signals, new_observations)
+            ``signals`` is the per-agent signal index. ``new_observations``
+            is each agent's observation tuple with received signals appended.
+        """
+        signals = [
+            agent.get_signal(observations[i]) for i, agent in enumerate(self.agents)
+        ]
+
+        for i in range(self.n_agents):
+            obs = observations[i]
+            if obs not in self.signal_usage[i]:
+                self.signal_usage[i][obs] = np.zeros(self.n_signaling_actions)
+            if not (0 <= signals[i] < self.n_signaling_actions):
+                raise ValueError(
+                    f"Signal {signals[i]} out of range "
+                    f"({self.n_signaling_actions}) for agent {i}"
+                )
+            self.signal_usage[i][obs][signals[i]] += 1
+
+        for i in range(self.n_agents):
+            _, nmi = compute_mutual_information(self.signal_usage[i])
+            self.signal_information_history[i].append(nmi)
+
+        new_observations = self._send_signals(signals, observations)
+        self.current_step = 2
+        return signals, new_observations
+
+    def step_action(self, observations: list[tuple]) -> list[int]:
+        """Run the final-action step. Updates ``action_usage``."""
+        actions = [
+            agent.get_action(observations[i]) for i, agent in enumerate(self.agents)
+        ]
+        for i in range(self.n_agents):
+            obs = observations[i]
+            if obs not in self.action_usage[i]:
+                self.action_usage[i][obs] = np.zeros(self.n_final_actions)
+            if not (0 <= actions[i] < self.n_final_actions):
+                raise ValueError(
+                    f"Action {actions[i]} out of range for agent {i}"
+                )
+            self.action_usage[i][obs][actions[i]] += 1
+        self.current_step = 3
+        return actions
+
+    def reward(
+        self,
+        actions: list[int],
+        signals: list[int] | None = None,
+        signal_cost: Sequence[float] | None = None,
+    ) -> list[float]:
+        """Look up per-agent rewards from the game dicts.
+
+        When ``signals`` is provided alongside a non-empty ``signal_cost``
+        and the env was constructed with ``costly_signaling=True``, the
+        per-agent cost is deducted unless the agent emitted the null signal.
+        """
+        rewards: list[float] = []
+        state_key = tuple(self.nature_vector)
+        for i, action in enumerate(actions):
+            try:
+                rewards.append(self.game_dicts[i][state_key][action])
+            except KeyError as e:
+                raise KeyError(
+                    f"Invalid state-action pair ({state_key}, {action}) for agent {i}"
+                ) from e
+
+        if (
+            self.costly_signaling
+            and signals is not None
+            and signal_cost is not None
+        ):
+            rewards = [
+                r - signal_cost[i] if signals[i] != self._null_signal_index else r
+                for i, r in enumerate(rewards)
+            ]
+
+        self.current_step = 4
+        return rewards
+
+    def update(
+        self,
+        signal_observations: list[tuple],
+        signals: list[int] | None,
+        action_observations: list[tuple],
+        actions: list[int],
+        rewards: list[float],
+    ) -> None:
+        """Apply per-agent ``update_episode`` and snapshot per-step usage."""
+        for i in range(self.n_agents):
+            self.rewards_history[i].append(rewards[i])
+            self.agents[i].update_episode(
+                signal_state=signal_observations[i],
+                signal=signals[i] if signals is not None else None,
+                action_state=action_observations[i],
+                action=actions[i],
+                reward=rewards[i],
+            )
+            self.histories[i]["signal_history"].append(copy.deepcopy(self.signal_usage[i]))
+            self.histories[i]["action_history"].append(copy.deepcopy(self.action_usage[i]))
+        self.current_step = 5
+
+    # ------------------------------------------------------------------ plumbing
+
+    def _send_signals(
+        self, signals: list[int], observations: list[tuple]
+    ) -> list[tuple]:
+        new_observations = copy.deepcopy(observations)
+        for i in range(self.n_agents):
+            for neig in self.graph.predecessors(i):
+                if (
+                    self.costly_signaling
+                    and signals[neig] == self._null_signal_index
+                ):
+                    continue
+                new_observations[i] = new_observations[i] + (signals[neig],)
+        return new_observations
+
+    def report_metrics(
+        self,
+    ) -> tuple[list[dict], list[list[float]], list[list[float]], list[tuple], dict]:
+        """Return the canonical 5-tuple of per-episode metrics."""
+        return (
+            self.signal_usage,
+            self.rewards_history,
+            self.signal_information_history,
+            self.nature_history,
+            self.histories,
+        )
+
+    def render(self) -> None:
+        """Print the current step and the most recent nature vector."""
+        print(f"Step: {self.current_step}")
+        print(f"Nature Vector: {self.nature_vector}")
 
 
 class NetMultiAgentEnv:
@@ -91,6 +360,12 @@ class NetMultiAgentEnv:
         costly_signaling: bool = False,
         graph: nx.DiGraph | None = None,
     ) -> None:
+        warnings.warn(
+            "NetMultiAgentEnv is deprecated; use rl_signaling.env.MultiAgentEnv instead. "
+            "See REFACTOR_PLAN.md Phase 5.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if graph is None:
             raise ValueError("Graph cannot be None. Please provide a valid graph structure.")
 
@@ -368,6 +643,12 @@ class TempNetMultiAgentEnv:
         agent_type: type | None = None,
         graph: nx.DiGraph | None = None,
     ) -> None:
+        warnings.warn(
+            "TempNetMultiAgentEnv is deprecated; use rl_signaling.env.MultiAgentEnv instead. "
+            "See REFACTOR_PLAN.md Phase 5.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if graph is None:
             raise ValueError("Graph cannot be None.")
         if len(graph.nodes) != n_agents:

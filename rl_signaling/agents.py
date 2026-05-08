@@ -116,18 +116,26 @@ def _select_action(
 
 
 class BaseAgent(ABC):
-    """Canonical agent interface used by :class:`rl_signaling.env.NetMultiAgentEnv`.
+    """Canonical agent interface used by :class:`rl_signaling.env.MultiAgentEnv`.
 
-    Concrete agents implement four methods:
+    Concrete agents implement three methods:
 
-    - ``get_signal(state) -> int``
-    - ``get_action(state) -> int``
-    - ``update_signals(state, signal, reward) -> None``
-    - ``update_actions(state, action, reward) -> None``
+    - ``get_signal(state) -> int`` — choose a signal given the direct
+      observation.
+    - ``get_action(state) -> int`` — choose a final action given the
+      post-communication observation.
+    - ``update_episode(signal_state, signal, action_state, action, reward)``
+      — apply all per-episode updates after the reward is known.
 
-    Implemented by :class:`UrnAgent` and :class:`QLearningAgent`.
-    :class:`TDLearningAgent` does not currently inherit from this ABC; its
-    interface is bridged in Phase 5 alongside the env unification.
+    The ``update_episode`` design unifies single-step and two-step update
+    semantics: agents that bootstrap (e.g. :class:`TDLearningAgent`) do
+    both TD updates inside this single call, while non-temporal agents
+    (e.g. :class:`UrnAgent`, :class:`QLearningAgent`) just delegate to
+    their per-channel update helpers. This is mathematically equivalent
+    to the original interleaved per-phase updates because signal-phase
+    and action-phase writes target different state keys (the action-phase
+    observation is the signal-phase observation with received signals
+    appended, so tuple lengths differ).
     """
 
     @abstractmethod
@@ -137,10 +145,14 @@ class BaseAgent(ABC):
     def get_action(self, state) -> int: ...
 
     @abstractmethod
-    def update_signals(self, state, signal: int, reward: float) -> None: ...
-
-    @abstractmethod
-    def update_actions(self, state, action: int, reward: float) -> None: ...
+    def update_episode(
+        self,
+        signal_state,
+        signal: int | None,
+        action_state,
+        action: int,
+        reward: float,
+    ) -> None: ...
 
 
 class UrnAgent(BaseAgent):
@@ -293,6 +305,19 @@ class UrnAgent(BaseAgent):
         self.action_urns[state][action] = max(
             0, self.action_urns[state][action] + reward
         )
+
+    def update_episode(
+        self,
+        signal_state,
+        signal: int | None,
+        action_state,
+        action: int,
+        reward: float,
+    ) -> None:
+        """Apply the per-episode signal and action urn updates."""
+        if signal is not None:
+            self.update_signals(signal_state, signal, reward)
+        self.update_actions(action_state, action, reward)
 
 
 class QLearningAgent(BaseAgent):
@@ -448,21 +473,40 @@ class QLearningAgent(BaseAgent):
             self.action_exploration_rate * self.exploration_decay,
         )
 
+    def update_episode(
+        self,
+        signal_state,
+        signal: int | None,
+        action_state,
+        action: int,
+        reward: float,
+    ) -> None:
+        """Apply the per-episode signal and action Q-table TD updates."""
+        if signal is not None:
+            self.update_signals(signal_state, signal, reward)
+        self.update_actions(action_state, action, reward)
 
-class TDLearningAgent:
+
+class TDLearningAgent(BaseAgent):
     """Temporal-difference learner with a single unified Q-table.
 
     Unlike :class:`UrnAgent` / :class:`QLearningAgent`, this agent uses the
-    same Q-table for signal and action selection — the role is implicit in
-    the ``available_actions`` argument passed to ``get_action``. The
+    same Q-table for signal and action selection — the phase is determined
+    by which subset of indices the caller treats as available. The
     learning-rate schedule is ``1 / N(s, a)`` (count-based), which satisfies
     the Robbins–Monro condition under sufficient exploration.
 
     Parameters
     ----------
-    n_actions : int
-        Size of the unified action space, typically
-        ``max(n_signaling_actions, n_final_actions)``.
+    n_actions : int, optional
+        Legacy form: size of the unified action space, typically
+        ``max(n_signaling_actions, n_final_actions)``. Provide this OR the
+        ``n_signaling_actions`` / ``n_final_actions`` pair.
+    n_signaling_actions, n_final_actions : int, optional
+        Canonical form: explicit per-phase action-space sizes. When both
+        are provided, ``n_actions`` is set to ``max(n_signaling_actions,
+        n_final_actions)`` and :meth:`get_signal` / :meth:`get_action`
+        default to the appropriate subset.
     learning_rate : float, default 0.1
         Currently unused — the active update uses ``1 / N(s, a)``.
     exploration_rate : float, default 1.0
@@ -479,15 +523,30 @@ class TDLearningAgent:
 
     def __init__(
         self,
-        n_actions: int,
+        n_actions: int | None = None,
         learning_rate: float = 0.1,
         exploration_rate: float = 1.0,
         exploration_decay: float = 0.995,
         min_exploration_rate: float = 0.001,
         gamma: float = 1,
         choice: str = "egreedy",
+        n_signaling_actions: int | None = None,
+        n_final_actions: int | None = None,
     ) -> None:
-        self.n_actions = n_actions
+        if n_signaling_actions is not None and n_final_actions is not None:
+            self.n_signaling_actions = n_signaling_actions
+            self.n_final_actions = n_final_actions
+            self.n_actions = max(n_signaling_actions, n_final_actions)
+        elif n_actions is not None:
+            self.n_actions = n_actions
+            self.n_signaling_actions = n_actions
+            self.n_final_actions = n_actions
+        else:
+            raise ValueError(
+                "Provide either `n_actions` or both `n_signaling_actions` "
+                "and `n_final_actions`."
+            )
+
         self.choice = choice
         self.learning_rate = learning_rate
         self.exploration_rate = exploration_rate
@@ -497,6 +556,10 @@ class TDLearningAgent:
         self.q_table: dict = {}
         self.action_counts: dict = {}
 
+    def get_signal(self, state) -> int:
+        """Choose a signaling action from the first ``n_signaling_actions`` indices."""
+        return self.get_action(state, available_actions=range(self.n_signaling_actions))
+
     def get_action(self, state, available_actions: Sequence[int] | None = None) -> int:
         """Select an action from ``available_actions`` under ``self.choice`` strategy.
 
@@ -505,13 +568,19 @@ class TDLearningAgent:
         state
             Observation tuple keying into the Q-table.
         available_actions
-            Subset of action indices that are valid in this step (e.g.
-            signaling actions during the signal phase, final actions during
-            the action phase). Defaults to all ``n_actions``.
+            Subset of action indices that are valid in this step. Defaults
+            to ``range(n_final_actions)`` so that calling ``get_action(state)``
+            without arguments — as :class:`rl_signaling.env.MultiAgentEnv`
+            does — selects from the final-action subset. The legacy
+            :class:`rl_signaling.env.TempNetMultiAgentEnv` always passes an
+            explicit ``available_actions``.
         """
         if state not in self.q_table:
             self.q_table[state] = np.zeros(self.n_actions)
             self.action_counts[state] = np.zeros(self.n_actions)
+
+        if available_actions is None:
+            available_actions = range(self.n_final_actions)
 
         action = _select_action(
             q_values=self.q_table[state],
@@ -557,4 +626,37 @@ class TDLearningAgent:
         self.exploration_rate = max(
             self.min_exploration_rate,
             self.exploration_rate * self.exploration_decay,
+        )
+
+    def update_episode(
+        self,
+        signal_state,
+        signal: int | None,
+        action_state,
+        action: int,
+        reward: float,
+    ) -> None:
+        """Apply two TD updates: signal-phase (bootstrap) then action-phase (terminal).
+
+        Equivalent to the interleaved per-phase update sequence used by
+        the legacy :class:`rl_signaling.env.TempNetMultiAgentEnv`. The two
+        updates target different state keys (``signal_state`` is shorter
+        than ``action_state`` because the action-phase observation appends
+        received signals), so collapsing them into a single per-episode
+        call does not change the per-state Q-value math.
+        """
+        if signal is not None:
+            self.update(
+                state=signal_state,
+                action=signal,
+                reward=0,
+                next_state=action_state,
+                done=False,
+            )
+        self.update(
+            state=action_state,
+            action=action,
+            reward=reward,
+            next_state=action_state,
+            done=True,
         )
