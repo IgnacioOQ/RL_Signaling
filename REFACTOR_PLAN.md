@@ -146,7 +146,7 @@ REFACTOR_PLAN.md     # this file
 | 1. Hygiene | **Done** | uncommitted on `refactor` |
 | 2. Typo rename | **Done** | uncommitted on `refactor` |
 | 3. Module split | **Done** | uncommitted on `refactor` |
-| 3.5. Docstrings + type hints | Pending | – |
+| 3.5. Docstrings + type hints | **Done** | uncommitted on `refactor` |
 | 4. Unified agent interface (+ urn-init bug fix) | Pending | – |
 | 5. Unified Env + runner | Pending | – |
 | 6. Tests | Pending | – |
@@ -329,7 +329,7 @@ Plus: launch one notebook (recommend `basic_unit_test.ipynb`) and run the first 
 
 ---
 
-## Phase 3.5 — Docstrings + type hints (Pending)
+## Phase 3.5 — Docstrings + type hints (Done)
 
 ### Scope
 
@@ -348,6 +348,20 @@ Add proper docstrings and type hints to the public API of every module in `rl_si
 python3 -m pip install ruff && ruff check rl_signaling/ --select=D    # docstring lint
 python3 -c "import rl_signaling; help(rl_signaling.agents.UrnAgent)"  # spot-check
 ```
+
+### Notes from execution
+
+- All six modules under `rl_signaling/` carry a module-level docstring.
+- All public classes (`UrnAgent`, `QLearningAgent`, `TDLearningAgent`, `NetMultiAgentEnv`, `TempNetMultiAgentEnv`) have full Numpy-style class docstrings with Parameters sections.
+- All public functions in `games.py` and `info_theory.py` have full Parameters / Returns / Raises sections. Functions in `simulation.py` (the two simulation runners) have full Parameters sections. Functions in `plotting.py` have one-paragraph docstrings — most are visual plot helpers where the name is self-evident.
+- All four internal helpers retain their single-line private docstrings.
+- `from __future__ import annotations` added to every module to enable PEP 604 union syntax (`int | None`) on Python 3.10.
+- Type hints on every function/method signature using built-in generic syntax (`list[int]`, `tuple[bool, bool]`, etc.). NumPy arrays annotated as `NDArray[np.int_]` / `NDArray[np.float64]` via `numpy.typing`.
+- A type alias `SimulationResult` is defined in `simulation.py` as the 5-tuple return type shared between `simulation_function` and `temp_simulation_function`.
+- A type alias `ConditionPair = tuple[bool, bool]` documents the `(with_signals, full_information)` cells used pervasively in `plotting.py`.
+- Stale comment removed from `temp_simulation_function`: the "appears to be an alternative implementation and is not currently called" line is replaced with a real docstring (the function is the active TD-learning path, used by 4 of 6 notebooks).
+- Smoke test: full package imports succeed; a 20-episode end-to-end UrnAgent run completes from inside `notebooks/` with the new sys.path-shimmed setup; all docstrings reachable via `__doc__`.
+- The `UrnAgent.action_urns` initialization bug remains in place (deferred to Phase 4) but is now documented in the class docstring's `Notes` section so it cannot be missed.
 
 ---
 

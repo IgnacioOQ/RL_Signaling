@@ -1,16 +1,22 @@
 """Information-theoretic metrics over an agent's signal-usage statistics."""
 
+from __future__ import annotations
+
 from collections import defaultdict
+from collections.abc import Iterable, Mapping
 
 import numpy as np
+from numpy.typing import NDArray
+
+SignalUsage = Mapping[tuple, NDArray[np.float64]]
 
 
-def _compute_entropy(probabilities):
+def _compute_entropy(probabilities: Iterable[float]) -> float:
     """Shannon entropy (base 2) of a discrete probability distribution."""
     return -sum(p * np.log2(p) for p in probabilities if p > 0)
 
 
-def compute_mutual_information(agent_signal_usage):
+def compute_mutual_information(agent_signal_usage: SignalUsage) -> tuple[float, float]:
     """Compute mutual information and normalized MI between signals and observations.
 
     Parameters

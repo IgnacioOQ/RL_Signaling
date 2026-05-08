@@ -1,28 +1,58 @@
-"""Plotting helpers and post-processing utilities for simulation results."""
+"""Plotting helpers and post-processing utilities for simulation results.
+
+Most functions take a long-format DataFrame produced by the experiment
+notebooks (one row per (iteration, full_information, with_signals) cell)
+and emit either a saved PNG, an inline plot, or a derived DataFrame.
+"""
+
+from __future__ import annotations
 
 import os
 import sys
+from typing import Sequence
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from numpy.typing import NDArray
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
+# A condition pair selecting one of the four experimental cells.
+ConditionPair = tuple[bool, bool]  # (with_signals, full_information)
+
 
 def plot_histograms_with_kde(
-    df,
-    variable,
-    bins=100,
-    figsize=(5, 3),
-    alpha=0.5,
-    kde=True,
-    variables=[(False, True), (True, False), (False, False)],
-    dump_path="./results/",
-    filename_prefix="test",
-):
+    df: pd.DataFrame,
+    variable: str,
+    bins: int = 100,
+    figsize: tuple[int, int] = (5, 3),
+    alpha: float = 0.5,
+    kde: bool = True,
+    variables: Sequence[ConditionPair] = ((False, True), (True, False), (False, False)),
+    dump_path: str = "./results/",
+    filename_prefix: str = "test",
+) -> None:
+    """Overlaid histogram + KDE of ``variable`` across condition pairs.
+
+    Parameters
+    ----------
+    df
+        Long-format DataFrame containing columns ``variable``,
+        ``with_signals``, and ``full_information``.
+    variable
+        Column to plot. Must be one of the keys in the internal
+        ``pretty_titles`` map.
+    bins, figsize, alpha, kde
+        Standard matplotlib / seaborn knobs.
+    variables
+        Sequence of ``(with_signals, full_information)`` pairs to overlay.
+    dump_path, filename_prefix
+        Output PNG is written to
+        ``{dump_path}/{filename_prefix}_{variable}.png``.
+    """
     plt.figure(figsize=figsize)
 
     colors = ["blue", "orange", "green", "red"]
@@ -98,15 +128,16 @@ def plot_histograms_with_kde(
 
 
 def plot_basecase_kde(
-    df,
-    variable,
-    file_path="dummy_plot.png",
-    bins=100,
-    figsize=(6, 3),
-    alpha=0.5,
-    kde=True,
-    variables=[(True, False), (False, True), (False, False)],
-):
+    df: pd.DataFrame,
+    variable: str,
+    file_path: str = "dummy_plot.png",
+    bins: int = 100,
+    figsize: tuple[int, int] = (6, 3),
+    alpha: float = 0.5,
+    kde: bool = True,
+    variables: Sequence[ConditionPair] = ((True, False), (False, True), (False, False)),
+) -> None:
+    """Single-condition histogram + KDE for the partial-info-with-signals cell."""
     plt.figure(figsize=figsize)
 
     subset_df = df[(df["full_information"] == False) & (df["with_signals"] == True)]
@@ -156,11 +187,22 @@ def plot_basecase_kde(
 
 
 def plot_all_histograms(
-    df,
-    bins=75,
-    variables=[(False, True), (True, False), (False, False), (True, True)],
-    filename_prefix="test",
-):
+    df: pd.DataFrame,
+    bins: int = 75,
+    variables: Sequence[ConditionPair] = (
+        (False, True),
+        (True, False),
+        (False, False),
+        (True, True),
+    ),
+    filename_prefix: str = "test",
+) -> None:
+    """Render the canonical three-panel summary used by the plotting notebook.
+
+    Calls :func:`plot_histograms_with_kde` for ``Agent_0_final_reward``,
+    ``Agent_0_avg_reward``, and ``Agent_0_NMI`` (the last with a reduced
+    condition set).
+    """
     plot_histograms_with_kde(
         df,
         "Agent_0_final_reward",
@@ -184,14 +226,20 @@ def plot_all_histograms(
     )
 
 
-def _calculate_reward_difference(df, agent_col):
+def _calculate_reward_difference(df: pd.DataFrame, agent_col: str) -> float:
     """Reward delta (with_signals=True) - (with_signals=False) for one agent column."""
     return (
         df[df["with_signals"]][agent_col].values - df[~df["with_signals"]][agent_col].values
     )[0]
 
 
-def compare_payoffs(df):
+def compare_payoffs(df: pd.DataFrame) -> pd.DataFrame:
+    """Build a per-iteration table of signal-vs-no-signal reward deltas.
+
+    For each ``iteration`` group, computes the reward delta
+    ``(with_signals=True) - (with_signals=False)`` for each agent under
+    both the full-information and partial-information regimes.
+    """
     iteration_indexes = df["iteration"].unique()
 
     columns = [
@@ -230,7 +278,8 @@ def compare_payoffs(df):
     return compared_payoff_df
 
 
-def plot_payoff_comparison(df):
+def plot_payoff_comparison(df: pd.DataFrame) -> None:
+    """Histogram-overlay of the four signal-vs-no-signal reward delta columns."""
     compared_payoff_df = compare_payoffs(df)
 
     variables = [
@@ -262,8 +311,16 @@ def plot_payoff_comparison(df):
     plt.show()
 
 
-def calculate_proportions(data, urn_type="signal_history"):
-    proportions = {key: [] for key in data[urn_type][-1].keys()}
+def calculate_proportions(
+    data: dict, urn_type: str = "signal_history"
+) -> dict[tuple, list[float]]:
+    """Per-state proportion of the first urn slot across the urn-history series.
+
+    For each state observed by the agent, returns the time series of
+    ``urn[state][0] / sum(urn[state])`` — the share of mass on the first
+    signal/action.
+    """
+    proportions: dict[tuple, list[float]] = {key: [] for key in data[urn_type][-1].keys()}
     for d in data[urn_type]:
         for key, value in d.items():
             total = np.sum(value)
@@ -272,32 +329,38 @@ def calculate_proportions(data, urn_type="signal_history"):
     return proportions
 
 
-def smooth(values, window_size=3):
+def smooth(values: Sequence[float], window_size: int = 3) -> NDArray[np.float64]:
+    """Edge-padded moving-average smoother of length ``len(values)``."""
     pad_width = window_size // 2
     padded_values = np.pad(values, (pad_width, pad_width), mode="edge")
     smoothed = np.convolve(padded_values, np.ones(window_size) / window_size, mode="valid")
     return smoothed
 
 
-def count_negative_nmi(file_path):
+def count_negative_nmi(file_path: str) -> dict[str, int]:
     """Count negative values in every NMI-bearing column of a results CSV."""
     df = pd.read_csv(file_path)
     nmi_columns = [col for col in df.columns if "NMI" in col]
-    negative_counts = {col: (df[col] < 0).sum() for col in nmi_columns}
+    negative_counts = {col: int((df[col] < 0).sum()) for col in nmi_columns}
     return negative_counts
 
 
 def plot_regression(
-    df,
-    x_var="Agent_0_NMI",
-    y_var="Agent_0_final_reward",
-    figsize=(6, 4),
-    model_type="linear",
-    filter_condition=[(True, True), (True, False)],
-    dump_path="./results/",
-    filename_prefix="test",
-):
-    """Plot a regression line between two variables and show coefficients and R²."""
+    df: pd.DataFrame,
+    x_var: str = "Agent_0_NMI",
+    y_var: str = "Agent_0_final_reward",
+    figsize: tuple[int, int] = (6, 4),
+    model_type: str = "linear",
+    filter_condition: Sequence[ConditionPair] = ((True, True), (True, False)),
+    dump_path: str = "./results/",
+    filename_prefix: str = "test",
+) -> None:
+    """Per-condition linear regression of ``x_var`` vs ``y_var`` with R² annotation.
+
+    One PNG per ``(with_signals, full_information)`` pair in
+    ``filter_condition`` is written to
+    ``{dump_path}/{filename_prefix}_regression_signals_<X>_fullinfo_<Y>.png``.
+    """
     os.makedirs(dump_path, exist_ok=True)
 
     for with_signals, full_information in filter_condition:
@@ -348,7 +411,9 @@ def plot_regression(
         plt.show()
 
 
-def plot_reward_vs_cost(df, plot_title="Final Reward vs. Signal Cost"):
+def plot_reward_vs_cost(
+    df: pd.DataFrame, plot_title: str = "Final Reward vs. Signal Cost"
+) -> None:
     """Scatter + regression of Signal_Cost_A0 against Agent_0_final_reward."""
     if "Signal_Cost_A0" not in df.columns or "Agent_0_final_reward" not in df.columns:
         print(
@@ -409,7 +474,9 @@ def plot_reward_vs_cost(df, plot_title="Final Reward vs. Signal Cost"):
     plt.show()
 
 
-def plot_nmi_vs_cost(df, plot_title="Final NMI vs. Signal Cost"):
+def plot_nmi_vs_cost(
+    df: pd.DataFrame, plot_title: str = "Final NMI vs. Signal Cost"
+) -> None:
     """Scatter + regression of Signal_Cost_A0 against Agent_0_NMI."""
     if "Signal_Cost_A0" not in df.columns or "Agent_0_NMI" not in df.columns:
         print(

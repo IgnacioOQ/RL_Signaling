@@ -1,28 +1,86 @@
+"""Episode-loop runners for the two environment shapes.
+
+- :func:`simulation_function` drives :class:`NetMultiAgentEnv` (single-step,
+  ``UrnAgent`` / ``QLearningAgent``).
+- :func:`temp_simulation_function` drives :class:`TempNetMultiAgentEnv`
+  (two-step, ``TDLearningAgent``).
+
+Both produce the same 5-tuple of metrics. The plotting block at the bottom
+of each is duplicated near-verbatim and is scheduled for extraction into
+``rl_signaling.plotting`` in Phase 5 of ``REFACTOR_PLAN.md``.
+"""
+
+from __future__ import annotations
+
 import copy
+from typing import Any, Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from rl_signaling.agents import QLearningAgent, TDLearningAgent, UrnAgent
 from rl_signaling.env import NetMultiAgentEnv, TempNetMultiAgentEnv
 from rl_signaling.plotting import calculate_proportions, smooth
 
 
-def simulation_function(n_agents=2, n_features=2,
-                        n_signaling_actions=2, n_final_actions=4,
-                        n_episodes=6000, with_signals = True,
-                        plot=True,env=None,
-                        costly_signaling=False,
-                        signal_cost = [0.25,0.25],
-                        verbose=False):
+SimulationResult = tuple[
+    list[dict],          # signal_usage per agent
+    list[list[float]],   # rewards_history per agent
+    list[list[float]],   # signal_information_history per agent (NMI)
+    dict,                # per-agent histories of signal/action usage snapshots
+    list[tuple],         # nature_history (tuple per episode)
+]
 
-    # agents = [agent_type(n_signaling_actions, n_final_actions,
-    #                    initialize=initialize) for _ in range(n_agents)]
 
-    # History of the information status of the agent after each episode
-    # namely their signalling and action urns as they get more complex
+def simulation_function(
+    n_agents: int = 2,
+    n_features: int = 2,
+    n_signaling_actions: int = 2,
+    n_final_actions: int = 4,
+    n_episodes: int = 6000,
+    with_signals: bool = True,
+    plot: bool = True,
+    env: NetMultiAgentEnv | None = None,
+    costly_signaling: bool = False,
+    signal_cost: Sequence[float] = (0.25, 0.25),
+    verbose: bool = False,
+) -> SimulationResult:
+    """Run ``n_episodes`` of the canonical signaling game on ``env``.
 
-    effective_n_signaling_actions = n_signaling_actions + 1 if costly_signaling else n_signaling_actions
+    Drives :class:`rl_signaling.env.NetMultiAgentEnv` through its standard
+    five-step episode (sample nature → assign observations → encode
+    signals → send signals → choose final actions → reward → update).
+
+    Parameters
+    ----------
+    n_agents, n_features, n_signaling_actions, n_final_actions : int
+        Must match the configuration used to instantiate ``env``.
+    n_episodes : int, default 6000
+        Number of episodes to run.
+    with_signals : bool, default True
+        If False, agents skip the signaling step; ``new_observations`` is
+        set to a deep copy of the direct observations.
+    plot : bool, default True
+        If True, render the canonical four-panel summary at the end.
+    env : NetMultiAgentEnv
+        Pre-constructed environment instance. Required.
+    costly_signaling : bool, default False
+        If True, deduct ``signal_cost[i]`` from agent ``i``'s reward
+        whenever its emitted signal is not the null signal.
+    signal_cost : Sequence[float], default ``(0.25, 0.25)``
+        Per-agent signaling cost. Used only when both ``costly_signaling``
+        and ``with_signals`` are True.
+    verbose : bool, default False
+        If True, print per-step traces.
+
+    Returns
+    -------
+    SimulationResult
+        ``(signal_usage, rewards_history, signal_information_history,
+        histories, nature_history)``.
+    """
+    effective_n_signaling_actions = (
+        n_signaling_actions + 1 if costly_signaling else n_signaling_actions
+    )
 
     for episode in range(n_episodes):
       if verbose:
@@ -209,13 +267,26 @@ def simulation_function(n_agents=2, n_features=2,
     return signal_usage, rewards_history, signal_information_history, histories, env.nature_history
   
 
-def temp_simulation_function(n_agents, n_features,
-                        n_signaling_actions, n_final_actions,
-                        n_episodes=6000, with_signals=True,
-                        plot=True, env=None, verbose=False):
+def temp_simulation_function(
+    n_agents: int,
+    n_features: int,
+    n_signaling_actions: int,
+    n_final_actions: int,
+    n_episodes: int = 6000,
+    with_signals: bool = True,
+    plot: bool = True,
+    env: TempNetMultiAgentEnv | None = None,
+    verbose: bool = False,
+) -> SimulationResult:
+    """Run ``n_episodes`` of the two-step game on ``env`` (TD-learning path).
 
-    # NOTE: This function appears to be an alternative implementation and is not currently called.
+    Drives :class:`rl_signaling.env.TempNetMultiAgentEnv` through its
+    two-step episode (signal phase → act phase). Used by
+    :class:`rl_signaling.agents.TDLearningAgent`.
 
+    Parameters mirror :func:`simulation_function` minus ``costly_signaling``
+    and ``signal_cost`` (which are not implemented for the two-step path).
+    """
     for episode in range(n_episodes):
         if verbose:
             print(f'Episode {episode}')
