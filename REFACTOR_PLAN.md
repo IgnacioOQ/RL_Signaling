@@ -144,7 +144,7 @@ REFACTOR_PLAN.md     # this file
 |---|---|---|
 | 0. Audit | **Done** | findings frozen above |
 | 1. Hygiene | **Done** | uncommitted on `refactor` |
-| 2. Typo rename | Pending | – |
+| 2. Typo rename | **Done** | uncommitted on `refactor` |
 | 3. Module split | Pending | – |
 | 3.5. Docstrings + type hints | Pending | – |
 | 4. Unified agent interface (+ urn-init bug fix) | Pending | – |
@@ -198,7 +198,7 @@ Expected output: `All modules import cleanly.`
 
 ---
 
-## Phase 2 — Typo rename (Pending)
+## Phase 2 — Typo rename (Done)
 
 ### Scope
 
@@ -260,6 +260,14 @@ grep -RIn "cannonical" . | grep -v REFACTOR_PLAN.md   # this file mentions it; i
 ```
 
 Plus the import smoke test from Phase 1.
+
+### Notes from execution
+
+- Total: 85 token replacements across the 6 notebooks (62 distinct lines).
+- Both case variants present: `cannonical` (lowercase, in code/strings/filenames) and `Cannonical` (capitalized, in markdown headers).
+- 27 files renamed under `plots_and_results/` via `git mv` (one filename had spaces and parens — `urnagent_results_cannonical_costly_signal (1).csv` — handled fine by shell glob expansion).
+- String literals inside notebooks (e.g. `pd.read_csv(dump_path+'urnagent_results_cannonical.csv')`) and `filename_prefix='Roth-Erev_cannonical'` arguments were updated in lockstep with the filename renames, so notebook reads still resolve.
+- All 6 notebooks parsed cleanly as JSON post-edit; module smoke test passes.
 
 ---
 
