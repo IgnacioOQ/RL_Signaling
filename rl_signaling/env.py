@@ -18,7 +18,7 @@ import networkx as nx
 import numpy as np
 from numpy.typing import NDArray
 
-from rl_signaling.agents import BaseAgent, QLearningAgent, TDLearningAgent, UrnAgent
+from rl_signaling.agents import BaseAgent, UrnAgent
 from rl_signaling.info_theory import compute_mutual_information
 
 
@@ -69,6 +69,7 @@ class MultiAgentEnv:
     ValueError
         If ``graph is None``, ``len(graph.nodes) != n_agents``, or
         ``agent_type`` does not satisfy :class:`BaseAgent`.
+
     """
 
     def __init__(
@@ -164,6 +165,7 @@ class MultiAgentEnv:
         (signals, new_observations)
             ``signals`` is the per-agent signal index. ``new_observations``
             is each agent's observation tuple with received signals appended.
+
         """
         signals = [
             agent.get_signal(observations[i]) for i, agent in enumerate(self.agents)
@@ -340,6 +342,7 @@ class NetMultiAgentEnv:
     ------
     ValueError
         If ``graph is None`` or ``len(graph.nodes) != n_agents``.
+
     """
 
     def __init__(
@@ -454,6 +457,7 @@ class NetMultiAgentEnv:
         -------
         list[int]
             Selected signal index per agent.
+
         """
         signals = [
             agent.get_signal(observation)
@@ -531,6 +535,7 @@ class NetMultiAgentEnv:
         -------
         (rewards, done) : (list[float], bool)
             ``done`` is always True — episodes are single-step.
+
         """
         rewards: list[float] = []
         for i in range(self.n_agents):

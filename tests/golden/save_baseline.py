@@ -37,7 +37,6 @@ from rl_signaling.env import MultiAgentEnv  # noqa: E402
 from rl_signaling.games import create_random_canonical_game  # noqa: E402
 from rl_signaling.simulation import run_simulation  # noqa: E402
 
-
 SEED = 12345
 N_EPISODES = 100
 N_AGENTS = 2

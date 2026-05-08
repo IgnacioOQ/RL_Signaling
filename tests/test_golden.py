@@ -21,7 +21,6 @@ from rl_signaling.env import MultiAgentEnv
 from rl_signaling.games import create_random_canonical_game
 from rl_signaling.simulation import run_simulation
 
-
 BASELINE_PATH = Path(__file__).parent / "golden" / "baseline.json"
 
 

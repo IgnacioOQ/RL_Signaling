@@ -68,23 +68,26 @@ tests/               # pytest suite (under construction)
 
 ## Setup
 
-Python 3.10+. Install the package and its runtime dependencies in editable mode:
+Python 3.10+. The recommended setup uses a project-local virtual environment:
 
 ```bash
-pip install -e .
-```
-
-For development (adds `pytest`, `ruff`, `ipykernel`):
-
-```bash
+python3.10 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
 pip install -e ".[dev]"
 ```
 
-To install pinned versions matching the checked-in lockfile:
+The `dev` extras include `pytest`, `ruff`, and `ipykernel`. To run the notebooks in Jupyter / VS Code, register the kernel once:
 
 ```bash
-pip install -r requirements.txt
+python -m ipykernel install --user --name rl_signaling --display-name "Python (rl_signaling)"
 ```
+
+Then select the **Python (rl_signaling)** kernel inside any notebook.
+
+Alternative install paths:
+- `pip install -e .` — runtime deps only, no test/lint tools.
+- `pip install -r requirements.txt` — exact pinned versions matching the checked-in lockfile, useful for reproducibility audits.
 
 ## Minimal example
 
@@ -124,7 +127,31 @@ The same scaffolding works for the other two agent types — just swap `agent_ty
 
 The legacy `NetMultiAgentEnv` / `TempNetMultiAgentEnv` classes and `simulation_function` / `temp_simulation_function` runners are still available for backward compatibility with the experiment notebooks but emit a `DeprecationWarning`.
 
-To reproduce the published figures, run the experiment notebooks first to generate CSVs in `results/`, then run [notebooks/plotting_results.ipynb](notebooks/plotting_results.ipynb).
+## Reproducing the figures
+
+The CSVs and PNGs under [results/](results/) are the canonical outputs of the experiment notebooks. To regenerate them:
+
+1. Run the experiment notebooks to produce per-experiment CSVs:
+   - [notebooks/Run_Simulations.ipynb](notebooks/Run_Simulations.ipynb) — canonical and complex models across the three agent types.
+   - [notebooks/Final_Costly_Signaling_Run_Simulations.ipynb](notebooks/Final_Costly_Signaling_Run_Simulations.ipynb) — costly-signaling experiments.
+   - [notebooks/Parameter_Optimization_wchoices.ipynb](notebooks/Parameter_Optimization_wchoices.ipynb) — hyperparameter sweeps.
+   - [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) — urn-initialization variants.
+2. Run [notebooks/plotting_results.ipynb](notebooks/plotting_results.ipynb) to consume the CSVs and emit the figures.
+
+## Tests
+
+Install the development extras and run the test suite:
+
+```bash
+pip install -e ".[dev]"
+pytest tests/ -v
+```
+
+The suite includes information-theoretic identities, agent contract checks, env lifecycle invariants, end-to-end smoke runs, and a deterministic golden-run regression against [tests/golden/baseline.json](tests/golden/baseline.json). To regenerate the baseline (only when the canonical implementation legitimately changes):
+
+```bash
+python tests/golden/save_baseline.py
+```
 
 ## Hypothesis
 

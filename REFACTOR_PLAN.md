@@ -150,7 +150,7 @@ REFACTOR_PLAN.md     # this file
 | 4. Unified agent interface (+ urn-init bug fix) | **Done** | uncommitted on `refactor` |
 | 5. Unified Env + runner | **Done** | uncommitted on `refactor` |
 | 6. Tests | **Done** | uncommitted on `refactor` |
-| 7. Docs polish | Pending | – |
+| 7. Docs polish | **Done** | uncommitted on `refactor` |
 
 ---
 
@@ -478,7 +478,7 @@ All tests pass. Coverage on `rl_signaling/` ≥ 80% (informational; not a gating
 
 ---
 
-## Phase 7 — Docs polish (Pending)
+## Phase 7 — Docs polish (Done)
 
 ### Scope
 
@@ -491,6 +491,23 @@ All tests pass. Coverage on `rl_signaling/` ≥ 80% (informational; not a gating
 ### Verification
 
 - `README.md` instructions work end-to-end on a fresh checkout in a clean venv.
+
+### Notes from execution
+
+- **Ruff configured:** added `[tool.ruff]` and `[tool.ruff.lint]` sections to `pyproject.toml` selecting `E`, `F`, `W`, `I`, `D` rule sets. Numpy docstring convention. `D107`, `D203`, `D213` ignored (we use class-level Parameters sections, not `__init__` docstrings, so D107 doesn't apply; D203/D213 are mutually exclusive with the alternatives we picked). `tests/**` skips all `D` rules; `rl_signaling/simulation.py` skips `E501` (legacy runners carry their original wide unpacking lines and are slated for removal once notebooks migrate). Final lint state: clean.
+- **Auto-fixed 24 lint hits:** missing blank line after last docstring section (`D413`), trailing whitespace (`W291`/`W293`), unsorted imports (`I001`), unused imports (`F401`).
+- **Manual fixes:** unused `Any` from `simulation.py` and `env.py`; pandas E712 idiom in `plotting.plot_basecase_kde` rewritten as `~df["full_information"] & df["with_signals"]`; `BaseAgent` abstract methods given one-line stub docstrings.
+- **Line length:** raised from 100 to 110. The remaining wide lines all live in the deprecated `simulation_function` / `temp_simulation_function`; the per-file ignore is documented inline in `pyproject.toml`.
+- **README polish:** added a `## Tests` section (`pip install -e ".[dev]"` + `pytest tests/ -v`) and a `## Reproducing the figures` section pointing at the four experiment notebooks → `plotting_results.ipynb`.
+- **Optional items skipped:** `docs/model.md` (the README's `## Model` section already covers the model formally) and `CITATION.cff` (project is anonymized; can be added later when un-anonymized).
+- **TODO_WORKFLOW.md:** the cross-session refactor task block was deleted (per the agent rule at the top of that file: delete on completion). The Task Template at the bottom remains.
+
+The refactor branch now contains a clean, lint-clean, test-passing rl_signaling/ package. Final state:
+- 7 phases complete, all verified.
+- 50 pytest tests passing in ~5 s.
+- Zero ruff findings across `rl_signaling/` and `tests/`.
+- Golden-run regression in place against `tests/golden/baseline.json`.
+- Five governance files at the repo root (`README.md`, `WORKLOG.md`, `TODO_WORKFLOW.md`, `HOUSEKEEPING.md`, `REFACTOR_PLAN.md`).
 
 ---
 

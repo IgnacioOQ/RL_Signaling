@@ -31,6 +31,7 @@ def create_random_game(n_features: int = 3, n_final_actions: int = 5) -> GameDic
     GameDict
         Mapping ``state -> {action -> reward}`` covering all ``2**n_features``
         binary states.
+
     """
     random_game_dict: GameDict = {}
     world_states = set(product([0, 1], repeat=n_features))
@@ -84,6 +85,7 @@ def create_random_canonical_game(
     ------
     AssertionError
         If ``n_final_actions < 2**n_features`` (not enough one-hot dicts).
+
     """
     random_game_dict: GameDict = {}
     world_states = list(product([0, 1], repeat=n_features))
@@ -141,6 +143,7 @@ def create_initial_signals(
     ------
     AssertionError
         If ``n_signals < 2**n_observed_features`` (not enough unique vectors).
+
     """
     signalling_urns: SignalUrns = {}
     observed_states = list(product([0, 1], repeat=n_observed_features))

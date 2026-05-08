@@ -55,3 +55,33 @@ filterwarnings = [
     "ignore::DeprecationWarning:rl_signaling.env",
     "ignore::DeprecationWarning:rl_signaling.simulation",
 ]
+
+[tool.ruff]
+# 110 is a pragmatic ceiling that accommodates the legacy simulation_function /
+# temp_simulation_function plotting blocks (slated for removal once notebooks
+# migrate) without rewrapping them.
+line-length = 110
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "D"]
+ignore = [
+    # We document constructor parameters on the class docstring (Numpy style),
+    # not on __init__ itself.
+    "D107",
+    # D203 / D211 are mutually exclusive; pick one.
+    "D203",
+    # D212 / D213 likewise; we use D212 (multi-line summary on first line).
+    "D213",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+"rl_signaling/__init__.py" = ["D104"]
+# The legacy simulation_function / temp_simulation_function carry their
+# original formatting (long inline comments, wide unpacking lines) and will
+# be removed once notebooks migrate to run_simulation.
+"rl_signaling/simulation.py" = ["E501"]

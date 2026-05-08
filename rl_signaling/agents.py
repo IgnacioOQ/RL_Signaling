@@ -73,6 +73,7 @@ def _select_action(
     ------
     ValueError
         If ``choice`` is not one of the three supported strategies.
+
     """
     n_actions = len(q_values)
     actions: list[int] = (
@@ -139,10 +140,12 @@ class BaseAgent(ABC):
     """
 
     @abstractmethod
-    def get_signal(self, state) -> int: ...
+    def get_signal(self, state) -> int:
+        """Return the signal index chosen by this agent for ``state``."""
 
     @abstractmethod
-    def get_action(self, state) -> int: ...
+    def get_action(self, state) -> int:
+        """Return the final-action index chosen by this agent for ``state``."""
 
     @abstractmethod
     def update_episode(
@@ -152,7 +155,8 @@ class BaseAgent(ABC):
         action_state,
         action: int,
         reward: float,
-    ) -> None: ...
+    ) -> None:
+        """Apply per-episode signal and action updates given the realized reward."""
 
 
 class UrnAgent(BaseAgent):
@@ -192,6 +196,7 @@ class UrnAgent(BaseAgent):
     that previously caused ``initialize=True`` runs to silently never
     pre-seed ``action_urns``. Behavior with ``initialize=False`` (the
     setting used by all checked-in result CSVs) is unchanged.
+
     """
 
     def __init__(
@@ -249,6 +254,7 @@ class UrnAgent(BaseAgent):
         -------
         int
             Index of the chosen signaling action.
+
         """
         if state not in self.signaling_urns:
             self.signaling_urns[state] = np.ones(self.n_signaling_actions)
@@ -279,6 +285,7 @@ class UrnAgent(BaseAgent):
         -------
         int
             Index of the chosen final action.
+
         """
         if state not in self.action_urns:
             self.action_urns[state] = np.ones(self.n_final_actions)
@@ -358,6 +365,7 @@ class QLearningAgent(BaseAgent):
         rather than constant-learning-rate TD.
     costly_signaling : bool, default False
         Stored for downstream use; cost is applied in the simulation loop.
+
     """
 
     def __init__(
@@ -519,6 +527,7 @@ class TDLearningAgent(BaseAgent):
         Discount factor applied to bootstrapped returns.
     choice : {"egreedy", "softmax", "ucb"}, default "egreedy"
         Action-selection strategy.
+
     """
 
     def __init__(
@@ -574,6 +583,7 @@ class TDLearningAgent(BaseAgent):
             does — selects from the final-action subset. The legacy
             :class:`rl_signaling.env.TempNetMultiAgentEnv` always passes an
             explicit ``available_actions``.
+
         """
         if state not in self.q_table:
             self.q_table[state] = np.zeros(self.n_actions)

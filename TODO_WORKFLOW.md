@@ -26,43 +26,40 @@ This file is the per-repository instance of the `TODO_WORKFLOW_TEMPLATE.md` patt
 
 ---
 
-## Continue Repository Refactor
+## Run the Debugging Audit
 - status: todo
 - type: task
-- id: todo.refactor_continue
-- description: Resume the multi-phase refactor described in REFACTOR_PLAN.md from the next pending phase.
+- id: todo.debugging_audit
+- description: Execute the phased audit in DEBUGGING_PLAN.md to compare the rl_signaling/ implementation against the intended signaling model.
 - owner: agent
 - blocked_by: []
 - last_checked: 2026-05-08
 <!-- content -->
-**Context:** The `refactor` branch carries Phase 0 (audit) and Phase 1 (hygiene) of a multi-session refactor. The full plan, decisions, per-phase scope, and verification steps live in `REFACTOR_PLAN.md` at the repository root. Phases 2 through 7 are pending. This task is a placeholder that points an incoming agent at that plan.
+**Context:** `DEBUGGING_PLAN.md` at the repo root carries a six-phase plan for auditing the implementation against the user's intended signaling model. Phase 1 is a model-specification handshake with the user; Phases 2–4 are the audit itself; Phase 5 produces a ranked fix plan; Phase 6 (separate session) verifies fixes after they land. Discrepancies surfaced during the audit are filed in `LEGACY_BUGS_LOG.md`, which already carries three entries from the refactor.
 
 **Preconditions:**
-- `git status` shows the working tree on the `refactor` branch. If not, run `git checkout refactor`.
-- `REFACTOR_PLAN.md` exists at repo root and the "Phase status" table is current.
+- `git status` shows the working tree on the `refactor` branch (or the user's named debugging branch). If not, ask before proceeding.
+- The `.venv/` exists and `pytest tests/` reports 50 passed.
+- `DEBUGGING_PLAN.md` exists at the repo root with the "Phase status" table and the empty placeholder sections at the bottom.
 
 **Steps:**
-1. Read `REFACTOR_PLAN.md` end-to-end (it is self-contained).
-2. Run the Phase 1 verification smoke test to confirm the baseline:
+1. Read `DEBUGGING_PLAN.md` end-to-end, plus the README Model section, `LEGACY_BUGS_LOG.md`, and `REFACTOR_PLAN.md`.
+2. Run the smoke test:
    ```bash
-   python3 -c "
-   import sys, types
-   sys.modules.setdefault('seaborn', types.ModuleType('seaborn'))
-   import utils, agents, environment, simulation_function
-   print('Modules import cleanly.')
-   "
+   .venv/bin/python -m pytest tests/ -q
    ```
-3. Identify the next pending phase from the "Phase status" table.
-4. Execute that phase following its Scope / Strategy / Verification sections.
-5. Update the phase's status (`Pending` → `Done`) and fill its "Notes from execution" section in `REFACTOR_PLAN.md` before stopping.
-6. Append a `WORKLOG.md` entry summarizing the phase if it involved non-trivial work (any phase from 2 onward qualifies).
+   Expected: 50 passed.
+3. **Phase 1 first.** Walk the user through every bullet in the Phase 1 checklist. Record each answer verbatim in the `## Phase 1 — Confirmed model specification` section at the bottom of `DEBUGGING_PLAN.md`. Do not start Phase 2 until that section is filled in.
+4. Execute Phases 2 → 3 → 4 → 5 in order. Each phase has its own deliverable section in `DEBUGGING_PLAN.md`.
+5. For every discrepancy found, append a new entry to `LEGACY_BUGS_LOG.md` using the template at its bottom. Do **not** fix bugs in the same session that finds them — fixes are deferred to a follow-up session per the plan's Operating Rule 4.
 
 **Verification:**
-- The phase's verification command (defined in its `REFACTOR_PLAN.md` section) succeeds.
-- `REFACTOR_PLAN.md` reflects the new phase status.
-- `WORKLOG.md` has a new dated entry for the work just done.
+- `## Phase 1 — Confirmed model specification` in `DEBUGGING_PLAN.md` is populated.
+- `## Phase 2 — Findings`, `## Phase 3 — Findings`, and `## Phase 5 — Fix plan` in `DEBUGGING_PLAN.md` are populated.
+- Every new bug surfaced has a corresponding `## Bug N — …` block in `LEGACY_BUGS_LOG.md`.
+- `pytest tests/` still passes.
 
-**On completion:** Do **not** delete this task block — keep it until every phase in `REFACTOR_PLAN.md` is marked `Done`. At that point delete the block (from the `---` above the `##` header to the `---` below the last line) and add a final WORKLOG entry recording the refactor's completion.
+**On completion:** Do **not** delete this task block — keep it until Phase 6 (verification re-run) closes. At that point, delete the block (from the `---` above the `##` header to the `---` below the last line) and add a final WORKLOG entry recording the audit's completion.
 
 ---
 

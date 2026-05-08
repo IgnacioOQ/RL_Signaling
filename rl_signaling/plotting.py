@@ -52,6 +52,7 @@ def plot_histograms_with_kde(
     dump_path, filename_prefix
         Output PNG is written to
         ``{dump_path}/{filename_prefix}_{variable}.png``.
+
     """
     plt.figure(figsize=figsize)
 
@@ -140,7 +141,7 @@ def plot_basecase_kde(
     """Single-condition histogram + KDE for the partial-info-with-signals cell."""
     plt.figure(figsize=figsize)
 
-    subset_df = df[(df["full_information"] == False) & (df["with_signals"] == True)]
+    subset_df = df[~df["full_information"] & df["with_signals"]]
 
     plt.hist(
         subset_df[variable],
@@ -360,6 +361,7 @@ def plot_simulation_summary(
         signal when ``costly_signaling=True``).
     n_episodes
         Number of episodes that were run; used as the x-axis upper bound.
+
     """
     n_agents = len(rewards_history)
 

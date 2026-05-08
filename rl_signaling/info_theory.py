@@ -29,6 +29,7 @@ def compute_mutual_information(agent_signal_usage: SignalUsage) -> tuple[float, 
     (float, float)
         ``(I(S;O), NMI)`` where ``NMI = I(S;O) / H(O)``. Returns ``NMI=0``
         when ``H(O) == 0``.
+
     """
     total_signals = sum(sum(counts) for counts in agent_signal_usage.values())
 

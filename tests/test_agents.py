@@ -15,7 +15,6 @@ from rl_signaling.agents import (
     _select_action,
 )
 
-
 # ----------------------------------------------------------- BaseAgent contract
 
 

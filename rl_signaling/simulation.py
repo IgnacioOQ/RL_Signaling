@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import copy
 import warnings
-from typing import Any, Sequence
+from typing import Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,7 +23,6 @@ from rl_signaling.plotting import (
     plot_simulation_summary,
     smooth,
 )
-
 
 SimulationResult = tuple[
     list[dict],          # signal_usage per agent
@@ -68,6 +67,7 @@ def run_simulation(
     SimulationResult
         ``(signal_usage, rewards_history, signal_information_history,
         histories, nature_history)``.
+
     """
     for episode in range(n_episodes):
         if verbose:
@@ -154,6 +154,7 @@ def simulation_function(
     SimulationResult
         ``(signal_usage, rewards_history, signal_information_history,
         histories, nature_history)``.
+
     """
     warnings.warn(
         "simulation_function is deprecated; use rl_signaling.simulation.run_simulation "
@@ -168,7 +169,7 @@ def simulation_function(
     for episode in range(n_episodes):
       if verbose:
         print(f'episode number is {episode}')
-        
+
       # Step 1: Nature samples state at random and we assign observations to agents
       # Reset the environment for a new episode
       nature_vector = tuple(env.nature_sample())  # Convert nature vector to a tuple for Q-table indexing
@@ -179,7 +180,7 @@ def simulation_function(
         print(f'agents direct observations are {agents_observations}')
         print(f'environment step is {env.current_step}')
 
-      # Step 2: Agents choose signaling actions based on learning policy, and 
+      # Step 2: Agents choose signaling actions based on learning policy, and
       # step to store signaling history, and move to the next step in the episode
     #   signals = env.encoding_signals(agents_observations)
     #   print(f'agents signals are {signals}')
@@ -193,21 +194,21 @@ def simulation_function(
       else:
         signals = None
         new_observations = copy.deepcopy(agents_observations)
-        
+
       if verbose:
         print(f'agents signals are {signals}')
         print(f'agents new_observations are {new_observations}')
         print(f'environment step is {env.current_step}')
-        
+
       # Step 3: Agents choose final actions based new observations
       final_actions = env.get_actions(new_observations)
       if verbose:
         print(f'agents final_actions are {final_actions}')
         print(f'environment step is {env.current_step}')
-        
+
       # Step 4: Agents receive rewards
       rewards, done = env.play_step(final_actions)
-      
+
       if costly_signaling and with_signals:
         # Apply signal cost only if the agent did not send the "null signal"
         # The null signal is at index n_signaling_actions
@@ -215,16 +216,16 @@ def simulation_function(
           print('signals:', signals)
           print('rewards before cost:', rewards)
           print('signal_cost:', signal_cost)
-        rewards = [rewards[i] - signal_cost[i] if signals[i] != n_signaling_actions 
-                   else rewards[i] 
+        rewards = [rewards[i] - signal_cost[i] if signals[i] != n_signaling_actions
+                   else rewards[i]
                    for i in range(n_agents)]
-        
+
       # Step 5: Update agents' signaling and action urns and histories
       env.update_agents(agents_observations,new_observations,signals, final_actions, rewards)
       if verbose:
         print(f'agents rewards are {rewards}')
         print(f'environment step is {env.current_step}')
-        
+
     signal_usage, rewards_history, signal_information_history, nature_history, histories = env.report_metrics()
 
     if plot:
@@ -290,7 +291,7 @@ def simulation_function(
       plt.legend()
       plt.tight_layout()
       plt.show()
-      
+
       # Plot final signal usage
       # NOTE: This history tracking is memory-inefficient. See environment.py.
       final_signal_usage = [histories[0]['signal_history'][-1],histories[1]['signal_history'][-1]]
@@ -325,7 +326,7 @@ def simulation_function(
       plt.legend()
       plt.tight_layout()
       plt.show()
-      
+
       plt.figure(figsize=(8, 5))  # (width, height)
       # Dataset 1
       proportions1 = calculate_proportions(histories[0])
@@ -333,14 +334,14 @@ def simulation_function(
           smoothed_values = smooth(values)
           plt.plot(range(len(values)), smoothed_values, marker='o', markersize=1, label=f'Agent 0 - Key {key}')
           plt.text(len(values)-1, smoothed_values[-1], f'{smoothed_values[-1]:.2f}', fontsize=10, ha='right')
-          
+
       # Dataset 2
       proportions2 = calculate_proportions(histories[1])
       for key, values in proportions2.items():
           smoothed_values = smooth(values)
           plt.plot(range(len(values)), smoothed_values, marker='x', markersize=1, label=f'Agent 1 - Key {key}')
           plt.text(len(values)-1, smoothed_values[-1], f'{smoothed_values[-1]:.2f}', fontsize=10, ha='right')
-          
+
       plt.title('(Smoothed) Signal Urn Proportions History for Agent and Observation')
       plt.xlabel('Episode')
       plt.ylabel('Proportion')
@@ -348,7 +349,7 @@ def simulation_function(
       plt.legend()
 
     return signal_usage, rewards_history, signal_information_history, histories, env.nature_history
-  
+
 
 def temp_simulation_function(
     n_agents: int,
@@ -500,7 +501,7 @@ def temp_simulation_function(
       plt.legend()
       plt.tight_layout()
       plt.show()
-      
+
       # Plot final signal usage
       final_signal_usage = [histories[0]['signal_history'][-1],histories[1]['signal_history'][-1]]
       plt.figure(figsize=(8, 5))  # (width, height)
@@ -533,7 +534,7 @@ def temp_simulation_function(
       plt.legend()
       plt.tight_layout()
       plt.show()
-      
+
       plt.figure(figsize=(8, 5))  # (width, height)
       # Dataset 1
       proportions1 = calculate_proportions(histories[0])
@@ -541,14 +542,14 @@ def temp_simulation_function(
           smoothed_values = smooth(values)
           plt.plot(range(len(values)), smoothed_values, marker='o', markersize=1, label=f'Agent 0 - Key {key}')
           plt.text(len(values)-1, smoothed_values[-1], f'{smoothed_values[-1]:.2f}', fontsize=10, ha='right')
-          
+
       # Dataset 2
       proportions2 = calculate_proportions(histories[1])
       for key, values in proportions2.items():
           smoothed_values = smooth(values)
           plt.plot(range(len(values)), smoothed_values, marker='x', markersize=1, label=f'Agent 1 - Key {key}')
           plt.text(len(values)-1, smoothed_values[-1], f'{smoothed_values[-1]:.2f}', fontsize=10, ha='right')
-          
+
       plt.title('(Smoothed) Signal Urn Proportions History for Agent and Observation')
       plt.xlabel('Episode')
       plt.ylabel('Proportion')

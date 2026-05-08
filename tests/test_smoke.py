@@ -4,13 +4,11 @@ from __future__ import annotations
 
 import math
 
-import numpy as np
 import pytest
 
 from rl_signaling.agents import QLearningAgent, TDLearningAgent, UrnAgent
 from rl_signaling.env import MultiAgentEnv
 from rl_signaling.simulation import run_simulation
-
 
 N_EPISODES = 100
 
