@@ -145,7 +145,7 @@ REFACTOR_PLAN.md     # this file
 | 0. Audit | **Done** | findings frozen above |
 | 1. Hygiene | **Done** | uncommitted on `refactor` |
 | 2. Typo rename | **Done** | uncommitted on `refactor` |
-| 3. Module split | Pending | – |
+| 3. Module split | **Done** | uncommitted on `refactor` |
 | 3.5. Docstrings + type hints | Pending | – |
 | 4. Unified agent interface (+ urn-init bug fix) | Pending | – |
 | 5. Unified Env + runner | Pending | – |
@@ -271,7 +271,7 @@ Plus the import smoke test from Phase 1.
 
 ---
 
-## Phase 3 — Module split (Pending)
+## Phase 3 — Module split (Done)
 
 ### Scope
 
@@ -314,6 +314,18 @@ Plus: launch one notebook (recommend `basic_unit_test.ipynb`) and run the first 
 
 - Notebook JSON edits are noisy; preserve cell metadata.
 - Path literals (e.g. `'./plots_and_results/'` defaults inside `utils.plot_histograms_with_kde` and similar) must be updated.
+
+### Notes from execution
+
+- Package skeleton created at `rl_signaling/` with `__init__.py` re-exporting `UrnAgent`, `QLearningAgent`, `TDLearningAgent`, `NetMultiAgentEnv`, `TempNetMultiAgentEnv`, `simulation_function`, `temp_simulation_function`.
+- Modules moved with `git mv`: `agents.py` → `rl_signaling/agents.py`, `environment.py` → `rl_signaling/env.py`, `simulation_function.py` → `rl_signaling/simulation.py`.
+- `utils.py` split into `rl_signaling/games.py` (game generators + signal initializers), `rl_signaling/info_theory.py` (MI/NMI), `rl_signaling/plotting.py` (everything else). Old `utils.py` deleted.
+- Internal helpers marked private with leading `_`: `_generate_unique_dicts`, `_generate_hot_vectors` (`games.py`); `_compute_entropy` (`info_theory.py`); `_calculate_reward_difference` (`plotting.py`). Internal call sites updated.
+- Intra-package imports use absolute `from rl_signaling.X import Y` form (PEP 8).
+- Notebooks moved to `notebooks/`; setup cells rewritten to add `sys.path.insert(0, os.path.abspath('..'))` so the package is importable whether or not it's pip-installed. Old import lines (`from agents import ...`, `from utils import ...`) replaced with the `rl_signaling.*` equivalents.
+- `plots_and_results/` renamed to `results/` via `git mv`. Path literals `./plots_and_results/` inside notebook code cells updated to `../results/` (notebooks now live one level down). Default `dump_path` argument of `plot_histograms_with_kde` and `plot_regression` in `plotting.py` updated to `'./results/'`. Colab-only absolute paths (`/content/drive/...`) left untouched.
+- `README.md` updated to reflect the new layout: tree diagram, module table, notebook paths, `pip install -e .` setup instructions, minimal example uses package imports.
+- Module smoke test passes: `import rl_signaling; from rl_signaling import agents, env, simulation, games, info_theory, plotting`. End-to-end env instantiation works from inside `notebooks/`.
 
 ---
 

@@ -32,38 +32,58 @@ When `costly_signaling=True`, an extra "null signal" action is added; sending an
 
 ## Repository layout
 
-| File | Purpose |
+```
+rl_signaling/
+  __init__.py        # package public surface
+  agents.py          # UrnAgent, QLearningAgent, TDLearningAgent
+  env.py             # NetMultiAgentEnv, TempNetMultiAgentEnv
+  simulation.py      # simulation_function, temp_simulation_function
+  games.py           # canonical & random game generators, signal-urn initializers
+  info_theory.py     # mutual-information / NMI metrics
+  plotting.py        # plot helpers, post-processing utilities
+notebooks/           # experiment notebooks (see table below)
+results/             # saved CSVs and PNG figures from each experiment
+tests/               # pytest suite (under construction)
+```
+
+| Module | Purpose |
 |---|---|
-| [agents.py](agents.py) | Agent classes: `UrnAgent` (Roth–Erev), `QLearningAgent` (`egreedy` / `softmax` / `ucb`), `TDLearningAgent` |
-| [environment.py](environment.py) | `NetMultiAgentEnv` (main, single-step episodes) and `TempNetMultiAgentEnv` (two-step formulation used by the TD-learning agent) |
-| [simulation_function.py](simulation_function.py) | `simulation_function` for `NetMultiAgentEnv`; `temp_simulation_function` for `TempNetMultiAgentEnv` |
-| [utils.py](utils.py) | Game generators, signal-urn initializers, mutual-information metrics, plotting helpers |
-| [imports.py](imports.py) | Shared third-party imports |
-| [plots_and_results/](plots_and_results/) | Saved CSVs and PNG figures from each experiment |
+| [rl_signaling/agents.py](rl_signaling/agents.py) | Agent classes: `UrnAgent` (Roth–Erev), `QLearningAgent` (`egreedy` / `softmax` / `ucb`), `TDLearningAgent` |
+| [rl_signaling/env.py](rl_signaling/env.py) | `NetMultiAgentEnv` (main, single-step episodes) and `TempNetMultiAgentEnv` (two-step formulation used by the TD-learning agent) |
+| [rl_signaling/simulation.py](rl_signaling/simulation.py) | `simulation_function` for `NetMultiAgentEnv`; `temp_simulation_function` for `TempNetMultiAgentEnv` |
+| [rl_signaling/games.py](rl_signaling/games.py) | Random and canonical game generators; signal-urn initializers |
+| [rl_signaling/info_theory.py](rl_signaling/info_theory.py) | Mutual information and normalized mutual information |
+| [rl_signaling/plotting.py](rl_signaling/plotting.py) | KDE histograms, regression plots, reward/NMI-vs-cost plots, smoothing, CSV post-processing |
 
 ### Notebooks
 
 | Notebook | Purpose |
 |---|---|
-| [basic_unit_test.ipynb](basic_unit_test.ipynb) | Sanity check for each agent type on a small canonical game |
-| [Run_Simulations.ipynb](Run_Simulations.ipynb) | Main runs: canonical and complex models across the three agent types |
-| [Initializations_test.ipynb](Initializations_test.ipynb) | Effect of urn/Q-table initialization strategies |
-| [Parameter_Optimization_wchoices.ipynb](Parameter_Optimization_wchoices.ipynb) | Hyperparameter tuning for Q-learning and TD-learning |
-| [Final_Costly_Signaling_Run_Simulations.ipynb](Final_Costly_Signaling_Run_Simulations.ipynb) | Costly-signaling experiments |
-| [plotting_results.ipynb](plotting_results.ipynb) | Builds the final figures from the saved CSVs |
+| [notebooks/basic_unit_test.ipynb](notebooks/basic_unit_test.ipynb) | Sanity check for each agent type on a small canonical game |
+| [notebooks/Run_Simulations.ipynb](notebooks/Run_Simulations.ipynb) | Main runs: canonical and complex models across the three agent types |
+| [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) | Effect of urn/Q-table initialization strategies |
+| [notebooks/Parameter_Optimization_wchoices.ipynb](notebooks/Parameter_Optimization_wchoices.ipynb) | Hyperparameter tuning for Q-learning and TD-learning |
+| [notebooks/Final_Costly_Signaling_Run_Simulations.ipynb](notebooks/Final_Costly_Signaling_Run_Simulations.ipynb) | Costly-signaling experiments |
+| [notebooks/plotting_results.ipynb](notebooks/plotting_results.ipynb) | Builds the final figures from the saved CSVs in `results/` |
 
 ## Setup
 
-Dependencies (Python 3.10+):
-
-```
-numpy pandas matplotlib seaborn networkx scikit-learn tqdm joblib
-```
-
-Install with:
+Python 3.10+. Install the package and its runtime dependencies in editable mode:
 
 ```bash
-pip install numpy pandas matplotlib seaborn networkx scikit-learn tqdm joblib
+pip install -e .
+```
+
+For development (adds `pytest`, `ruff`, `ipykernel`):
+
+```bash
+pip install -e ".[dev]"
+```
+
+To install pinned versions matching the checked-in lockfile:
+
+```bash
+pip install -r requirements.txt
 ```
 
 ## Minimal example
@@ -72,10 +92,10 @@ A 2-agent run on the canonical game with the urn agent:
 
 ```python
 import networkx as nx
-from utils import create_random_canonical_game
-from agents import UrnAgent
-from environment import NetMultiAgentEnv
-from simulation_function import simulation_function
+from rl_signaling.agents import UrnAgent
+from rl_signaling.env import NetMultiAgentEnv
+from rl_signaling.games import create_random_canonical_game
+from rl_signaling.simulation import simulation_function
 
 n_agents, n_features = 2, 2
 n_signaling_actions, n_final_actions = 2, 4
@@ -112,9 +132,9 @@ signal_usage, rewards_history, signal_information_history, histories, nature_his
     )
 ```
 
-For the TD-learning agent, swap in `TempNetMultiAgentEnv` and `temp_simulation_function` instead — see [basic_unit_test.ipynb](basic_unit_test.ipynb) for a working example.
+For the TD-learning agent, swap in `TempNetMultiAgentEnv` and `temp_simulation_function` instead — see [notebooks/basic_unit_test.ipynb](notebooks/basic_unit_test.ipynb) for a working example.
 
-To reproduce the published figures, run the experiment notebooks first to generate CSVs in `plots_and_results/`, then run [plotting_results.ipynb](plotting_results.ipynb).
+To reproduce the published figures, run the experiment notebooks first to generate CSVs in `results/`, then run [notebooks/plotting_results.ipynb](notebooks/plotting_results.ipynb).
 
 ## Hypothesis
 
@@ -122,5 +142,6 @@ Each agent's payoff is independent of the others' actions, so there is no immedi
 
 ## Status and known limitations
 
-- `signal_usage` history in [environment.py](environment.py) is appended every episode via `deepcopy`, which is memory-inefficient for long runs but kept for plotting compatibility.
+- `signal_usage` history in [rl_signaling/env.py](rl_signaling/env.py) is appended every episode via `deepcopy`, which is memory-inefficient for long runs but kept for plotting compatibility.
 - The `TempNetMultiAgentEnv` / `temp_simulation_function` path is the one used for the TD-learning agent; the in-code comment claiming it is unused is stale.
+- An ongoing structural refactor is tracked in [REFACTOR_PLAN.md](REFACTOR_PLAN.md). See `WORKLOG.md` for completed phases and `TODO_WORKFLOW.md` for the active task.

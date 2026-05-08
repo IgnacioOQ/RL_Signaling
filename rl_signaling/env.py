@@ -2,8 +2,8 @@ import copy
 
 import numpy as np
 
-from agents import UrnAgent, QLearningAgent, TDLearningAgent
-from utils import compute_mutual_information
+from rl_signaling.agents import QLearningAgent, TDLearningAgent, UrnAgent
+from rl_signaling.info_theory import compute_mutual_information
 
 
 class NetMultiAgentEnv:

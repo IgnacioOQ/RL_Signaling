@@ -2,7 +2,7 @@ import random
 
 import numpy as np
 
-from utils import create_initial_signals
+from rl_signaling.games import create_initial_signals
 
 # Urn-Learning Agent
 class UrnAgent:

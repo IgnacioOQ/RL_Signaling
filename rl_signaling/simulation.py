@@ -3,9 +3,9 @@ import copy
 import matplotlib.pyplot as plt
 import numpy as np
 
-from agents import UrnAgent, QLearningAgent, TDLearningAgent
-from environment import NetMultiAgentEnv, TempNetMultiAgentEnv
-from utils import calculate_proportions, smooth
+from rl_signaling.agents import QLearningAgent, TDLearningAgent, UrnAgent
+from rl_signaling.env import NetMultiAgentEnv, TempNetMultiAgentEnv
+from rl_signaling.plotting import calculate_proportions, smooth
 
 
 def simulation_function(n_agents=2, n_features=2,
