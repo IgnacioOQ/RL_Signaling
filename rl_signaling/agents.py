@@ -9,16 +9,24 @@ updating internal estimates from received rewards:
 - :class:`TDLearningAgent` — temporal-difference learning over a single Q-table
   with a unified action space (used with the two-step environment).
 
-``UrnAgent`` and ``QLearningAgent`` share the
-``get_signal`` / ``get_action`` / ``update_signals`` / ``update_actions`` API.
-``TDLearningAgent`` exposes a different ``get_action(state, available_actions)`` /
-``update(state, action, reward, next_state, done)`` API; unifying the three
-behind a common base class is tracked as Phase 4 in ``REFACTOR_PLAN.md``.
+:class:`UrnAgent` and :class:`QLearningAgent` both inherit from
+:class:`BaseAgent`, which defines the canonical
+``get_signal`` / ``get_action`` / ``update_signals`` / ``update_actions``
+interface. :class:`TDLearningAgent` exposes a different
+``get_action(state, available_actions)`` / ``update(state, action, reward,
+next_state, done)`` API because its update rule bootstraps off ``next_state``;
+bringing it under the same base class is coupled to the env-unification
+work in Phase 5 of ``REFACTOR_PLAN.md``.
+
+The egreedy / softmax / ucb exploration strategy is implemented once in
+:func:`_select_action` and reused across :class:`QLearningAgent` and
+:class:`TDLearningAgent`.
 """
 
 from __future__ import annotations
 
 import random
+from abc import ABC, abstractmethod
 from typing import Sequence
 
 import numpy as np
@@ -27,7 +35,115 @@ from numpy.typing import NDArray
 from rl_signaling.games import create_initial_signals
 
 
-class UrnAgent:
+def _select_action(
+    q_values: NDArray[np.float64],
+    counts: NDArray[np.float64],
+    exploration_rate: float,
+    choice: str,
+    available_actions: Sequence[int] | None = None,
+) -> int:
+    """Pick an action under ``egreedy`` / ``softmax`` / ``ucb``.
+
+    Shared exploration kernel for :class:`QLearningAgent` and
+    :class:`TDLearningAgent`. When ``available_actions`` is ``None`` the
+    full action set ``range(len(q_values))`` is considered.
+
+    Parameters
+    ----------
+    q_values
+        1-D array of Q-values, one entry per action in the full action set.
+    counts
+        1-D array of visit counts aligned with ``q_values`` (used by ``ucb``;
+        ignored otherwise).
+    exploration_rate
+        Epsilon for ``egreedy``, temperature for ``softmax``, weight for
+        ``ucb``.
+    choice
+        One of ``"egreedy"``, ``"softmax"``, ``"ucb"``.
+    available_actions
+        Optional subset of action indices that are valid in this step.
+
+    Returns
+    -------
+    int
+        Index of the chosen action, drawn from the full action set (so the
+        caller can index ``q_values`` / ``counts`` directly with it).
+
+    Raises
+    ------
+    ValueError
+        If ``choice`` is not one of the three supported strategies.
+    """
+    n_actions = len(q_values)
+    actions: list[int] = (
+        list(range(n_actions)) if available_actions is None else list(available_actions)
+    )
+
+    if choice == "egreedy":
+        if random.uniform(0, 1) < exploration_rate:
+            if available_actions is None:
+                return random.randint(0, n_actions - 1)
+            return random.choice(actions)
+        if available_actions is None:
+            return int(np.argmax(q_values))
+        return max(actions, key=lambda a: q_values[a])
+
+    if choice == "softmax":
+        tau = max(exploration_rate, 1e-6)
+        if available_actions is None:
+            stable_q = q_values - np.max(q_values)
+            exp_q = np.exp(stable_q / tau)
+            probabilities = exp_q / np.sum(exp_q)
+            return int(np.random.choice(n_actions, p=probabilities))
+        logits = np.array([q_values[a] for a in actions])
+        stable_logits = logits - np.max(logits)
+        exp_logits = np.exp(stable_logits / tau)
+        probs = exp_logits / np.sum(exp_logits)
+        return int(np.random.choice(actions, p=probs))
+
+    if choice == "ucb":
+        safe_counts = counts + 1e-5
+        total_counts = np.sum(counts) + 1
+        ucb_bonus = exploration_rate * np.sqrt(np.log(total_counts) / safe_counts)
+        ucb_scores = q_values + ucb_bonus
+        if available_actions is None:
+            return int(np.argmax(ucb_scores))
+        masked = np.full_like(ucb_scores, -np.inf)
+        masked[actions] = ucb_scores[actions]
+        return int(np.argmax(masked))
+
+    raise ValueError(f"Unknown choice strategy: {choice}")
+
+
+class BaseAgent(ABC):
+    """Canonical agent interface used by :class:`rl_signaling.env.NetMultiAgentEnv`.
+
+    Concrete agents implement four methods:
+
+    - ``get_signal(state) -> int``
+    - ``get_action(state) -> int``
+    - ``update_signals(state, signal, reward) -> None``
+    - ``update_actions(state, action, reward) -> None``
+
+    Implemented by :class:`UrnAgent` and :class:`QLearningAgent`.
+    :class:`TDLearningAgent` does not currently inherit from this ABC; its
+    interface is bridged in Phase 5 alongside the env unification.
+    """
+
+    @abstractmethod
+    def get_signal(self, state) -> int: ...
+
+    @abstractmethod
+    def get_action(self, state) -> int: ...
+
+    @abstractmethod
+    def update_signals(self, state, signal: int, reward: float) -> None: ...
+
+    @abstractmethod
+    def update_actions(self, state, action: int, reward: float) -> None: ...
+
+
+class UrnAgent(BaseAgent):
     """Roth–Erev urn agent.
 
     Maintains one urn per observed state for both signaling and final actions.
@@ -60,11 +176,10 @@ class UrnAgent:
 
     Notes
     -----
-    There is a known bug at the bottom of ``__init__``: the unconditional
-    ``self.action_urns = {}`` overwrites the ``initialize=True`` branch,
-    so action urns are never pre-seeded. The fix is deferred to Phase 4 of
-    ``REFACTOR_PLAN.md`` so checked-in numerical results remain
-    reproducible until the agent interface is unified.
+    Phase 4 of ``REFACTOR_PLAN.md`` fixed the action-urn initialization bug
+    that previously caused ``initialize=True`` runs to silently never
+    pre-seed ``action_urns``. Behavior with ``initialize=False`` (the
+    setting used by all checked-in result CSVs) is unchanged.
     """
 
     def __init__(
@@ -86,6 +201,8 @@ class UrnAgent:
         self.n_final_actions = n_final_actions
         self.costly_signaling = costly_signaling
 
+        self.signaling_urns: dict
+        self.action_urns: dict
         if initialize:
             self.signaling_urns = create_initial_signals(
                 n_observed_features=n_observed_features,
@@ -101,7 +218,7 @@ class UrnAgent:
             )
         else:
             self.signaling_urns = {}
-        self.action_urns: dict = {}
+            self.action_urns = {}
 
     def reset_urns(self) -> None:
         """Reset both signaling and action urns to empty dictionaries."""
@@ -178,7 +295,7 @@ class UrnAgent:
         )
 
 
-class QLearningAgent:
+class QLearningAgent(BaseAgent):
     """Q-learning agent with three exploration strategies.
 
     Holds two Q-tables — one for signaling, one for final actions — keyed
@@ -270,30 +387,12 @@ class QLearningAgent:
             self.q_table_signaling[state] = np.zeros(self.n_signaling_actions)
             self.signaling_counts[state] = np.zeros(self.n_signaling_actions)
 
-        if self.choice == "egreedy":
-            if random.uniform(0, 1) < self.signal_exploration_rate:
-                signal = random.randint(0, self.n_signaling_actions - 1)
-            else:
-                signal = int(np.argmax(self.q_table_signaling[state]))
-        elif self.choice == "softmax":
-            q_values = self.q_table_signaling[state]
-            tau = self.signal_exploration_rate
-            stable_q = q_values - np.max(q_values)  # numerical stability
-            exp_q = np.exp(stable_q / tau)
-            probabilities = exp_q / np.sum(exp_q)
-            signal = int(np.random.choice(len(q_values), p=probabilities))
-        elif self.choice == "ucb":
-            q_values = self.q_table_signaling[state]
-            counts = self.signaling_counts[state] + 1e-5  # avoid division by zero
-            total_counts = np.sum(self.signaling_counts[state]) + 1
-            ucb_bonus = self.signal_exploration_rate * np.sqrt(
-                np.log(total_counts) / counts
-            )
-            ucb_scores = q_values + ucb_bonus
-            signal = int(np.argmax(ucb_scores))
-        else:
-            raise ValueError(f"Unknown choice strategy: {self.choice}")
-
+        signal = _select_action(
+            q_values=self.q_table_signaling[state],
+            counts=self.signaling_counts[state],
+            exploration_rate=self.signal_exploration_rate,
+            choice=self.choice,
+        )
         self.signaling_counts[state][signal] += 1
         return signal
 
@@ -303,30 +402,12 @@ class QLearningAgent:
             self.q_table_action[state] = np.zeros(self.n_final_actions)
             self.action_counts[state] = np.zeros(self.n_final_actions)
 
-        if self.choice == "egreedy":
-            if random.uniform(0, 1) < self.action_exploration_rate:
-                action = random.randint(0, self.n_final_actions - 1)
-            else:
-                action = int(np.argmax(self.q_table_action[state]))
-        elif self.choice == "softmax":
-            q_values = self.q_table_action[state]
-            tau = self.action_exploration_rate
-            stable_q = q_values - np.max(q_values)
-            exp_q = np.exp(stable_q / tau)
-            probabilities = exp_q / np.sum(exp_q)
-            action = int(np.random.choice(len(q_values), p=probabilities))
-        elif self.choice == "ucb":
-            q_values = self.q_table_action[state]
-            counts = self.action_counts[state] + 1e-5
-            total_counts = np.sum(self.action_counts[state]) + 1
-            ucb_bonus = self.action_exploration_rate * np.sqrt(
-                np.log(total_counts) / counts
-            )
-            ucb_scores = q_values + ucb_bonus
-            action = int(np.argmax(ucb_scores))
-        else:
-            raise ValueError(f"Unknown choice strategy: {self.choice}")
-
+        action = _select_action(
+            q_values=self.q_table_action[state],
+            counts=self.action_counts[state],
+            exploration_rate=self.action_exploration_rate,
+            choice=self.choice,
+        )
         self.action_counts[state][action] += 1
         return action
 
@@ -432,37 +513,13 @@ class TDLearningAgent:
             self.q_table[state] = np.zeros(self.n_actions)
             self.action_counts[state] = np.zeros(self.n_actions)
 
-        if available_actions is None:
-            available_actions = list(range(self.n_actions))
-
-        q_values = self.q_table[state]
-
-        if self.choice == "egreedy":
-            if random.random() < self.exploration_rate:
-                action = random.choice(list(available_actions))
-            else:
-                action = max(available_actions, key=lambda a: q_values[a])
-        elif self.choice == "softmax":
-            tau = max(self.exploration_rate, 1e-6)
-            logits = np.array([q_values[a] for a in available_actions])
-            stable_logits = logits - np.max(logits)
-            exp_logits = np.exp(stable_logits / tau)
-            probs = exp_logits / np.sum(exp_logits)
-            action = int(np.random.choice(list(available_actions), p=probs))
-        elif self.choice == "ucb":
-            counts = self.action_counts[state] + 1e-5
-            total_counts = np.sum(self.action_counts[state]) + 1
-            ucb_bonus = self.exploration_rate * np.sqrt(np.log(total_counts) / counts)
-            ucb_scores: NDArray = q_values + ucb_bonus
-
-            # Mask unavailable actions
-            masked_scores = np.full_like(ucb_scores, -np.inf)
-            masked_scores[list(available_actions)] = ucb_scores[list(available_actions)]
-
-            action = int(np.argmax(masked_scores))
-        else:
-            raise ValueError(f"Unknown choice strategy: {self.choice}")
-
+        action = _select_action(
+            q_values=self.q_table[state],
+            counts=self.action_counts[state],
+            exploration_rate=self.exploration_rate,
+            choice=self.choice,
+            available_actions=available_actions,
+        )
         self.action_counts[state][action] += 1
         return action
 

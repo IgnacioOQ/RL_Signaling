@@ -147,7 +147,7 @@ REFACTOR_PLAN.md     # this file
 | 2. Typo rename | **Done** | uncommitted on `refactor` |
 | 3. Module split | **Done** | uncommitted on `refactor` |
 | 3.5. Docstrings + type hints | **Done** | uncommitted on `refactor` |
-| 4. Unified agent interface (+ urn-init bug fix) | Pending | – |
+| 4. Unified agent interface (+ urn-init bug fix) | **Done** | uncommitted on `refactor` |
 | 5. Unified Env + runner | Pending | – |
 | 6. Tests | Pending | – |
 | 7. Docs polish | Pending | – |
@@ -365,7 +365,7 @@ python3 -c "import rl_signaling; help(rl_signaling.agents.UrnAgent)"  # spot-che
 
 ---
 
-## Phase 4 — Unified agent interface + urn-init bug fix (Pending)
+## Phase 4 — Unified agent interface + urn-init bug fix (Done)
 
 ### Scope
 
@@ -402,6 +402,16 @@ After Phase 4, re-run with the same seeds and diff against `baseline.json`. Acce
 
 - All notebooks still run without modification (since the agent classes keep their same names).
 - Golden-run diff matches expected impact (urn-init change only).
+
+### Notes from execution
+
+- **Scope adjusted in flight:** The TDLearningAgent interface migration to `BaseAgent` is **deferred to Phase 5** because it is structurally coupled to the env unification. TDLearningAgent's update path bootstraps off `next_state`, which the canonical 4-method signature does not carry; bridging the two is naturally part of the env redesign in Phase 5. In Phase 4 TDLearningAgent now uses the shared `_select_action` helper but does not yet inherit from `BaseAgent`. This deferral is reflected in the `BaseAgent` class docstring.
+- `BaseAgent` ABC added at the top of `rl_signaling/agents.py`. Instantiating it directly raises `TypeError` (Python's standard ABC enforcement).
+- `UrnAgent` and `QLearningAgent` now inherit from `BaseAgent`; their interface already matched, so no method changes were needed.
+- `_select_action` helper extracted with signature `(q_values, counts, exploration_rate, choice, available_actions=None) -> int`. Replaces three near-identical exploration blocks: `QLearningAgent.get_signal`, `QLearningAgent.get_action`, `TDLearningAgent.get_action`.
+- **Urn-init bug fixed:** `UrnAgent.__init__` no longer unconditionally overwrites `action_urns`. The `self.action_urns = {}` line is now inside the `else` branch alongside the `self.signaling_urns = {}` line. Verified directly: with `initialize=True, n_observed_features=1, n_signaling_actions=2, n_final_actions=4`, `action_urns` is now populated with 4 one-hot vectors keyed by `(observation, signal)` pairs (was empty pre-fix).
+- **Golden run:** captured a pre-Phase-4 baseline at fixed seed (`SEED=12345`, `N_EPISODES=100`) for all three agent types in `tests/golden/baseline.json`. Re-ran post-Phase-4 — final NMI fingerprints match to ~17 decimals across all three agents, confirming zero behavioral drift on the `initialize=False` path used by every saved CSV in `results/`.
+- Full package smoke test passes; `BaseAgent`, `_select_action`, and the bug fix are all reachable and behave as designed.
 
 ---
 
