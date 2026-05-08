@@ -1,4 +1,16 @@
-from imports import *
+import os
+import random
+import sys
+from collections import defaultdict
+from itertools import product
+
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
 
 # Games
 # game dictionary takes as input binary tuples of length 4 and outputs a payoff
@@ -112,13 +124,6 @@ def compute_mutual_information(agent_signal_usage):
 
 
 # PLOTTING
-def plot_hist(df,variable,with_signal=True,full_information=False):
-  subset_df = df[(df['full_information'] == full_information) & (df['with_signal'] == with_signal)]
-  subset_df[variable].plot(kind='hist', bins=100, title=f'variable={variable}, setup = {with_signal,full_information}')
-  plt.gca().spines[['top', 'right',]].set_visible(False)
-  plt.show()
-
-
 def plot_histograms_with_kde(df, variable, bins=100, figsize=(5, 3),
                              alpha=0.5, kde=True,variables = [(False, True), (True, False), (False, False)],
                              dump_path = './plots_and_results/',
@@ -360,20 +365,7 @@ def plot_payoff_comparison(df):
     plt.ylabel("Frequency")
     plt.legend()  # Add legend to differentiate variables and their means
     plt.show()
-    
-    # Function to create a directed graph with n agents
-def create_directed_graph(n):
-    G = nx.DiGraph()
 
-    # Add n nodes
-    G.add_nodes_from(range(1, n + 1))
-
-    # Add directed edges where each node points to every other node
-    for i in range(1, n + 1):
-        for j in range(1, n + 1):
-            if i != j:
-                G.add_edge(i, j)
-    return G
 
 # Plot Smoothing
 # Prepare data for plotting

@@ -1,5 +1,8 @@
-from imports import *
-from utils import *
+import random
+
+import numpy as np
+
+from utils import create_initial_signals
 
 # Urn-Learning Agent
 class UrnAgent:

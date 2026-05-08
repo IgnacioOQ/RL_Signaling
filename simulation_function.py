@@ -1,21 +1,15 @@
-from imports import *
-from utils import *
+import copy
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 from agents import UrnAgent, QLearningAgent, TDLearningAgent
 from environment import NetMultiAgentEnv, TempNetMultiAgentEnv
+from utils import calculate_proportions, smooth
 
-n_agents = 2
-n_features = 2
-n_signaling_actions = 2
-n_final_actions = 4
 
-random_game_dicts = {}
-for i in range(n_agents):
-  random_game_dicts[i] = create_random_canonical_game(n_features,n_final_actions)
-
-agents_observed_variables = {0:[0],1:[1]}
-
-def simulation_function(n_agents=n_agents, n_features=n_features,
-                        n_signaling_actions=n_signaling_actions, n_final_actions=n_final_actions,
+def simulation_function(n_agents=2, n_features=2,
+                        n_signaling_actions=2, n_final_actions=4,
                         n_episodes=6000, with_signals = True,
                         plot=True,env=None,
                         costly_signaling=False,

@@ -1,22 +1,10 @@
-from imports import *
-from utils import *
+import copy
+
+import numpy as np
+
 from agents import UrnAgent, QLearningAgent, TDLearningAgent
+from utils import compute_mutual_information
 
-# Networked Multi-Agent Environment Class
-# Environment input
-n_agents=2
-n_features=2
-n_final_actions=4
-# example game_dicts and observed variables
-random_game_dicts = {}
-for i in range(n_agents):
-  random_game_dicts[i] = create_random_canonical_game(n_features,n_final_actions)
-  
-agents_observed_variables = {0:[0],1:[1]}
-
-G = nx.DiGraph()
-G.add_nodes_from([0,1])  # Adds multiple nodes at once
-G.add_edges_from([(0, 1), (1, 0)])  # Adds multiple edges
 
 class NetMultiAgentEnv:
     def __init__(self, n_agents=2, n_features=2, n_signaling_actions=2, n_final_actions=4,
