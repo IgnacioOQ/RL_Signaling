@@ -1,4 +1,14 @@
 # RL_Signaling
+- status: active
+- type: how-to
+- id: rl_signaling.readme
+- description: Reinforcement-learning study of emergent signaling between agents under partial observation; covers the model, repository layout, setup, and a minimal runnable example.
+- label: [core]
+- injection: informational
+- volatility: evolving
+- scope: project-specific
+- last_checked: 2026-05-08
+<!-- content -->
 
 A reinforcement-learning study of emergent signaling between agents under partial observation. Two or more agents on a directed graph each observe a subset of the world state, exchange signals, then take an action whose payoff depends on the full state. The question is whether — and when — meaningful communication emerges, even though each agent's payoff is independent of the others' actions.
 
