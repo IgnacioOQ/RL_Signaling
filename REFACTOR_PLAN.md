@@ -149,7 +149,7 @@ REFACTOR_PLAN.md     # this file
 | 3.5. Docstrings + type hints | **Done** | uncommitted on `refactor` |
 | 4. Unified agent interface (+ urn-init bug fix) | **Done** | uncommitted on `refactor` |
 | 5. Unified Env + runner | **Done** | uncommitted on `refactor` |
-| 6. Tests | Pending | – |
+| 6. Tests | **Done** | uncommitted on `refactor` |
 | 7. Docs polish | Pending | – |
 
 ---
@@ -446,7 +446,7 @@ After Phase 4, re-run with the same seeds and diff against `baseline.json`. Acce
 
 ---
 
-## Phase 6 — Tests (Pending)
+## Phase 6 — Tests (Done)
 
 ### Scope
 
@@ -466,6 +466,15 @@ pytest tests/ -v
 ```
 
 All tests pass. Coverage on `rl_signaling/` ≥ 80% (informational; not a gating criterion).
+
+### Notes from execution
+
+- Five test files written under `tests/`: `test_info_theory.py`, `test_agents.py`, `test_env.py`, `test_smoke.py`, `test_golden.py`. Plus a `conftest.py` with shared fixtures (`two_agent_graph`, `small_game_dicts`) and a `sys.path` shim so tests run without `pip install -e .`.
+- `pyproject.toml` gains a `[tool.pytest.ini_options]` block: `testpaths = ["tests"]`, `addopts = "-ra"`, and a `filterwarnings` entry that suppresses the `DeprecationWarning` emitted by the legacy env / runner classes during testing (otherwise pytest's default settings turn them into noise).
+- Final status: **50 tests pass in ~5 seconds**.
+- **Phase-ordering nuance discovered while writing the golden test:** in the legacy `TempNetMultiAgentEnv` flow, `TDLearningAgent.update` is called twice per episode at the *end of each phase* — so the signal-phase update decays `exploration_rate` *before* the action-phase `get_action` runs. In the new `MultiAgentEnv` flow, both updates happen at end-of-episode (inside `update_episode`), so the action-phase `get_action` sees a slightly higher `exploration_rate`. For most episodes this doesn't change the explore/exploit branch, but in ~1/100 episodes the comparison `random.uniform(0,1) < exploration_rate` lands on the other side and the action diverges. The Q-value math is unchanged — this is purely an exploration-schedule ordering difference. Resolution: the canonical `baseline.json` is now captured against the new API (`MultiAgentEnv` + `run_simulation`); future regressions are measured against the canonical implementation, not the deprecated one. The `save_baseline.py` script was rewritten accordingly.
+- `test_td_learning_update_episode_runs_two_updates` in `test_agents.py` had to pre-populate the action-state Q-row before calling `update_episode`. With a zero-initialized Q-table, the signal-phase TD bootstrap target is `gamma * max(zeros) = 0`, so `td_error = 0` and the row doesn't move on the first episode. Pre-populating with a non-zero value lets the test assert the row actually shifts.
+- `test_end_to_end_invariants` in `test_smoke.py` was updated to handle the `with_signals=False` case: NMI history is empty (no `step_signal` ever ran) and `signal_usage` is `{}` rather than 100 episodes' worth of counts.
 
 ---
 

@@ -44,3 +44,14 @@ dev = [
 where = ["."]
 include = ["rl_signaling*"]
 exclude = ["tests*", "notebooks*", "results*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra"
+filterwarnings = [
+    # Treat the deprecation warnings on the legacy env/runner classes as
+    # informational during tests — the golden-run baseline still calls them.
+    "ignore::DeprecationWarning:rl_signaling.env",
+    "ignore::DeprecationWarning:rl_signaling.simulation",
+]
