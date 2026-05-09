@@ -26,65 +26,88 @@ This file is the per-repository instance of the `TODO_WORKFLOW_TEMPLATE.md` patt
 
 ---
 
-## Sanity-check the Phase 6 Initializations finding
+## Investigate why QLearning fails to lock into pre-seeded equilibria
 - status: todo
 - type: task
-- id: todo.sanity_check_initializations_finding
-- description: Verify the surprising Phase 6 finding that init_weights=[1,0] yields UrnAgent NMI≈1.0 with reward stuck at ≈0.25, and that QLearning under all four init_weights settles at random-baseline reward.
+- id: todo.investigate_qlearning_initialization
+- description: The Initializations experiment is supposed to test whether agents systematically biased toward one of the multiple pure-strategy equilibria of the canonical signaling game lock in to that equilibrium under different bias strengths. UrnAgent shows the expected behavior; QLearningAgent does not. Diagnose why and propose a fix.
 - owner: agent
 - blocked_by: []
 - last_checked: 2026-05-09
 <!-- content -->
-**Context:** The 2026-05-09 Phase 6 verification re-ran the migrated `notebooks/Initializations_test.ipynb` end-to-end after Bugs 4 and 5 were fixed. The regenerated figures show:
+**Context — what the study is for.** The canonical signaling game has many pure-strategy equilibria. Each equilibrium is a *bijection* from world-state observations to signals (the sender's encoding) composed with a bijection from `(own_obs, received_signal)` to final actions (the receiver's decoding) such that the realized action matches the game's optimal action for the full state. The `Initializations_test.ipynb` notebook varies `init_weights ∈ {[1,0], [1,1], [5,1], [100,1]}` to ask: *if we pre-seed agents with a strong systematic bias toward one of these candidate equilibria, does the bias persist through learning?* The pre-seed mechanism is `rl_signaling.games.create_initial_signals(n_observed_features, n_signals, n, m)` ([rl_signaling/games.py:115-160](rl_signaling/games.py#L115-L160)) which returns a deterministic bijection observation → unique one-hot vector with weight `n` (= `init_weights[0]`) at the hot position and `m` (= `init_weights[1]`) at the others. Increasing the magnitude of `n` should produce a stronger initial pull toward whatever bijection the random shuffle picked — *that is the intended mechanism of the experiment*, not a confounder.
 
-- **UrnAgent `[1, 0]`** → NMI ≈ 1.0 throughout, reward stuck at ≈ 0.25 (random-baseline for `n_final_actions = 4`).
-- **UrnAgent `[1, 1]`** → NMI ≈ 0.05, reward ≈ 0.85.
-- **UrnAgent `[5, 1]`** → NMI ≈ 0.93, reward ≈ 0.85.
-- **UrnAgent `[100, 1]`** → NMI ≈ 0.90, reward climbing 0.20 → 0.95–1.0 across 30 000 episodes.
-- **QLearningAgent** all four init_weights → reward stuck at ≈ 0.20–0.30 throughout; NMI spikes briefly (~0.7) then collapses to ≈ 0 by episode 500.
+**What works — UrnAgent.** The 2026-05-09 re-run of `notebooks/Initializations_test.ipynb` (post-Bug-5 / post-Bug-4 fix; figures at [results/initializations_urn_rewards.png](results/initializations_urn_rewards.png) and [results/initializations_urn_nmi.png](results/initializations_urn_nmi.png)) shows the expected pattern:
 
-The detailed write-up is in `LEGACY_BUGS_LOG.md` Bug 5 → "Post-fix observation (Phase 6, 2026-05-09)". The interpretation offered there — that `create_initial_signals` produces *biased* (toward an arbitrary action) rather than *informed* (toward the optimal action) priors, which inverts the original Bug 1 prediction — is a strong claim and was made on visual evidence alone. It bundles three separate hypotheses that should be teased apart before treating the framing as authoritative:
+- `[1, 0]` → NMI ≈ 1.0 throughout, reward stuck at ≈ 0.25 — agents lock into a *strong* (deterministic) signaling protocol but the pre-seeded action map happens to be wrong on this seed; perfect signaling, mismatched receiver decoding.
+- `[1, 1]` → NMI ≈ 0.05 with reward ≈ 0.85 — uniform pre-seed, ordinary learning, near-optimal payoff.
+- `[5, 1]` → NMI ≈ 0.93, reward ≈ 0.85 — moderate bias.
+- `[100, 1]` → NMI ≈ 0.90, reward climbs 0.20 → 0.95–1.0 across 30 000 episodes — strong but recoverable.
 
-1. **The pre-seed pattern.** What does `rl_signaling.games.create_initial_signals(n_observed_features, n_signals, n, m)` actually produce? Is it deterministic per `(n_observed_features, n_signals, n, m)`? Does the "hot" position vary by observation key, or is it the same column for every key?
-2. **The game's optimal action map.** For the seed used in `Initializations_test.ipynb` (`np.random.seed(0); random.seed(0)` per iteration), what `(state) → optimal_action` table does `create_random_canonical_game(2, 4, n=1, m=0)` produce? Does it coincide cell-wise with the pre-seeded "hot" action chosen by `create_initial_signals(n_observed_features+1, n_final_actions, ...)`?
-3. **The QLearning stuck-at-baseline behavior.** Even granting the biased-prior framing, the closed-form $Q_n = Q_0 (1-\alpha)^n + r (1 - (1-\alpha)^n)$ at $\alpha = 0.1$ pulls $Q$ toward $r$ at rate $0.9^n$ — a Q[hot] = 100 prior should decay below 1.0 within ~44 reward-zero updates. The fact that *all four* QLearning curves are stuck suggests the agent isn't sampling cold actions enough times for that decay to apply, not that the decay itself is too slow. This is a UCB-exploration question, separate from the prior question.
+The `[1, 0]` case is the cleanest demonstration of the design working: the urn *cannot* assign positive count to any cold action (`m = 0`), so the pre-seeded bijection persists indefinitely. This is exactly the "stick with one of the candidate equilibria" phenomenon the experiment is meant to probe.
+
+**What doesn't work — QLearning.** The same notebook's QLearning block produces [results/initializations_rewards.png](results/initializations_rewards.png) and [results/initializations_nmi.png](results/initializations_nmi.png). All four `init_weights` curves bounce around the random-action baseline (reward ≈ 0.20–0.30 = 1/`n_final_actions`) for the entire 30 000-episode run. NMI starts at ~0.7 (consistent with the pre-seeded bijection being briefly visible in the first ~100 episodes) then collapses to ≈ 0 by episode 500. Even `init_weights=[100,1]` shows no lock-in, no slow drift toward an equilibrium — the bias is washed out almost immediately. **This is the suspicious behavior** that this task investigates.
+
+**Why this is suspicious — the asymmetry between agents.** Inspecting the update rules clarifies the structural reason but does *not* fully explain why the QL collapse is so fast and so total:
+
+- `UrnAgent.update_signals` / `UrnAgent.update_actions` ([rl_signaling/agents.py:240-243+](rl_signaling/agents.py#L240-L243)): `urn[s][a] = max(0, urn[s][a] + reward)`. Updates are **positive-only and additive**. A pre-seeded `urn[s][hot] = 100` stays at 100 forever during reward-0 episodes; reward-1 episodes only grow it further. The cold actions can grow when explored and rewarded, but the hot action's bias never erodes.
+- `QLearningAgent.update_signals` / `update_actions` ([rl_signaling/agents.py:462-479+](rl_signaling/agents.py#L462-L479)): `Q[s][a] += 0.1 * (reward - Q[s][a])`. Updates are **multiplicative TD** with a constant learning rate. A pre-seeded `Q[s][hot] = 100` decays toward the observed reward at rate $0.9^n$ per visit. With reward zero ~75 % of the time on a random pre-seed, `Q[hot]` decays to ≈ 0.25 within ~50 visits. The pre-seeded magnitude is **erased** by the TD update itself, regardless of UCB exploration.
+
+So the asymmetry is real, but it's worth being precise about *which* observation it explains. The TD-decay of `Q[hot]` toward observed reward is one piece. Whether that alone is sufficient to explain the *complete* erasure across all `init_weights` is what this task should determine.
+
+**Three live hypotheses for QLearning's failure:**
+
+1. **TD-decay erases the pre-seed.** With `α = 0.1` hard-coded and no compensating mechanism, `Q[hot] = 100` is mathematically guaranteed to decay to ≈ `mean_reward` within ~50 visits regardless of which equilibrium that pre-seed was supposed to encode. The "magnitude" of the pre-seed (the 100 in `[100, 1]`) does not produce a persistent bias the way the urn count does — because Q values are bounded by the observed-reward range `[0, 1]` and the update pulls toward that range. Implication: if true, `QLearningAgent` as currently designed cannot exhibit the lock-in phenomenon UrnAgent shows. The fix would have to change either the update rule (e.g. exponential smoothing, or a positive-only-clamped variant), the learning rate (smaller `α` or count-based `1/N`), or the meaning of `init_weights` for QL (e.g. use it to set initial `signaling_counts` / `action_counts` rather than Q values, mimicking the count-as-bias structure of the urn).
+
+2. **The Bug 4 fix (symmetric pre-seed of both Q-tables) breaks the experiment.** The 2026-05-09 session applied Bug 4's "symmetric" interpretation, mirroring the Bug 1 fix on `UrnAgent` so that `QLearningAgent.__init__` pre-seeds both `q_table_signaling` *and* `q_table_action`. With the action Q-table pre-seeded with random hot positions per `(own_obs, received_signal)` key, the action policy is initially noisy from the receiver's perspective: roughly 1 of 4 keys' pre-seeded action coincides with the optimal action for the corresponding world state. The other 3 keys produce reward 0, dragging all Q values toward the action-key-averaged reward of ≈ 0.25 and feeding noise back into the signal-phase Q-update (because the signaling reward is the same as the action reward in this single-step game). Implication: the asymmetric pre-seed (signaling Q-table only, action Q-table left empty / lazy-init to zero) might preserve the experiment's intent. The pre-Bug-4 docstring described the asymmetric behavior; the user confirmed "symmetric" during Batch B but may not have anticipated this interaction. Note: this is *not* a strict alternative to Hypothesis 1 — even with asymmetric pre-seed, TD-decay still erases the signaling Q-table's pre-seed at the same rate.
+
+3. **`exploration_rate` interaction.** The notebook injects tuned hyperparameters from `Parameter_Optimization_wchoices.ipynb`: `exploration_rate=0.965, exploration_decay=0.9998, min_exploration_rate=1e-10, choice='ucb'`. UCB's bonus is `exploration_rate * sqrt(log(t)/(N + 1e-5))`, which is *enormous* on unvisited actions (`N=0` → bonus ≈ `0.965 * sqrt(log(t) / 1e-5)`). Even with `Q[hot] = 100`, the UCB bonus on a cold action with `N=0` reaches ≈ 254 by `t=2`, forcing an immediate explore-all-actions sweep. After all four actions are visited once, counts equalize and the bonus drops to ~1, but by then the pre-seed has already been touched by reward-0 updates that pull every cell toward zero. Implication: tuned hyperparameters were optimized against `initialize=False` (per the Bug 5 history) and may be incompatible with the `initialize=True` regime; running the QL block at QLearningAgent's *default* hyperparameters might preserve the bias.
+
+These hypotheses are not mutually exclusive. The investigation should distinguish their magnitudes empirically.
+
+**Cross-references:**
+- Migrated notebook: [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) (rewritten 2026-05-09 to canonical `MultiAgentEnv` + `agent_kwargs`, Urn / QLearning split, paired-comparison seeding).
+- Pre-seed function: [rl_signaling/games.py:115-160](rl_signaling/games.py#L115-L160) (`create_initial_signals`).
+- Game generator: [rl_signaling/games.py:55-102](rl_signaling/games.py#L55-L102) (`create_random_canonical_game`).
+- Agents: [rl_signaling/agents.py](rl_signaling/agents.py) — `UrnAgent.__init__` ([:202-238](rl_signaling/agents.py#L202-L238)), `UrnAgent.update_*` (positive-only-clamped urn updates, search "max(0,"); `QLearningAgent.__init__` ([:371-417](rl_signaling/agents.py#L371-L417)), `QLearningAgent.update_signals` / `update_actions` ([:462-499](rl_signaling/agents.py#L462-L499)) (constant α=0.1 TD updates).
+- UCB selection: [rl_signaling/agents.py:105-114](rl_signaling/agents.py#L105-L114).
+- Math reference: [analytics/agent_q_learning.md](analytics/agent_q_learning.md) (Q-update closed form $Q_n = Q_0(1-\alpha)^n + r(1-(1-\alpha)^n)$ derived and verified to atol=1e-12 in Phase 4).
+- Prior session's write-up: `LEGACY_BUGS_LOG.md` Bug 5 → "Post-fix observation (Phase 6, 2026-05-09)" — note the framing there ("biased toward an arbitrary action vs informed toward the optimal action") was *one* candidate explanation; it is now superseded by the framing in this task (the bias **is** the experimental treatment, and the question is why QL doesn't preserve it).
+- Pre-fix figure backup (if `/tmp` still has it): `/tmp/rl_signaling_prefix_backup/initializations_{rewards,nmi}.png`. If gone, recover the pre-fix figures from `git log` history before the 2026-05-09 commit.
 
 **Preconditions:**
-- `notebooks/Initializations_test.ipynb` is at the post-Bug-5 / post-Bug-4 state (committed in the 2026-05-09 fix session).
+- `notebooks/Initializations_test.ipynb` is at the post-Bug-5 / post-Bug-4 state (2026-05-09 commit).
 - `pytest tests/` reports 61 passed.
 - The four post-fix figures `results/initializations_{,urn_}{rewards,nmi}.png` are present and reflect the 2026-05-09 re-run.
-- Pre-fix backups live at `/tmp/rl_signaling_prefix_backup/initializations_{rewards,nmi}.png` (these are session-local; if the OS has cleared `/tmp` since 2026-05-09, recover them from `git log` history before the 2026-05-09 commit).
 
 **Steps:**
 
-1. **Pin down `create_initial_signals` behavior.** Read [rl_signaling/games.py](rl_signaling/games.py)'s `create_initial_signals` end-to-end. Document the actual pattern (deterministic vs RNG-driven? per-key hot-position selection?) and add a unit test in `tests/test_games.py` if one is not already there — mirror the assertion shape already in `tests/test_agents.py::test_urn_agent_initialize_true_seeds_action_urns`.
+1. **Read for context.** Before any code, read end-to-end: `LEGACY_BUGS_LOG.md` Bug 4 (Fix applied + Post-fix observation), Bug 5 (Fix applied + Post-fix observation), `analytics/agent_q_learning.md` (the constant-α closed form), `analytics/agent_urn.md` (the positive-only-clamped urn update). Hold the asymmetry firmly in mind: urn updates preserve high pre-seeded values through reward-0 episodes; TD updates do not.
 
-2. **Compare prior vs optimal map.** Construct the canonical game used by `Initializations_test.ipynb` exactly: `np.random.seed(0); random.seed(0); create_random_canonical_game(2, 4, n=1, m=0)` for each of the two agents. For each `(obs, received_signal)` key, compute the agent-side optimal action by enumerating the full nature_vector consistent with `obs`, looking up the rewards from the game dict, and identifying the action that maximizes expected reward. Compare cell-by-cell against the pre-seeded "hot" action chosen by `create_initial_signals(n_observed_features=2, n_signals=4, n=1, m=0)`. Tabulate matches vs mismatches.
+2. **Test Hypothesis 1 in isolation — TD-decay alone.** Construct a minimal reproduction: a single `QLearningAgent` instance with `initialize=True, init_weights=[100, 1], n_observed_features=1, n_signaling_actions=2, n_final_actions=4`, default hyperparameters (no tuned overrides). Drive it with a deterministic environment that always returns reward 0 regardless of action. Assert that `Q[hot]` decays from 100 toward 0 at rate $0.9^n$ per visit (the closed-form prediction). Then drive it with a deterministic environment that always returns reward 1 *only* when the agent picks action `0`. Track `Q[hot]` for each `(obs, received_signal)` cell — does the bias persist when the pre-seeded hot action happens to be 0? Does it decay when it doesn't? This isolates the TD-decay mechanism from UCB exploration and from the canonical game's reward sparsity.
 
-3. **Dump the UrnAgent `[1, 0]` end-of-training state.** Re-run the `[1, 0]` UrnAgent leg with `n_episodes=30000, np.random.seed(0); random.seed(0)`. After training, dump:
-   - `agents[0].signaling_urns` and `agents[1].signaling_urns` — are they concentrated on a single signal per observation? (They should be — NMI ≈ 1 implies a deterministic signaling code modulo rare exploration.)
-   - `agents[0].action_urns` and `agents[1].action_urns` — are they concentrated on the pre-seeded "hot" action regardless of received signal? (Expected if the framing is correct.)
-   - For each agent, the per-state action choice frequency averaged over the last 100 episodes, and compare to the game's optimal action per state.
+3. **Test Hypothesis 2 in isolation — symmetric vs asymmetric pre-seed.** Without modifying the codebase, write a temporary fork of `QLearningAgent.__init__` (or a subclass override) that pre-seeds **only** `q_table_signaling` and leaves `q_table_action` empty / lazy-init to zeros. Re-run the QL block of `Initializations_test.ipynb` using this asymmetric variant. Compare the four resulting curves to the symmetric-pre-seed ones in `results/initializations_rewards.png`. If the asymmetric variant produces visible separation across `init_weights` (similar to UrnAgent's pattern), Hypothesis 2 is confirmed and Bug 4's "symmetric" decision should be reversed. If both variants are stuck, Hypothesis 1 dominates.
 
-4. **Dump the QLearning `[100, 1]` end-of-training state.** Re-run with `n_episodes=30000, np.random.seed(0); random.seed(0)`. After training, dump:
-   - `agents[0].q_table_action` values per `(obs, received_signal)` key — quantify how many cells still carry the 100-valued pre-seed (i.e. were never updated) vs decayed to ≈ reward-mean.
-   - `agents[0].action_counts` per key — for each key, count how many times each action was selected. If cold actions show $N \approx 0$ at episode 30 000 while the hot action shows $N \approx 7500$, the agent never explored — that confirms the UCB-exploration explanation.
-   - Compute the UCB bonus $c \cdot \sqrt{\log(t) / N(a))}$ at $t = 30000$ for $N(\text{cold}) = 0$ vs $N(\text{hot}) = 7500$. Determine whether the bonus could plausibly flip the selection given the post-pre-seed Q-spread.
+4. **Test Hypothesis 3 in isolation — default hyperparameters.** Re-run the QL block of `Initializations_test.ipynb` with `QLearningAgent`'s constructor *defaults* instead of the tuned `Parameter_Optimization` values: `exploration_rate=1.0, exploration_decay=0.995, min_exploration_rate=0.001`. Compare to the tuned-hyperparameter run. If the defaults preserve the bias, Hypothesis 3 contributes; if not, the tuned hyperparameters are not the cause.
 
-5. **Counter-experiment — informed prior.** Construct an `informed` pre-seed that points at the game's actual optimal action per `(obs, received_signal)` key (computed from the per-iteration `randomcanonical_game[i]`). Inject it via either (a) a custom `create_initial_signals`-shaped helper that takes the optimal-action map as an argument, or (b) direct `agents[i].q_table_action[key] = …` / `urns[key] = …` assignment after env construction. Re-run the `init_weights = [100, 1]` comparison for both UrnAgent and QLearning agents, against the `create_initial_signals` (uninformed/biased) version. If the informed-prior version converges fast to reward ≈ 1.0 while the biased version stays near 0.25, that is direct evidence the framing is correct and the original Bug 1 prediction implicitly assumed an informed prior.
+5. **Counter-test — match UrnAgent dynamics structurally.** Implement a "positive-only-clamped Q variant" by either (a) wrapping `update_signals` / `update_actions` to apply `Q[s][a] = max(Q[s][a], Q[s][a] + 0.1*(r - Q[s][a]))` (i.e. block decreases — TD only allowed to grow Q), or (b) using `exp_smoothing=True` (already supported by `QLearningAgent`) which gives `Q ← (1-α)*Q + α*r` — the *same* form as the standard TD update mathematically, so this is **not** a fix on its own; it just confirms `exp_smoothing` reproduces the broken behavior. Document whether (a) restores the bias-persistence pattern. If yes, the structural reason for QL's failure is the unconstrained TD-decay, and the fix space includes either a positive-only Q variant or a redesign of `init_weights` to seed something other than Q values.
 
-6. **Document the verdict.** Write the findings as either:
-   - A new `### Sanity-check follow-up (Phase 6, YYYY-MM-DD)` subsection appended to `LEGACY_BUGS_LOG.md` Bug 5's "Post-fix observation" section, with a clear verdict on the biased-vs-informed-prior question and on the UCB-exploration-stuck-at-cold-Ns question.
-   - Or a new `analytics/initialization_priors.md` if the analysis grows large enough to warrant its own document (formal treatment of how `create_initial_signals` interacts with `create_random_canonical_game` under the QLearning vs UrnAgent dynamics).
+6. **Reframe `init_weights` for QLearning if hypotheses 1 & 5 are confirmed.** If TD-decay is the proximate cause and a positive-only Q variant feels like a hack, consider alternative interpretations: pre-seed the *visit counts* `signaling_counts` / `action_counts` rather than (or in addition to) the Q values, biasing the UCB bonus toward the pre-seeded equilibrium without giving the agent unrealistic Q magnitudes; or pre-seed Q values at a more modest scale (e.g. `[1, 0]` only, treating `init_weights` as a probability-shaping factor that gets applied through softmax / boltzmann selection rather than directly stored as Q). Each of these is a redesign rather than a bug fix; document the tradeoffs.
+
+7. **Land the chosen fix.** Whichever option survives the analysis, implement it as a small, focused change with:
+   - A clear `### Why this fix` paragraph in the relevant code's docstring (`QLearningAgent.__init__`) explaining what `init_weights` now means for QL and how it relates to the experimental intent.
+   - A unit test in `tests/test_agents.py` asserting the bias-persistence property (e.g. "after 50 reward-0 episodes on a single state, `Q[hot] - Q[cold]` is still ≥ X for `init_weights=[100, 1]`").
+   - A re-run of `notebooks/Initializations_test.ipynb` and a fresh round of `### Post-fix observation` updates on `LEGACY_BUGS_LOG.md` Bug 4 and Bug 5.
+   - A WORKLOG entry documenting the diagnosis, the fix, and the new figure outcomes.
 
 **Verification:**
-- The unit test for `create_initial_signals` structure passes.
-- The biased-vs-informed prior verdict is recorded with concrete evidence (dumps of urns / Q-tables, per-action visit counts, per-state action-frequency comparisons against the game's optimal map).
-- The counter-experiment outcome is recorded with paired-seed final-reward / final-NMI comparisons across `informed` vs `create_initial_signals` priors.
-- If the framing is corroborated, the existing `LEGACY_BUGS_LOG.md` Bug 5 Post-fix observation either (a) stands as written (already framed as a hypothesis), or (b) is amended with the corroborated finding and concrete numbers.
-- If the framing is refuted, the Phase 6 write-up is corrected: identify the actual cause of the stuck-at-baseline QLearning result (e.g. exploration-rate decay schedule, UCB tie-break behavior, action-count seeding) and retract the biased-prior framing.
+- One of the three live hypotheses is empirically confirmed (or all three are partially confirmed with documented relative magnitudes).
+- The QLearning block of `Initializations_test.ipynb` produces curves that show meaningful separation across `init_weights` — at minimum, `[1, 0]` should lock into a deterministic policy (whether reward-1 or reward-0.25) the way UrnAgent's `[1, 0]` does, and `[100, 1]` should show a slow drift rather than instant collapse.
+- The fix (whatever it is) does not regress the UrnAgent block.
+- `pytest tests/` still passes.
+- `tests/test_golden.py` still byte-identical (the golden baseline uses `initialize=False`, so any fix to the `initialize=True` path should leave it untouched).
 
-**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a WORKLOG entry recording the verdict and any code or document changes that resulted.
+**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a WORKLOG entry recording the diagnosis, the chosen fix, and the regenerated figure outcomes.
 
 ---
 
