@@ -38,6 +38,7 @@ dev = [
     "pytest-cov>=4.1",
     "ruff>=0.5",
     "ipykernel>=6.25",
+    "scikit-optimize>=0.9",
 ]
 
 [tool.setuptools.packages.find]

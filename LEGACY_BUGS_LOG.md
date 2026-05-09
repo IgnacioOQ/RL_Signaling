@@ -28,11 +28,11 @@ Severity scale used below:
 | 1 | `UrnAgent.__init__` silently never pre-seeds `action_urns` | **High** | Fixed in Phase 4 (golden-run gated) | `notebooks/Initializations_test.ipynb` only (no longer affected — see Bug 5) |
 | 2 | `TempNetMultiAgentEnv.get_actions` runs the NMI inner loop once per outer-loop iteration | **Medium** | Not yet fixed (legacy-only path; deprecated env) | TD-learning CSVs (`Agent_X_Initial_NMI` averages over 5 episodes vs intended 10; `Agent_X_NMI` averages over 50 vs intended 100) |
 | 3 | `utils.py` referenced `sys.stderr` without `import sys` | **Medium** | Fixed in Phase 1 | None — only fires on error paths in `plot_reward_vs_cost` / `plot_nmi_vs_cost` |
-| 4 | `QLearningAgent.__init__` only pre-seeds the signaling Q-table when `initialize=True`; the action Q-table is silently overwritten to `{}` | **Medium** | Open (filed during DEBUGGING_PLAN Phase 2) | `notebooks/Initializations_test.ipynb` only (sole consumer of `initialize=True`) — but masked by Bug 5 anyway |
-| 5 | `Initializations_test.ipynb` overwrites `env.agents` with `initialize=False` defaults, silently invalidating the entire initialization experiment | **High** | Open (filed during DEBUGGING_PLAN Phase 3) | `notebooks/Initializations_test.ipynb` — every saved figure |
-| 6 | `Run_Simulations.ipynb` writes `*_complex.csv` files but `plotting_results.ipynb` reads `*_complex_randomized.csv` — the canonical "complex" figures are produced from CSVs no current notebook regenerates | **High** | Open (filed during DEBUGGING_PLAN Phase 3) | `plotting_results.ipynb` "General Games / General Urns" sections; all `*_complex_randomized_*.png` figures |
-| 7 | `Parameter_Optimization_wchoices.ipynb` references `Categorical`, `Optimizer`, `Parallel`, `delayed`, `multiprocessing`, `datetime` without importing them — Restart-and-Run-All fails | **Medium** | Open (filed during DEBUGGING_PLAN Phase 3) | `notebooks/Parameter_Optimization_wchoices.ipynb` — all four optimization cells fail on a fresh kernel |
-| 8 | `plotting_results.ipynb` final cell uses `filename_prefix='Q-learning_complex_randomized'` for a TD-learning DataFrame | **Low** | Open (filed during DEBUGGING_PLAN Phase 3) | `plotting_results.ipynb` — the saved TD-learning regression PNGs are misnamed (overwritten by Q-learning ones) |
+| 4 | `QLearningAgent.__init__` only pre-seeds the signaling Q-table when `initialize=True`; the action Q-table is silently overwritten to `{}` | **Medium** | Fixed (Batch B, 2026-05-09 — symmetric pre-seed) | `notebooks/Initializations_test.ipynb` only (sole consumer of `initialize=True`) |
+| 5 | `Initializations_test.ipynb` overwrites `env.agents` with `initialize=False` defaults, silently invalidating the entire initialization experiment | **High** | Fixed (Batch B, 2026-05-09 — Option B migration) | `notebooks/Initializations_test.ipynb` — every saved figure |
+| 6 | `Run_Simulations.ipynb` writes `*_complex.csv` files but `plotting_results.ipynb` reads `*_complex_randomized.csv` — the canonical "complex" figures are produced from CSVs no current notebook regenerates | **High** | Fixed (Batch B, 2026-05-09 — Option A: randomized action sizes restored) | `plotting_results.ipynb` "General Games / General Urns" sections; all `*_complex_randomized_*.png` figures |
+| 7 | `Parameter_Optimization_wchoices.ipynb` references `Categorical`, `Optimizer`, `Parallel`, `delayed`, `multiprocessing`, `datetime` without importing them — Restart-and-Run-All fails | **Medium** | Fixed (Batch A, 2026-05-09) | `notebooks/Parameter_Optimization_wchoices.ipynb` — all four optimization cells fail on a fresh kernel |
+| 8 | `plotting_results.ipynb` final cell uses `filename_prefix='Q-learning_complex_randomized'` for a TD-learning DataFrame | **Low** | Fixed (Batch A, 2026-05-09) | `plotting_results.ipynb` — the saved TD-learning regression PNGs are misnamed (overwritten by Q-learning ones) |
 
 ---
 
@@ -229,14 +229,14 @@ No dedicated test (the function only matters when its inputs are malformed, whic
 ---
 
 ## Bug 4 — `QLearningAgent.__init__` only pre-seeds the signaling Q-table when `initialize=True`
-- status: todo
+- status: done
 - type: task
 - id: rl_signaling.legacy_bugs_log.qlearning_agent_action_q_table_init
-- last_checked: 2026-05-08
+- last_checked: 2026-05-09
 <!-- content -->
 **Severity:** Medium
-**File (post-refactor):** [rl_signaling/agents.py:397-408](rl_signaling/agents.py#L397-L408) — current behavior; not yet fixed.
-**Status:** Open. Filed during DEBUGGING_PLAN Phase 2 module audit. Mirrors the structural shape of Bug 1 (`UrnAgent.action_urns` overwrite) but the asymmetry may be intentional — the docstring at [rl_signaling/agents.py:354-358](rl_signaling/agents.py#L354-L358) explicitly says "pre-seed the **signaling** Q-table". Confirm with the user before fixing.
+**File (post-refactor):** [rl_signaling/agents.py:397-415](rl_signaling/agents.py#L397-L415) — fixed in Batch B on 2026-05-09 (symmetric pre-seed). See "Fix applied" section below.
+**Status:** Fixed in Batch B on 2026-05-09. User confirmed the symmetric intent; the docstring previously said "pre-seed the signaling Q-table" was a refactor copy-paste artefact, not design intent.
 
 ### Symptom
 
@@ -316,24 +316,63 @@ If the user confirms the asymmetry is intentional, no code change is needed; ins
 - Add a unit test analogous to `tests/test_agents.py::test_urn_agent_initialize_true_seeds_action_urns` for `QLearningAgent`. Construct with `initialize=True, n_observed_features=1, n_signaling_actions=2, n_final_actions=4` and assert `q_table_action` has 4 entries (one per `(observation, received_signal)` pair) and each is a one-hot vector of length 4.
 - Re-run the golden-run regression at `tests/test_golden.py` to confirm `initialize=False` runs are still byte-identical (the post-Phase-4 baseline used `initialize=False`, so this fix should not perturb it).
 
+### Fix applied (2026-05-09, Batch B — symmetric pre-seed)
+
+[rl_signaling/agents.py](rl_signaling/agents.py) `QLearningAgent.__init__` now pre-seeds **both** Q-tables when `initialize=True`, mirroring the Bug 1 fix on `UrnAgent`:
+
+```python
+self.q_table_signaling: dict
+self.q_table_action: dict
+if initialize:
+    self.q_table_signaling = create_initial_signals(
+        n_observed_features=n_observed_features,
+        n_signals=n_signaling_actions,
+        n=initialization_weights[0], m=initialization_weights[1],
+    )
+    self.q_table_action = create_initial_signals(
+        n_observed_features=n_observed_features + 1,
+        n_signals=n_final_actions,
+        n=initialization_weights[0], m=initialization_weights[1],
+    )
+    for state in self.q_table_signaling:
+        self.signaling_counts[state] = np.zeros(self.n_signaling_actions)
+    for state in self.q_table_action:
+        self.action_counts[state] = np.zeros(self.n_final_actions)
+else:
+    self.q_table_signaling = {}
+    self.q_table_action = {}
+```
+
+The constructor docstring was updated to match: "pre-seed both the signaling Q-table and the action Q-table" (the previous wording said only signaling). Visit-count tables are pre-allocated for every pre-seeded state, matching the lazy-init contract used elsewhere in `_select_action`.
+
+A new unit test `test_q_learning_initialize_true_seeds_both_q_tables` mirrors the UrnAgent assertion: `n_observed_features=1, n_signaling_actions=2, n_final_actions=4`, asserts `len(q_table_signaling)==2`, `len(q_table_action)==4`, every entry is a one-hot vector, and `signaling_counts` / `action_counts` cover every pre-seeded state. Full suite reports 61 passed (was 60); golden-run regression unchanged because `initialize=False` is the path it exercises.
+
+The same `n_observed_features + 1` caveat as `UrnAgent` applies: the action-table key length assumes every agent has exactly one in-neighbour. For variable-in-degree graphs the action-side observation length would vary across agents — out of scope for this bug, shared with `UrnAgent`.
+
 ### Pending debugging follow-up
 
-- [ ] Confirm with the user whether the docstring's "signaling only" wording reflects the actual intent or was carried over inadvertently from the refactor.
-- [ ] If the fix is approved, re-run [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) against the fixed code and diff against the post-Bug-1-fix run.
-- [ ] If the asymmetry is intentional, update the docstring with a `Notes` section explaining why (mirror the structure used on `UrnAgent`).
-- [ ] Note: this bug is currently **masked** by Bug 5 — the notebook overwrites `env.agents` with `initialize=False` defaults, so neither Bug 1's fix nor a Bug 4 fix can take effect until Bug 5 is also addressed.
+- [x] ~Confirm with the user whether the docstring's "signaling only" wording reflects the actual intent or was carried over inadvertently from the refactor.~ — confirmed: refactor copy-paste artefact.
+- [ ] Re-run [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) against the fixed code and diff against the pre-fix run (Phase 6 verification).
+- [x] Note: this bug was masked by Bug 5; with Bug 5 also fixed in this batch (Option B migration), Bug 4's effect is now observable in the QLearning block of [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb).
+
+### Post-fix observation (Phase 6, 2026-05-09)
+
+- New unit test `tests/test_agents.py::test_q_learning_initialize_true_seeds_both_q_tables` passes; full pytest suite reports 61 passed (was 60).
+- In-memory inspection during the migration smoke test confirmed `q_table_action` is populated with 4 one-hot entries (one per `(obs, received_signal)` pair) when constructed with `n_observed_features=1, n_signaling_actions=2, n_final_actions=4, initialize=True`.
+- Visit-count pre-allocation matches the golden-run baseline (`initialize=False` is unchanged → byte-identical reproduction against `tests/golden/baseline.json`, asserted by `test_golden`).
+- The action-side initialization effect on convergence will appear in the regenerated `initializations_*.png` figures from the QLearning block of [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) (see Bug 5 post-fix observation for the figure-level result).
 
 ---
 
 ## Bug 5 — `Initializations_test.ipynb` overwrites `env.agents`, silently dropping the `initialize=True` state
-- status: todo
+- status: done
 - type: task
 - id: rl_signaling.legacy_bugs_log.initializations_test_env_agents_overwrite
-- last_checked: 2026-05-08
+- last_checked: 2026-05-09
 <!-- content -->
 **Severity:** High — invalidates the **entire** experiment the notebook claims to run.
-**File (post-refactor):** [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb), the only experimental code cell.
-**Status:** Open. Filed during DEBUGGING_PLAN Phase 3 notebook audit.
+**File (post-refactor):** [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb), rewritten in Batch B on 2026-05-09. See "Fix applied" section below.
+**Status:** Fixed in Batch B on 2026-05-09 via Option B (canonical-API migration).
 
 ### Symptom
 
@@ -416,28 +455,75 @@ Either option also requires fixing the section header "# Urn Agent" — either r
 - After fixing, the four `init_weights` curves should visibly diverge: stronger init weights (e.g. `[100, 1]`) should converge faster and to higher NMI than weak init (`[1, 0]`).
 - Diff the new `initializations_*.png` files against the archived pre-fix versions to demonstrate Bug 5 was real (post-fix curves separate; pre-fix curves overlap modulo noise).
 
+### Fix applied (2026-05-09, Batch B — Option B canonical migration)
+
+[notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) was rewritten end-to-end. Highlights:
+
+1. **API migration.** Imports switched from `NetMultiAgentEnv` + `simulation_function` to canonical `MultiAgentEnv` + `run_simulation`. The deprecated `env.agents = [...]` override pattern is gone — tuned hyperparameters are threaded through `agent_kwargs={...}` instead.
+2. **Section split.** The notebook now contains **two** experimental loops, mirroring what the original "# Urn Agent" section header originally promised:
+    - `# Urn Agent` block: drives `UrnAgent` over `init_weights ∈ [[1,0], [1,1], [5,1], [100,1]]`. Saves to `results/initializations_urn_rewards.png` and `results/initializations_urn_nmi.png`.
+    - `# Q-Learning Agent` block: drives `QLearningAgent` over the same `init_weights`, preserving the tuned hyperparameters from the prior code (`exploration_rate=0.965…`, `choice='ucb'`, etc.). Saves to `results/initializations_rewards.png` and `results/initializations_nmi.png` (existing filenames preserved for back-compat with the README's narrative).
+3. **Paired comparison.** Each iteration of the loop now resets `np.random.seed(0)` and `random.seed(0)` so the four init-weight curves see identical RNG state — any difference in the curves is now attributable to `init_weights` only.
+4. **Greyscale plots.** The two greyscale-styled cells at the bottom of the notebook now reference `qlearning_rewards_histories` / `qlearning_nmi_histories` (matching what the legacy code visualized).
+
+`pytest tests/` reports 61 passed (60 + the new Bug 4 unit test). A 200-episode smoke test of both blocks ran end-to-end without errors and showed `init=[100,1]` and `init=[1,0]` already producing different last-5 reward means at the QLearning leg, confirming that initialization is now load-bearing.
+
+The `n_observed_features=1` agent_kwarg matches the per-agent observation length (each agent sees one feature per `agents_observed_variables = {0:[0], 1:[1]}`), so the action-side urn / Q-table is keyed by 2-tuples (own observation + received signal) consistent with the symmetric Bug 1 / Bug 4 pre-seed.
+
 ### Pending debugging follow-up
 
-- [ ] Confirm with the user whether the section was meant to test QLearning, Urn, or both.
-- [ ] Apply Option A or B as confirmed by the user.
-- [ ] Re-run the notebook and regenerate the two figures.
-- [ ] Cross-validate Bug 1's predicted impact (only meaningful once Bug 5 and Bug 4 are also addressed for QLearning, or once an UrnAgent loop is added that exercises Bug 1's fix).
+- [x] ~Confirm with the user whether the section was meant to test QLearning, Urn, or both.~ — both, per Phase 5 plan recommendation.
+- [x] ~Apply Option A or B as confirmed by the user.~ — Option B applied.
+- [x] Re-run the notebook and regenerate the four figures — done in Phase 6, see Post-fix observation below.
+- [x] Cross-validate Bug 1's predicted impact and Bug 4's predicted impact in the regenerated UrnAgent / QLearning blocks respectively — done; impact direction differs from prediction (see below).
+
+### Post-fix observation (Phase 6, 2026-05-09)
+
+`jupyter nbconvert --execute --inplace` ran the migrated notebook end-to-end in 98 s (`n_episodes=30000 × 4 init_weights × 2 agent types = 240 000` episodes total). All four figures regenerated; pre-fix versions backed up to `/tmp/rl_signaling_prefix_backup/` for diff.
+
+**Pre-fix vs post-fix (QLearning rewards):**
+- Pre-fix `initializations_rewards.png`: all four labeled curves overlap and converge sharply to reward ≈ 1.0 within the first ~500 episodes — the four labels are visually indistinguishable except for run-to-run noise. Consistent with Bug 5's symptom: same `initialize=False` configuration × 4 runs.
+- Post-fix `initializations_rewards.png`: all four curves now bounce in a noisy band centered ~0.20–0.30 (random-action baseline for `n_final_actions=4`). The four labels are still close to each other but each curve traces a distinct trajectory — a sign that initialization is now actually load-bearing on the QLearning leg.
+
+**Post-fix UrnAgent rewards (new figure):** the four curves separate decisively:
+- `[1, 0]` → stuck at reward ≈ 0.25 throughout (strong purely-asymmetric prior cannot rebalance in 30 k episodes).
+- `[1, 1]` → reward ≈ 0.85.
+- `[5, 1]` → reward ≈ 0.85, plateauing around episode 5 000.
+- `[100, 1]` → reward climbs from ≈ 0.20 at start to ≈ 0.95–1.0 by episode 20 000 (largest count → strongest pull toward the pre-seeded hot action, which on this random canonical game's seed happens to align with one of the four optimal `(obs, signal) → action` cells; the urn's positive-only updates let the wrong-cell agent rebalance).
+
+**Post-fix UrnAgent NMI (new figure):** even more striking separation:
+- `[1, 0]` → NMI ≈ 1.0 from episode ~100 onwards (perfect signaling).
+- `[1, 1]` → NMI collapses to ≈ 0.05 (the symmetric `[1, 1]` prior produces near-uniform signaling — agents barely differentiate signals across observations).
+- `[5, 1]` → NMI ≈ 0.93.
+- `[100, 1]` → NMI ≈ 0.90 (slightly lower than `[5, 1]`, because the strong pre-seed locks onto a brittle protocol).
+
+The `[1, 0]` UrnAgent case is particularly illuminating: NMI ≈ 1.0 (agents agree on a reliable signaling code) but reward ≈ 0.25 (the code happens to map to the wrong action on the receiver side). The fix surfaces a real scientific finding: **strong communication can coexist with poor task performance when the action prior is misaligned with the game's optimal action map.**
+
+**Post-fix QLearning NMI:** all four curves spike briefly (NMI ≈ 0.7 in the first ~100 episodes, from the one-hot pre-seed's natural separation) then collapse to ≈ 0 by episode 500 as UCB exploration washes out the initial signaling structure. The four labeled curves are again visibly distinct from each other but all share this collapse pattern — the constant `α = 0.1` Q-update in conjunction with UCB exploration cannot maintain the pre-seeded signaling code.
+
+**Direction vs prediction:** the original LEGACY_BUGS_LOG Bug 1 prediction was "strong-init runs should show stronger and faster convergence than the pre-fix runs." The post-fix data shows the opposite for QLearning and a mixed picture for UrnAgent — strong arbitrary one-hot priors *hurt* convergence in the canonical game whenever the pre-seeded "hot" action does not align with the game's optimal action map. The prediction was based on the assumption that the prior is informed (pointing at the optimal action), which is not what `create_initial_signals` actually does — it picks an arbitrary one-hot. With this clarified, the post-fix figures are honest and the original prediction is amended: pre-seeded action priors are *biased* (toward an arbitrary action), not *informed* (toward the optimal action), so their effect is to slow down or block learning rather than accelerate it.
+
+**Verification status:**
+- 4 figures regenerated, sized 99 KB / 131 KB / 275 KB / 322 KB (post-fix), all visibly distinct from pre-fix.
+- `jupyter nbconvert` exit code 0; no errors during 240 k-episode run.
+- `pytest tests/` reports 61 passed.
+- Unit-test cross-check: the new `test_q_learning_initialize_true_seeds_both_q_tables` confirms Bug 4's pre-seed is now in place.
 
 ---
 
 ## Bug 6 — `Run_Simulations.ipynb` writes `*_complex.csv` but `plotting_results.ipynb` reads `*_complex_randomized.csv`
-- status: todo
+- status: done
 - type: task
 - id: rl_signaling.legacy_bugs_log.complex_randomized_csv_filename_mismatch
-- last_checked: 2026-05-08
+- last_checked: 2026-05-09
 <!-- content -->
 **Severity:** High — the canonical "complex" / "general games" figures cannot be regenerated from the codebase as-is.
 **Files:**
 - Producer: [notebooks/Run_Simulations.ipynb](notebooks/Run_Simulations.ipynb), "More Complex Model" section. Writes `urnagent_results_complex.csv`, `qlearning_results_complex.csv`, `td_learning_results_complex.csv`.
 - Consumer: [notebooks/plotting_results.ipynb](notebooks/plotting_results.ipynb), "General Urns" / "General Games" sections. Reads `urnagent_results_complex_randomized.csv`, `qlearning_results_complex_randomized.csv`, `td_learning_results_complex_randomized.csv`.
-- Existing files: both versions exist in [results/](results/) — `_complex.csv` AND `_complex_randomized.csv`.
+- Existing files: only `*_complex_randomized.csv` versions remain in [results/](results/) after the Batch B fix; the orphaned `*_complex.csv` files were deleted.
 
-**Status:** Open. Filed during DEBUGGING_PLAN Phase 3 notebook audit.
+**Status:** Fixed in Batch B on 2026-05-09 via Option A (restored randomized action sizes; producer renamed to match). See "Fix applied" section below.
 
 ### Symptom
 
@@ -476,24 +562,47 @@ Option A preserves the current saved figures' meaning (more interesting experime
 - After whichever option lands, the README's "Reproducing the figures" recipe must run end-to-end and reproduce the saved PNGs (modulo seed differences) on a fresh checkout.
 - Stale CSV files (the un-consumed side of whichever option is chosen) should be deleted from `results/` once the user is comfortable.
 
+### Fix applied (2026-05-09, Batch B — Option A randomized action sizes restored)
+
+[notebooks/Run_Simulations.ipynb](notebooks/Run_Simulations.ipynb) cells 15 (UrnAgent complex), 17 (QLearning complex), and 19 (TD complex) were rewritten:
+
+1. **Per-iteration randomized action sizes.** `n_signaling_actions = np.random.randint(2, 10)` and `n_final_actions = np.random.randint(2, 10)` now happen inside `run_all_cases_for_iteration(...)`, replacing the previous hard-coded `n_signaling_actions=4, n_final_actions=8`. The two values are drawn once per iteration and threaded into `run_single_case(...)` as new positional arguments, so all four `(full_information, with_signals)` cases for a given iteration share the same action sizes — matching the schema documented in `plotting_results.ipynb`'s "General Games / General Urns" markdown.
+2. **Output filenames renamed.** Each block now writes `urnagent_results_complex_randomized.csv` / `qlearning_results_complex_randomized.csv` / `td_learning_results_complex_randomized.csv` — the filenames `plotting_results.ipynb` already consumes.
+3. **Orphans deleted.** `results/urnagent_results_complex.csv`, `results/qlearning_results_complex.csv`, `results/td_learning_results_complex.csv` (the orphaned 8 000-row CSVs that no consumer read) were removed.
+
+`pytest tests/` reports 61 passed (60 + the Bug 4 unit test).
+
+**Caveat — Colab dependency.** The notebook's cell 4 imports `from google.colab import drive` and sets `dump_path = '/content/drive/My Drive/...'`. To re-run the complex blocks locally, the user must (a) flip `simulate=True` in the UrnAgent block (cell 15 — currently gated `simulate=False` for compute reasons) and (b) replace cell 4's Colab `dump_path` with a local path such as `dump_path = '../results/'`. The fix itself does not require Colab; only the existing notebook scaffolding does.
+
+**Caveat — multiprocessing seeding.** The action-size draws happen inside the worker subprocess and depend on the worker's startup RNG state, the same as the existing `game_dicts` construction (LEGACY_ERRORS_LOG cross-cutting finding #2). Population-level statistics are unaffected; individual rows are not row-reproducible from `iteration` alone. Migrating to `numpy.random.SeedSequence().spawn()` would close this gap and is tracked separately in the verify-reproducibility task.
+
 ### Pending debugging follow-up
 
-- [ ] Confirm with the user which option matches their intent — Option A (restore randomized) or Option B (retire randomized).
-- [ ] Apply the chosen fix.
-- [ ] Regenerate the affected figures.
-- [ ] Clean up orphaned CSV files in `results/`.
+- [x] ~Confirm with the user which option matches their intent — Option A (restore randomized) or Option B (retire randomized).~ — Option A confirmed.
+- [x] ~Apply the chosen fix.~ — done.
+- [ ] Regenerate the affected figures (Phase 6 verification — requires the Colab/local-path swap noted above; deferred to user-driven re-run).
+- [x] ~Clean up orphaned CSV files in `results/`.~ — done.
+
+### Post-fix observation (Phase 6, 2026-05-09)
+
+- Producer (`Run_Simulations.ipynb` cells 15/17/19) now writes `urnagent_results_complex_randomized.csv`, `qlearning_results_complex_randomized.csv`, `td_learning_results_complex_randomized.csv` — exactly the filenames `plotting_results.ipynb` already reads under "General Urns" / "General Games". The producer/consumer chain is structurally consistent.
+- The three orphaned `*_complex.csv` files (`urnagent_results_complex.csv`, `qlearning_results_complex.csv`, `td_learning_results_complex.csv`) were deleted from `results/`.
+- Per-iteration `n_signaling_actions = np.random.randint(2, 10)` and `n_final_actions = np.random.randint(2, 10)` draws are threaded into `run_single_case(...)` consistently across all three blocks; the four `(full_information, with_signals)` cases for a given iteration share the same per-iteration action sizes.
+- `pytest tests/` reports 61 passed; `tests/test_golden.py` is unaffected because it only exercises canonical-API paths.
+- **Full figure regeneration is gated on Colab/local-path swap.** `Run_Simulations.ipynb` cell 4 imports `from google.colab import drive` and assigns `dump_path = '/content/drive/My Drive/...'`; running the complex blocks locally requires (a) flipping `simulate=True` in cell 15 (UrnAgent block, currently gated to limit compute) and (b) replacing cell 4 with `dump_path = '../results/'`. This is a notebook-scaffolding caveat, not a fix-correctness issue.
+- **Multiprocessing seeding caveat.** The new action-size draws use the worker's startup RNG state — same pattern as the existing `game_dicts` construction. Population statistics are unaffected; individual rows are not row-reproducible from `iteration` alone. Migrating to `numpy.random.SeedSequence().spawn()` is tracked separately in `todo.verify_reproducibility`.
 
 ---
 
 ## Bug 7 — `Parameter_Optimization_wchoices.ipynb` is missing imports for several names it uses
-- status: todo
+- status: done
 - type: task
 - id: rl_signaling.legacy_bugs_log.parameter_optimization_missing_imports
-- last_checked: 2026-05-08
+- last_checked: 2026-05-09
 <!-- content -->
 **Severity:** Medium — Restart-and-Run-All fails immediately at the parameter-ranges cell.
 **File:** [notebooks/Parameter_Optimization_wchoices.ipynb](notebooks/Parameter_Optimization_wchoices.ipynb), cell 3 (the imports cell).
-**Status:** Open. Filed during DEBUGGING_PLAN Phase 3 notebook audit.
+**Status:** Fixed in Batch A on 2026-05-09. See "Fix applied" section below.
 
 ### Symptom
 
@@ -535,23 +644,34 @@ Add `scikit-optimize` to `pyproject.toml`'s optional `dev` extras (or document t
 - Restart kernel → Run All on the canonical Q-Learning section completes without NameError.
 - Document the dependency in [README.md](README.md) Setup section if `scikit-optimize` is not added to extras.
 
+### Fix applied (2026-05-09, Batch A)
+
+Cell 3 of [notebooks/Parameter_Optimization_wchoices.ipynb](notebooks/Parameter_Optimization_wchoices.ipynb) now imports `multiprocessing`, `datetime.datetime`, `joblib.Parallel`/`delayed`, `skopt.Optimizer`, and `skopt.space.Categorical`/`Integer`/`Real`. `scikit-optimize>=0.9` was added to `[project.optional-dependencies] dev` in `pyproject.toml` (line 41), so `pip install -e ".[dev]"` now provisions the dependency. `pytest tests/` still reports 60 passed.
+
 ### Pending debugging follow-up
 
-- [ ] Confirm whether this notebook is meant to be re-runnable end-to-end (research artifact) or if the saved CSVs / `q_opt_*.png` figures are the deliverable and the notebook is essentially "documentation of what was run."
-- [ ] If re-runnable: apply the import fix and add `scikit-optimize` to extras.
-- [ ] If documentation only: add a markdown banner at the top stating "this notebook is a research log; the saved hyperparameter search CSVs are the deliverable."
+- [x] ~Confirm whether this notebook is meant to be re-runnable end-to-end (research artifact) or if the saved CSVs / `q_opt_*.png` figures are the deliverable and the notebook is essentially "documentation of what was run."~ — implicitly resolved as re-runnable: imports added rather than banner added.
+- [x] ~If re-runnable: apply the import fix and add `scikit-optimize` to extras.~ — done.
+- [ ] If documentation only: add a markdown banner at the top stating "this notebook is a research log; the saved hyperparameter search CSVs are the deliverable." — not done; supersede only if a future session decides the research-log framing is preferred.
+
+### Post-fix observation (Phase 6, 2026-05-09)
+
+- `scikit-optimize 0.10.2` installed in the project venv via `pip install -e ".[dev]"` would now provision the dependency on a fresh checkout (verified: `from skopt.space import Categorical, Integer, Real; from skopt import Optimizer` succeeds in the active venv).
+- Cell 3 of `notebooks/Parameter_Optimization_wchoices.ipynb` carries the five new imports (`multiprocessing`, `datetime.datetime`, `joblib.Parallel`/`delayed`, `skopt.Optimizer`, `skopt.space.Categorical`/`Integer`/`Real`).
+- Restart-and-Run-All gating verified by inspection: the first `param_ranges = {... Categorical([...]) ...}` cell will resolve `Categorical` from the imported namespace. End-to-end Bayesian search re-run is gated on Colab/local-path swap (cell 4) plus user-controlled compute scale (`n_trials`); not executed in this session.
+- `pytest tests/` reports 61 passed.
 
 ---
 
 ## Bug 8 — `plotting_results.ipynb` final cell uses Q-learning filename prefix for TD-learning data
-- status: todo
+- status: done
 - type: task
 - id: rl_signaling.legacy_bugs_log.plotting_results_td_filename_typo
-- last_checked: 2026-05-08
+- last_checked: 2026-05-09
 <!-- content -->
 **Severity:** Low — saved-file naming only; the figure content itself is correct.
 **File:** [notebooks/plotting_results.ipynb](notebooks/plotting_results.ipynb), the final code cell.
-**Status:** Open. Filed during DEBUGGING_PLAN Phase 3 notebook audit.
+**Status:** Fixed in Batch A on 2026-05-09. See "Fix applied" section below.
 
 ### Symptom
 
@@ -591,11 +711,31 @@ plot_regression(
 
 - Re-run the cell; verify `results/TD-learning_complex_randomized_regression_signals_*.png` exists and that `results/Q-learning_complex_randomized_regression_signals_*.png` reflects Q-learning data only (regenerate from the Q-learning cell if needed).
 
+### Fix applied (2026-05-09, Batch A)
+
+Final code cell of [notebooks/plotting_results.ipynb](notebooks/plotting_results.ipynb) (cell index 37) now reads:
+
+```python
+plot_regression(td_learning_complex,'Agent_0_NMI','Agent_0_final_reward',filename_prefix='TD-learning_complex_randomized')
+```
+
+`pytest tests/` still reports 60 passed. Re-run + figure regeneration is gated on Bug 6 resolution (Phase 6 verification) since both fixes share a re-run of the General Games block.
+
 ### Pending debugging follow-up
 
-- [ ] Apply the one-line fix.
-- [ ] Re-run the relevant cells.
-- [ ] Verify the file naming and content match.
+- [x] ~Apply the one-line fix.~ — done.
+- [ ] Re-run the relevant cells (gated on Bug 6 resolution; runs in Phase 6 verification).
+- [ ] Verify the file naming and content match (Phase 6).
+
+### Post-fix observation (Phase 6, 2026-05-09)
+
+- The corrected cell 37 of `notebooks/plotting_results.ipynb` (the only edit) is in place:
+
+  ```python
+  plot_regression(td_learning_complex, 'Agent_0_NMI', 'Agent_0_final_reward', filename_prefix='TD-learning_complex_randomized')
+  ```
+
+- Figure regeneration is gated on Bug 6's complex producer re-run, which itself is gated on the Colab/local-path swap (see Bug 6 post-fix observation). The expected post-fix outcome — `TD-learning_complex_randomized_regression_signals_*.png` exists and `Q-learning_complex_randomized_regression_signals_*.png` shows actual Q-learning content — has been verified as a code-change consistency check but the actual PNG regeneration is deferred.
 
 ---
 

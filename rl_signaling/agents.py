@@ -352,8 +352,13 @@ class QLearningAgent(BaseAgent):
     min_exploration_rate : float, default 0.001
         Floor for the decayed exploration rate.
     initialize : bool, default False
-        If True, pre-seed the signaling Q-table with one-hot vectors via
-        :func:`rl_signaling.games.create_initial_signals`.
+        If True, pre-seed both the signaling Q-table and the action Q-table
+        with one-hot vectors via
+        :func:`rl_signaling.games.create_initial_signals`. The signaling
+        table is keyed by the agent's pre-signal observation
+        (``n_observed_features``); the action table is keyed by the
+        post-signal observation (``n_observed_features + 1``), matching the
+        single-incoming-edge convention shared with :class:`UrnAgent`.
     initialization_weights : Sequence[float], default ``[1, 0]``
         ``(hot, cold)`` weights passed to ``create_initial_signals``.
     n_observed_features : int, default 1
@@ -394,6 +399,8 @@ class QLearningAgent(BaseAgent):
         self.signaling_counts: dict = {}
         self.action_counts: dict = {}
 
+        self.q_table_signaling: dict
+        self.q_table_action: dict
         if initialize:
             self.q_table_signaling = create_initial_signals(
                 n_observed_features=n_observed_features,
@@ -401,11 +408,19 @@ class QLearningAgent(BaseAgent):
                 n=initialization_weights[0],
                 m=initialization_weights[1],
             )
+            self.q_table_action = create_initial_signals(
+                n_observed_features=n_observed_features + 1,
+                n_signals=n_final_actions,
+                n=initialization_weights[0],
+                m=initialization_weights[1],
+            )
             for state in self.q_table_signaling:
                 self.signaling_counts[state] = np.zeros(self.n_signaling_actions)
+            for state in self.q_table_action:
+                self.action_counts[state] = np.zeros(self.n_final_actions)
         else:
             self.q_table_signaling = {}
-        self.q_table_action: dict = {}
+            self.q_table_action = {}
 
     def reset(self) -> None:
         """Reset both Q-tables and visit-count tables to empty."""

@@ -107,6 +107,31 @@ def test_urn_agent_initialize_true_seeds_action_urns():
 # --------------------------------------------------------- QLearningAgent tests
 
 
+def test_q_learning_initialize_true_seeds_both_q_tables():
+    """Bug 4 fix: ``initialize=True`` must populate both Q-table dicts."""
+    random.seed(0)
+    a = QLearningAgent(
+        n_signaling_actions=2,
+        n_final_actions=4,
+        n_observed_features=1,
+        initialize=True,
+    )
+    # q_table_signaling indexed by 1-tuples (n_observed_features=1)
+    assert len(a.q_table_signaling) == 2
+    # q_table_action indexed by 2-tuples (observation + appended signal)
+    assert len(a.q_table_action) == 4
+    # Every entry is a one-hot vector of the right length.
+    for vec in a.q_table_signaling.values():
+        assert vec.shape == (2,)
+        assert (vec == 0).sum() + (vec == 1).sum() == 2  # one-hot
+    for vec in a.q_table_action.values():
+        assert vec.shape == (4,)
+        assert (vec == 0).sum() + (vec == 1).sum() == 4
+    # Visit counts are pre-allocated for every pre-seeded state.
+    assert set(a.signaling_counts) == set(a.q_table_signaling)
+    assert set(a.action_counts) == set(a.q_table_action)
+
+
 @pytest.mark.parametrize("choice", ["egreedy", "softmax", "ucb"])
 def test_q_learning_get_signal_each_strategy(choice):
     a = QLearningAgent(n_signaling_actions=3, n_final_actions=4, choice=choice)

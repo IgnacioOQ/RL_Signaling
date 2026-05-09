@@ -31,10 +31,10 @@ The audit was performed during the DEBUGGING_PLAN session on 2026-05-08, after t
 | Experiment | Roth–Erev | Q-learning | TD-learning |
 |---|---|---|---|
 | Canonical (2-feature, fixed action sizes) | CLEAN | CLEAN | BIASED-METRIC |
-| Costly signaling | UNREPRODUCIBLE (per-agent vs shared cost code drift) | CLEAN | (not run) |
-| Complex / general games | UNREPRODUCIBLE | UNREPRODUCIBLE | UNREPRODUCIBLE + BIASED-METRIC + MISLABELED |
-| Initialization study | (not run, see Bug 5) | WRONG | (not run) |
-| Hyperparameter optimization | (not run) | UNREPRODUCIBLE | UNREPRODUCIBLE + BIASED-METRIC |
+| Costly signaling | **RETIRED** (theoretical incompatibility — see Error 5a) | CLEAN | (not run) |
+| Complex / general games | UNREPRODUCIBLE → reproducible after Bug 6 fix; pending Phase 6 re-run | UNREPRODUCIBLE → reproducible after Bug 6 fix | UNREPRODUCIBLE + BIASED-METRIC + MISLABELED → reproducible after Bug 6 fix; Bug 8 fix corrects the misnaming |
+| Initialization study | (newly available in regenerated notebook after Bug 5 fix) | WRONG → corrected after Bug 5 fix; pending Phase 6 re-run | (not run) |
+| Hyperparameter optimization | (not run) | UNREPRODUCIBLE → reproducible after Bug 7 fix | UNREPRODUCIBLE + BIASED-METRIC → reproducible after Bug 7 fix; BIASED-METRIC remains until Bug 2 lands |
 
 The rest of this file expands each cell. The detailed file-by-file inventory and column-level audit are in the [Detailed inventory](#detailed-inventory) section below.
 
@@ -170,9 +170,29 @@ If the figure is read as "four runs of the same configuration," the data is hone
 
 The costly experiment file family contains two CSVs and two figure sets, with **different verdicts** for Roth-Erev versus Q-learning. They are split below.
 
-### Error 5a — Roth-Erev costly figures: UNREPRODUCIBLE (cost-protocol drift)
+### Error 5a — Roth-Erev costly figures: RETIRED (2026-05-09)
 
-**Affected files:**
+**Resolution.** The user chose Option A from the `todo.retire_costly_urnagent` task on 2026-05-09. The Roth-Erev costly experiment is theoretically ill-defined under the project's non-negativity-clamped urn rule (see "Additional theoretical concern" below and `analytics/agent_urn.md`). Files removed; consumer cells trimmed; markdown notes added to both `Final_Costly_Signaling_Run_Simulations.ipynb` and `plotting_results.ipynb`. **Q-learning costly figures are unaffected** — Q-learning's TD update is defined on the reals and handles costly rewards natively (Error 5b verdict CLEAN preserved).
+
+**Files deleted:**
+- `results/Roth-Erev_canonical_costly_signal_Agent_0_NMI.png`
+- `results/Roth-Erev_canonical_costly_signal_Agent_0_avg_reward.png`
+- `results/Roth-Erev_canonical_costly_signal_Agent_0_final_reward.png`
+- `results/q_costly_vs_reward.png`, `results/q_costs_vs_nmi.png`, `results/q_learning_costly_single_run.png`, `results/q_learning_costly_single_run_frequencies.png` (the Q-prefixed visualizations consume the same Roth-Erev CSV per the audit; deleted along with the CSV)
+- `results/urnagent_results_canonical_costly_signal.csv` (1 000 rows; never-committed independent-cost protocol)
+- `results/urnagent_results_canonical_costly_signal (1).csv` (10 000 rows; orphan matching current shared-cost code; no consumer)
+
+**Notebook edits:**
+- `notebooks/Final_Costly_Signaling_Run_Simulations.ipynb`: the `## Urn Agent` block (cells 7–12 in the prior layout) replaced with a single retirement-note markdown cell explaining the theoretical incompatibility and citing `analytics/agent_urn.md` / `analytics/costly_signaling.md`.
+- `notebooks/plotting_results.ipynb`: the four cells under the first `## Costly Signals` header (the Roth-Erev consumer block, cells 8–11 in the prior layout) replaced with a single retirement-note markdown cell. The Q-learning `## Costly Signals` section later in the notebook is preserved unchanged.
+
+The historical record below is retained for context.
+
+---
+
+### Historical Error 5a (pre-retirement) — Roth-Erev costly figures: UNREPRODUCIBLE (cost-protocol drift)
+
+**Originally affected files (now deleted):**
 - `results/Roth-Erev_canonical_costly_signal_Agent_0_NMI.png`
 - `results/Roth-Erev_canonical_costly_signal_Agent_0_avg_reward.png`
 - `results/Roth-Erev_canonical_costly_signal_Agent_0_final_reward.png`

@@ -294,7 +294,7 @@ This phase is not part of the audit itself — it is the closing validation. It 
 | 3. Notebook-level audit | Done (2026-05-08) |
 | 4. Numerical sanity | Done (2026-05-08) |
 | 5. Synthesis + fix plan | Done (2026-05-08) |
-| 6. Verification re-run | Deferred (separate session) |
+| 6. Verification re-run | Done — partial (2026-05-09). Batch A (Bugs 7, 8) and Batch B (Bugs 4, 5, 6) applied; `Initializations_test.ipynb` re-run end-to-end (98 s, 240 k episodes); pre/post-fix figure diff captured; per-bug Post-fix observations appended to `LEGACY_BUGS_LOG.md`. `Run_Simulations.ipynb` complex-block re-run is deferred to a user-driven session because of the existing Colab/local-path scaffolding (cell 4) and compute scale; the producer/consumer chain has been verified consistent by code review. The costly Roth-Erev experiment was retired per Option A of `todo.retire_costly_urnagent` and the affected files were removed from `results/`. |
 
 ---
 
