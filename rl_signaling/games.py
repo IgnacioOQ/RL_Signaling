@@ -9,7 +9,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 GameDict = dict[tuple[int, ...], dict[int, float]]
-SignalUrns = dict[tuple[int, ...], NDArray[np.int_]]
+SignalUrns = dict[tuple[int, ...], NDArray[np.float64]]
 
 
 def create_random_game(n_features: int = 3, n_final_actions: int = 5) -> GameDict:
@@ -104,10 +104,18 @@ def create_random_canonical_game(
 
 def _generate_hot_vectors(
     n_signals: int, n: float = 1, m: float = 0
-) -> list[NDArray[np.int_]]:
-    """Generate ``n_signals`` one-hot vectors of length ``n_signals``."""
+) -> list[NDArray[np.float64]]:
+    """Generate ``n_signals`` one-hot vectors of length ``n_signals``.
+
+    Returns float64 arrays so downstream constant-α TD updates and
+    fractional-reward urn updates do not silently truncate (in-place
+    addition of a float into an int array casts the result back to int).
+    """
     return [
-        np.array([n if i == j else m for i in range(n_signals)])
+        np.array(
+            [n if i == j else m for i in range(n_signals)],
+            dtype=np.float64,
+        )
         for j in range(n_signals)
     ]
 

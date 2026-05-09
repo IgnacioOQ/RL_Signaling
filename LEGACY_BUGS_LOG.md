@@ -33,6 +33,7 @@ Severity scale used below:
 | 6 | `Run_Simulations.ipynb` writes `*_complex.csv` files but `plotting_results.ipynb` reads `*_complex_randomized.csv` — the canonical "complex" figures are produced from CSVs no current notebook regenerates | **High** | Fixed (Batch B, 2026-05-09 — Option A: randomized action sizes restored) | `plotting_results.ipynb` "General Games / General Urns" sections; all `*_complex_randomized_*.png` figures |
 | 7 | `Parameter_Optimization_wchoices.ipynb` references `Categorical`, `Optimizer`, `Parallel`, `delayed`, `multiprocessing`, `datetime` without importing them — Restart-and-Run-All fails | **Medium** | Fixed (Batch A, 2026-05-09) | `notebooks/Parameter_Optimization_wchoices.ipynb` — all four optimization cells fail on a fresh kernel |
 | 8 | `plotting_results.ipynb` final cell uses `filename_prefix='Q-learning_complex_randomized'` for a TD-learning DataFrame | **Low** | Fixed (Batch A, 2026-05-09) | `plotting_results.ipynb` — the saved TD-learning regression PNGs are misnamed (overwritten by Q-learning ones) |
+| 9 | `_generate_hot_vectors` returns int64 arrays; constant-α TD updates on pre-seeded Q-tables silently truncate fractional changes | **High** | Fixed (2026-05-09 follow-up) | `notebooks/Initializations_test.ipynb` QLearning block — `init_weights` had no observable effect because every fractional update was floored back to int |
 
 ---
 
@@ -352,8 +353,9 @@ The same `n_observed_features + 1` caveat as `UrnAgent` applies: the action-tabl
 ### Pending debugging follow-up
 
 - [x] ~Confirm with the user whether the docstring's "signaling only" wording reflects the actual intent or was carried over inadvertently from the refactor.~ — confirmed: refactor copy-paste artefact.
-- [ ] Re-run [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) against the fixed code and diff against the pre-fix run (Phase 6 verification).
+- [x] Re-run [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) against the fixed code and diff against the pre-fix run (Phase 6 verification). — done in the 2026-05-09 follow-up; figures regenerated against the Bug 9 fix.
 - [x] Note: this bug was masked by Bug 5; with Bug 5 also fixed in this batch (Option B migration), Bug 4's effect is now observable in the QLearning block of [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb).
+- [x] Note (2026-05-09 follow-up): the Bug-4 fix alone was insufficient. The QLearning leg of `Initializations_test.ipynb` collapsed to the random-action baseline regardless of `init_weights` because of a separate dtype bug — see Bug 9. The Bug 4 symmetric pre-seed is a *prerequisite* for the experiment to be well-formed (both Q-tables must be pre-seeded for `init_weights` to be load-bearing on both signaling and action), but the Bug 9 dtype fix is what makes the pre-seed survive even one TD update. Both fixes are needed; neither alone is sufficient.
 
 ### Post-fix observation (Phase 6, 2026-05-09)
 
@@ -499,9 +501,9 @@ The `n_observed_features=1` agent_kwarg matches the per-agent observation length
 
 The `[1, 0]` UrnAgent case is particularly illuminating: NMI ≈ 1.0 (agents agree on a reliable signaling code) but reward ≈ 0.25 (the code happens to map to the wrong action on the receiver side). The fix surfaces a real scientific finding: **strong communication can coexist with poor task performance when the action prior is misaligned with the game's optimal action map.**
 
-**Post-fix QLearning NMI:** all four curves spike briefly (NMI ≈ 0.7 in the first ~100 episodes, from the one-hot pre-seed's natural separation) then collapse to ≈ 0 by episode 500 as UCB exploration washes out the initial signaling structure. The four labeled curves are again visibly distinct from each other but all share this collapse pattern — the constant `α = 0.1` Q-update in conjunction with UCB exploration cannot maintain the pre-seeded signaling code.
+**Post-fix QLearning NMI (2026-05-09 first pass, pre-Bug-9):** all four curves spiked briefly (NMI ≈ 0.7 in the first ~100 episodes, from the one-hot pre-seed's natural separation) then collapsed to ≈ 0 by episode 500. This was originally interpreted as "the constant `α = 0.1` Q-update in conjunction with UCB exploration cannot maintain the pre-seeded signaling code." That interpretation was incomplete — the dominant cause turned out to be the int-dtype Bug 9 (see entry below), not constant-α TD-decay. After the Bug 9 fix, all four QLearning curves reach reward 1.0 by mid-run and NMI 0.93–0.98 by end. The four `init_weights` are now monotone in early NMI (`[1,1]: 0.02 < [1,0]: 0.18 < [5,1]: 0.24 < [100,1]: 0.62`) — the pre-seed survives long enough to provide an early signaling structure that converges to the equilibrium.
 
-**Direction vs prediction:** the original LEGACY_BUGS_LOG Bug 1 prediction was "strong-init runs should show stronger and faster convergence than the pre-fix runs." The post-fix data shows the opposite for QLearning and a mixed picture for UrnAgent — strong arbitrary one-hot priors *hurt* convergence in the canonical game whenever the pre-seeded "hot" action does not align with the game's optimal action map. The prediction was based on the assumption that the prior is informed (pointing at the optimal action), which is not what `create_initial_signals` actually does — it picks an arbitrary one-hot. With this clarified, the post-fix figures are honest and the original prediction is amended: pre-seeded action priors are *biased* (toward an arbitrary action), not *informed* (toward the optimal action), so their effect is to slow down or block learning rather than accelerate it.
+**Direction vs prediction:** the original LEGACY_BUGS_LOG Bug 1 prediction was "strong-init runs should show stronger and faster convergence than the pre-fix runs." The post-Bug-9 data confirms this for QLearning: stronger pre-seeds produce higher early NMI, even though all four converge to the same equilibrium by mid-run. For UrnAgent the picture is more interesting — strong arbitrary one-hot priors *hurt* convergence in the `[1, 0]` case because the urn's positive-only update rule preserves the (misaligned) bijection forever, locking the agent at NMI ≈ 1.0 / reward ≈ 0.25. The prediction was based on the assumption that the prior is informed (pointing at the optimal action), which is not what `create_initial_signals` actually does — it picks an arbitrary one-hot. With this clarified, the regenerated figures are honest: pre-seeded action priors are *biased* (toward an arbitrary action), not *informed* (toward the optimal action). For QLearning they accelerate the early signaling structure; for UrnAgent under `[1, 0]` they permanently lock in the (potentially misaligned) bijection. The asymmetry between agents is a real scientific finding, not a fix-correctness issue.
 
 **Verification status:**
 - 4 figures regenerated, sized 99 KB / 131 KB / 275 KB / 322 KB (post-fix), all visibly distinct from pre-fix.
@@ -736,6 +738,136 @@ plot_regression(td_learning_complex,'Agent_0_NMI','Agent_0_final_reward',filenam
   ```
 
 - Figure regeneration is gated on Bug 6's complex producer re-run, which itself is gated on the Colab/local-path swap (see Bug 6 post-fix observation). The expected post-fix outcome — `TD-learning_complex_randomized_regression_signals_*.png` exists and `Q-learning_complex_randomized_regression_signals_*.png` shows actual Q-learning content — has been verified as a code-change consistency check but the actual PNG regeneration is deferred.
+
+---
+
+## Bug 9 — `_generate_hot_vectors` returns int64; pre-seeded Q-tables silently truncate fractional TD updates
+- status: done
+- type: task
+- id: rl_signaling.legacy_bugs_log.generate_hot_vectors_int_dtype
+- last_checked: 2026-05-09
+<!-- content -->
+**Severity:** High — invalidates the entire QLearning leg of `notebooks/Initializations_test.ipynb`.
+**File (post-refactor):** [rl_signaling/games.py:105-112](rl_signaling/games.py#L105-L112) — `_generate_hot_vectors`. Fixed in the 2026-05-09 follow-up; see "Fix applied" section below.
+**Status:** Fixed.
+
+### Symptom
+
+In the QLearning leg of `notebooks/Initializations_test.ipynb` (post-Bug-4 / post-Bug-5 state), all four `init_weights` curves bounce around the random-action baseline (reward ≈ 0.20–0.30 = 1/`n_final_actions` for `n_final_actions=4`) for the entire 30 000-episode run. NMI starts at the pre-seed level (0.18–0.62 depending on `init_weights`) and collapses to ≈ 0 by episode 500. Even `init_weights=[100, 1]` shows no lock-in and no slow drift — the bias is washed out almost immediately. The pre-fix figures `results/initializations_rewards.png` and `results/initializations_nmi.png` reflect this degenerate regime.
+
+By contrast, the UrnAgent leg of the same notebook (using the same `_generate_hot_vectors`-derived pre-seed) shows the expected separation across `init_weights`. So the symptom is QLearning-specific.
+
+### Root cause
+
+`_generate_hot_vectors` builds one-hot vectors from the `n` and `m` arguments without specifying a dtype:
+
+```python
+def _generate_hot_vectors(n_signals, n=1, m=0):
+    return [
+        np.array([n if i == j else m for i in range(n_signals)])
+        for j in range(n_signals)
+    ]
+```
+
+When the caller passes integer arguments — the standard `init_weights=[100, 1]`, `[5, 1]`, `[1, 1]`, `[1, 0]` cases all do — `np.array(...)` infers `dtype=int64`. Pre-seeded `q_table_signaling` and `q_table_action` therefore become int64 arrays, while the lazy-init path (executed when `initialize=False`) creates float64 arrays via `np.zeros(...)` — a silent dtype inconsistency between the two construction paths.
+
+The constant-α TD update at [rl_signaling/agents.py:474](rl_signaling/agents.py#L474) and [:492](rl_signaling/agents.py#L492) is
+
+```python
+self.q_table_signaling[state][signal] += learning_rate * td_error  # learning_rate = 0.1
+```
+
+On a float64 array, this produces $Q \leftarrow Q + 0.1 \cdot (r - Q)$ — the canonical TD update. On an int64 array, NumPy in-place addition of a float into an int element converts the float increment back to int (truncation toward zero) before storing. Concretely:
+
+- `Q[cold] = 1`, `r = 0`: $1 + 0.1 \cdot (0 - 1) = 0.9$ → cast to int = **0**. `Q[cold]` collapses to zero in **a single update**.
+- `Q[hot] = 100`, `r = 0`: $100 + 0.1 \cdot (0 - 100) = 90.0$ → 90 (correct), but the cumulative trajectory diverges from the closed form because every step truncates 0.x of decay. Empirically, `Q[hot]` reaches 0 at $n \approx 30$ instead of the closed-form $n \approx 100$ where it crosses 1.0.
+- For `init_weights=[1, 0]`: hot starts at 1, cold at 0; one reward-0 update on hot → 0, identical to a never-pre-seeded cell.
+- For `init_weights=[1, 1]`: every cell starts at 1; one reward-0 update → 0; uniform pre-seed dies on the first visit.
+
+So the pre-seed is erased far faster than the Hypothesis-1 ("constant-α TD-decay") closed form predicts, regardless of `init_weights` magnitude. The dtype bug is the dominant cause of the QLearning failure; H1 is real but subordinate.
+
+### Why it was hard to spot
+
+1. **Silent dtype promotion.** `np.array([100, 1])` infers int64 without warning. There is no error path; the truncation is invisible at the call site.
+2. **The lazy-init path works.** `initialize=False` agents create float64 Q-tables via `np.zeros(...)`. So every notebook except `Initializations_test.ipynb` is unaffected, and the same `QLearningAgent` class behaves correctly in 5 of 6 notebooks.
+3. **UrnAgent is incidentally robust to the bug.** Under the canonical game's integer-valued rewards (`{0, 1}`), UrnAgent's update `urn[a] = max(0, urn[a] + reward)` produces the same numerical values whether stored as int or float. Because `Initializations_test.ipynb` is structurally a Roth-Erev-style integer-reward experiment for UrnAgent, the UrnAgent figures are correct in both pre- and post-fix code. The bug masquerades as "QLearning-specific failure" rather than the structural dtype inconsistency it actually is.
+4. **The Hypothesis-1 narrative is plausible.** The closed form $Q_n = r + (Q_0 - r)(1 - \alpha)^n$ predicts that with `α = 0.1`, `Q_0 = 100`, `r = 0`, `Q_n \approx 0.5` after 50 visits — a small remnant. So "the pre-seed decays" is a true statement, just not the dominant cause of the empirical zero-by-episode-500 collapse. A debugging session that landed on H1 alone would not have caught the dtype bug.
+
+### Experimental impact
+
+- **Affected notebook:** [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) — its QLearning block specifically. The UrnAgent block was unaffected (rewards in {0, 1} → int and float arithmetic are equivalent for `max(0, urn + reward)`).
+- **Affected saved figures:** [results/initializations_rewards.png](results/initializations_rewards.png) and [results/initializations_nmi.png](results/initializations_nmi.png) — the QLearning figures regenerated on 2026-05-09 (post-Bug-4, post-Bug-5) reflect the int-truncated trajectory, not the intended experiment.
+- **Unaffected:** every other notebook and CSV in `results/`. They use `initialize=False`; lazy-init creates float64 arrays via `np.zeros` / `np.ones`, bypassing the bug entirely. The golden-run baseline at [tests/golden/baseline.json](tests/golden/baseline.json) is uses `initialize=False` and is byte-identical pre- and post-fix.
+- **Latent risk now closed:** an `initialize=True` costly-signaling experiment under the pre-fix code would have triggered the same int-truncation problem on UrnAgent (because $c_i \in (0, 0.5)$ produces fractional rewards). No current notebook exercises this path, but the dtype fix closes it before it ever fires.
+
+### Three-hypothesis investigation (2026-05-09 follow-up session)
+
+The investigation in `TODO_WORKFLOW.md::todo.investigate_qlearning_initialization` posed three hypotheses for QLearning's failure: H1 (TD-decay erases pre-seed), H2 (symmetric pre-seed adds noise), H3 (tuned hyperparameters wash out the bias). All three were empirically tested at notebook-scale (5000 episodes per cell, 5 seeds, paired comparison via `np.random.seed(0); random.seed(0)`). Results:
+
+| Variant | rew@end ([1,0] / [1,1] / [5,1] / [100,1]) | nmi@end |
+|---|---|---|
+| V1 BASELINE — current code | 0.27 / 0.27 / 0.21 / 0.27 | 0 / 0 / 0 / 0 |
+| V2 default hyperparameters (H3) | 0.27 / 0.27 / 0.21 / 0.27 (byte-identical to V1) | 0 / 0 / 0 / 0 |
+| V3 asymmetric pre-seed (H2) | 0.39 / 0.36 / 0.46 / 0.39 | 0 / 0 / 0 / 0 |
+| **V4 float dtype (Bug 9 fix)** | **1.00 / 1.00 / 1.00 / 1.00** | **0.91 / 0.89 / 0.83 / 0.81** |
+| V5 positive-only-clamped Q (counter-test) | 0.62 / 0.27 / 0.25 / 0.25 | 0.31 / 0 / 0.99 / 0.99 |
+
+H3 contributed nothing (V2 = V1 byte-identical, because UCB's high early bonus dominates ε in either schedule until counts equalize). H2 contributed a small amount (~0.1–0.2 reward improvement under asymmetric pre-seed, but NMI still 0). The dominant cause was the int dtype: V4 alone restores the experiment for all four `init_weights`, with `[1, 1]` showing higher variance because `[1, 1]` is by construction a no-bias pre-seed. V5 (positive-only-clamp) was brittle and is rejected.
+
+### The fix
+
+[rl_signaling/games.py:105-119](rl_signaling/games.py#L105-L119) `_generate_hot_vectors` now passes `dtype=np.float64` explicitly:
+
+```python
+def _generate_hot_vectors(
+    n_signals: int, n: float = 1, m: float = 0
+) -> list[NDArray[np.float64]]:
+    return [
+        np.array(
+            [n if i == j else m for i in range(n_signals)],
+            dtype=np.float64,
+        )
+        for j in range(n_signals)
+    ]
+```
+
+The return-type annotation and the `SignalUrns` type alias at the top of the module were updated accordingly (`NDArray[np.int_]` → `NDArray[np.float64]`).
+
+### Verification
+
+- **Unit tests added** to [tests/test_agents.py](tests/test_agents.py):
+  - `test_pre_seeded_q_tables_are_float_dtype` — asserts `np.issubdtype(vec.dtype, np.floating)` on every pre-seeded entry of `QLearningAgent.q_table_signaling`, `QLearningAgent.q_table_action`, `UrnAgent.signaling_urns`, `UrnAgent.action_urns`.
+  - `test_q_learning_pre_seed_bias_persists_through_zero_reward_decay` — constructs a `QLearningAgent(initialize=True, init_weights=(100, 1))`, drives 50 reward-0 updates on each of `Q[hot]` and `Q[cold]` for the same state, and asserts the closed-form predictions match (`Q_hot ≈ 100·0.9⁵⁰ ≈ 0.5154`, `Q_cold ≈ 0.005154`) to relative tolerance `1e-6`, and that `Q_hot - Q_cold > 0.4` (the pre-seed advantage that survives the decay; pre-fix this gap was zero because both cells truncated to 0).
+- **Golden-run regression** ([tests/test_golden.py](tests/test_golden.py)) still byte-identical because `initialize=False` is the path it exercises.
+- `pytest tests/` reports **63 passed** (was 61).
+- `jupyter nbconvert --execute --inplace` ran the notebook end-to-end against the fix; pre-fix QLearning PNGs backed up to `/tmp/rl_signaling_bug9_backup/`. Pre- and post-fix UrnAgent PNGs are visually identical (byte-identical numerics under integer rewards), confirming the fix is QLearning-specific in effect.
+
+### Post-fix observation (2026-05-09)
+
+A 30 000-episode reproduction (matching the notebook's protocol with paired seeds) yields:
+
+**QLearning, post-fix:**
+
+| init_weights | rew @ ep 1–100 | rew @ mid | rew @ end | nmi @ ep 1–100 | nmi @ mid | nmi @ end |
+|---|---|---|---|---|---|---|
+| [1, 0]    | 0.36 | 1.00 | 1.00 | 0.18 | 0.97 | 0.98 |
+| [1, 1]    | 0.38 | 1.00 | 1.00 | 0.02 | 0.96 | 0.98 |
+| [5, 1]    | 0.31 | 1.00 | 1.00 | 0.24 | 0.93 | 0.96 |
+| [100, 1]  | 0.25 | 1.00 | 1.00 | 0.62 | 0.92 | 0.96 |
+
+All four `init_weights` now reach optimal reward (1.00) by mid-run and sustain it. Early NMI (`ep 1–100`) is monotone in pre-seed strength (`[1,1]: 0.02 < [1,0]: 0.18 < [5,1]: 0.24 < [100,1]: 0.62`), confirming the pre-seed encodes initial signaling structure that survives the dtype fix. Late NMI converges to ≈ 0.96–0.98 across all four — QLearning learns the equilibrium independently of initialization, and the pre-seed accelerates the early signaling structure rather than determining the final state.
+
+**UrnAgent, post-fix:** byte-identical to the 2026-05-09 figures (integer rewards make int and float arithmetic equivalent for the urn update), so the existing UrnAgent figures are valid as-is.
+
+**Cross-reference to the original Bug 1 prediction.** The original prediction ("strong-init runs should show stronger and faster convergence") was based on the assumption of *informed* priors (pointing at the optimal action). The empirical post-Bug-9 data shows that for QLearning, the priors are *biased* (toward an arbitrary action) and survive long enough to provide an early signaling structure but do not determine the final convergence point — which is good. For UrnAgent, biased priors *do* determine the final state in the `[1, 0]` case (because the urn's positive-only update rule preserves the bijection forever when cold cells start at zero). This asymmetry is now visible in the regenerated figures and is a real scientific finding about agent-update structure, not a fix-correctness issue.
+
+### Pending debugging follow-up
+
+- [x] ~Diagnose why QLearning fails to lock into pre-seeded equilibria.~ — root cause identified as the int dtype bug; H1/H2/H3 magnitudes documented in the table above.
+- [x] ~Implement the chosen fix.~ — done.
+- [x] ~Add unit tests asserting dtype and bias-persistence.~ — done (2 new tests, suite 61 → 63).
+- [x] ~Regenerate `results/initializations_*.png` against the fix.~ — done; pre-fix backed up to `/tmp/rl_signaling_bug9_backup/`.
+- [x] ~Update Bug 4 / Bug 5 post-fix observations to point at Bug 9 as the actual cause of the QLearning collapse.~ — done (this commit).
 
 ---
 

@@ -132,6 +132,71 @@ def test_q_learning_initialize_true_seeds_both_q_tables():
     assert set(a.action_counts) == set(a.q_table_action)
 
 
+def test_pre_seeded_q_tables_are_float_dtype():
+    """Bug 9 fix: pre-seeded Q-tables must be float so TD updates do not truncate.
+
+    Lazy-init creates float64 zeros; pre-seed used to create int64 one-hots,
+    which silently floored fractional TD increments — Q[1] became 0 after a
+    single reward-0 update because (1 + 0.1*(0-1)) = 0.9 cast back to int = 0.
+    """
+    a = QLearningAgent(
+        n_signaling_actions=2,
+        n_final_actions=4,
+        n_observed_features=1,
+        initialize=True,
+        initialization_weights=(100, 1),
+    )
+    for vec in a.q_table_signaling.values():
+        assert np.issubdtype(vec.dtype, np.floating)
+    for vec in a.q_table_action.values():
+        assert np.issubdtype(vec.dtype, np.floating)
+
+    u = UrnAgent(
+        n_signaling_actions=2,
+        n_final_actions=4,
+        n_observed_features=1,
+        initialize=True,
+        initialization_weights=(100, 1),
+    )
+    for vec in u.signaling_urns.values():
+        assert np.issubdtype(vec.dtype, np.floating)
+    for vec in u.action_urns.values():
+        assert np.issubdtype(vec.dtype, np.floating)
+
+
+def test_q_learning_pre_seed_bias_persists_through_zero_reward_decay():
+    """Bug 9 verification: pre-seeded Q-table bias survives 50 reward-0 updates.
+
+    Closed form: Q_n = r + (Q_0 - r)*(1 - alpha)^n. With alpha=0.1, r=0,
+    Q_hot_0=100, Q_cold_0=1: after n=50 visits each, Q_hot ≈ 0.515 and
+    Q_cold ≈ 0.0052, so Q_hot - Q_cold ≈ 0.51. Pre-fix int dtype collapsed
+    both cells to 0 (Q_cold in one step; Q_hot via repeated truncation),
+    leaving zero gap.
+    """
+    random.seed(0)
+    a = QLearningAgent(
+        n_signaling_actions=2,
+        n_final_actions=4,
+        n_observed_features=1,
+        initialize=True,
+        initialization_weights=(100, 1),
+    )
+    state = next(iter(a.q_table_signaling.keys()))
+    hot = int(np.argmax(a.q_table_signaling[state]))
+    cold = 1 - hot
+
+    for _ in range(50):
+        a.update_signals(state, hot, reward=0.0)
+        a.update_signals(state, cold, reward=0.0)
+
+    q_hot = a.q_table_signaling[state][hot]
+    q_cold = a.q_table_signaling[state][cold]
+    # Closed-form predictions: 100*0.9^50 ≈ 0.5154, 1*0.9^50 ≈ 0.005154.
+    assert q_hot == pytest.approx(100 * 0.9 ** 50, rel=1e-6)
+    assert q_cold == pytest.approx(1 * 0.9 ** 50, rel=1e-6)
+    assert q_hot - q_cold > 0.4
+
+
 @pytest.mark.parametrize("choice", ["egreedy", "softmax", "ucb"])
 def test_q_learning_get_signal_each_strategy(choice):
     a = QLearningAgent(n_signaling_actions=3, n_final_actions=4, choice=choice)
