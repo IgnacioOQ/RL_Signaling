@@ -7,7 +7,7 @@
 - injection: informational
 - volatility: evolving
 - scope: project-specific
-- last_checked: 2026-05-08
+- last_checked: 2026-05-09
 <!-- content -->
 
 A reinforcement-learning study of emergent signaling between agents under partial observation. Two or more agents on a directed graph each observe a subset of the world state, exchange signals, then take an action whose payoff depends on the full state. The question is whether — and when — meaningful communication emerges, even though each agent's payoff is independent of the others' actions.
@@ -42,8 +42,12 @@ rl_signaling/                   # the package
   info_theory.py                # mutual-information / NMI metrics
   plotting.py                   # plot helpers, post-processing utilities, plot_simulation_summary
 notebooks/                      # experiment notebooks (see table below)
+analytics/                      # mathematical reference (every quantity the package computes) + independent verification scripts
+  *.md                          # math files: notation, info_theory, signaling_model, agents, proof_of_concept_markov, etc.
+  docs/                         # source PDFs and the authoritative roth_erev_polya_mle.md reference
+  scripts/                      # standalone PASS/FAIL verification scripts (see analytics/scripts/SCRIPTS_README.md)
 results/                        # saved CSVs and PNG figures from each experiment
-tests/                          # pytest suite (50 tests, ~5 s); includes a golden-run regression against tests/golden/baseline.json
+tests/                          # pytest suite (63 tests, ~5 s); includes a golden-run regression against tests/golden/baseline.json
 README.md                       # this file
 REFACTOR_PLAN.md                # phased refactor plan (Phases 1–7 complete)
 WORKLOG.md                      # append-only history of significant changes
@@ -62,6 +66,7 @@ pyproject.toml, requirements.txt, LICENSE, .gitignore
 | [rl_signaling/games.py](rl_signaling/games.py) | Random and canonical game generators; signal-urn initializers |
 | [rl_signaling/info_theory.py](rl_signaling/info_theory.py) | Mutual information and normalized mutual information |
 | [rl_signaling/plotting.py](rl_signaling/plotting.py) | KDE histograms, regression plots, reward/NMI-vs-cost plots, smoothing, CSV post-processing, the `plot_simulation_summary` helper used by `run_simulation` |
+| [analytics/](analytics/) | Mathematical reference for every quantity the package computes, plus independent verification scripts. See [analytics/ANALYTICS_README.md](analytics/ANALYTICS_README.md) for the reading order; the Markov-chain analysis of the signal-trading game lives in [analytics/proof_of_concept_markov.md](analytics/proof_of_concept_markov.md), [analytics/initialization_basins.md](analytics/initialization_basins.md), [analytics/argiento_obstruction.md](analytics/argiento_obstruction.md), and the authoritative reference [analytics/docs/roth_erev_polya_mle.md](analytics/docs/roth_erev_polya_mle.md). |
 
 ### Notebooks
 
