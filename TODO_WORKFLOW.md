@@ -284,6 +284,187 @@ This task verifies that:
 
 ---
 
+## Execute the notebook refactor plan (Phases 0–3 + Phase 5)
+- status: todo
+- type: task
+- id: todo.notebook_refactor
+- description: Execute Phases 0–3 and Phase 5 of [NOTEBOOK_REFACTOR_PLAN.md](NOTEBOOK_REFACTOR_PLAN.md) — migrate the six notebooks under `notebooks/` from the legacy `NetMultiAgentEnv` / `simulation_function` surface to the canonical `MultiAgentEnv` + `run_simulation` API, with the metadata, kernel, and dual local/Colab scaffolding required by the project's notebook conventions. Phase 4 (re-running the experiments to refresh `results/`) is deferred and tracked separately.
+- owner: agent
+- blocked_by: []
+- last_checked: 2026-05-15
+<!-- content -->
+**Context.** The six notebooks under [notebooks/](notebooks/) were authored before the seven-phase code refactor and still call the legacy API surface (`NetMultiAgentEnv`, `TempNetMultiAgentEnv`, `simulation_function`, `temp_simulation_function`), which now emits `DeprecationWarning`. Two of the six ([basic_unit_test.ipynb](notebooks/basic_unit_test.ipynb), [Initializations_test.ipynb](notebooks/Initializations_test.ipynb)) were partly updated during the original refactor; the remaining four still target the legacy surface plus a Colab-only setup section.
+
+[NOTEBOOK_REFACTOR_PLAN.md](NOTEBOOK_REFACTOR_PLAN.md) is the authoritative plan. It includes:
+
+- A legacy → canonical API mapping cheat-sheet (read this before touching any notebook).
+- Per-notebook refactor recipes (§2.1 through §2.6).
+- Resolved decisions (2026-05-15): rename mapping accepted, `nbstripout` adopted in Phase 5, Phase 4 deferred, `04_parameter_optimization.ipynb` stays Colab-only.
+- Tooling already in place: [notebooks/_tools/nb_migrate.py](notebooks/_tools/nb_migrate.py) (upgrade + audit subcommands) and [notebooks/NOTEBOOKS_README.md](notebooks/NOTEBOOKS_README.md).
+
+**Preconditions:**
+- The plan document and the helper tooling are committed (they were authored in the 2026-05-15 session that wrote this task).
+- `pytest tests/ -v` passes on the current branch — the migration should not change package behavior, so the test suite is the regression net.
+
+**Steps:**
+1. Read [NOTEBOOK_REFACTOR_PLAN.md](NOTEBOOK_REFACTOR_PLAN.md) end-to-end. The §"Legacy → canonical API mapping" table is the cheat-sheet for every notebook edit.
+2. Run the audit tool to confirm the starting state matches what the plan documents:
+   ```bash
+   python notebooks/_tools/nb_migrate.py audit notebooks/
+   ```
+   Expected: four notebooks show legacy-API hits and `NEEDS UPGRADE` metadata; two show clean state.
+3. **Phase 0 (tooling) — already done** by the 2026-05-15 session. Skip.
+4. **Phase 1 — rename + metadata pass.** Rename the six notebooks per the plan's table (numeric prefixes `01_` through `06_`, snake_case). Run `python notebooks/_tools/nb_migrate.py upgrade notebooks/` to bump every file to `nbformat=4.5`, set the `rl_signaling` kernel, and assign stable cell IDs. Update the six links in [README.md](README.md) (the **Notebooks** table and the **Reproducing the figures** section). The agent must **not** stage the renames with `git mv` per CODING_AGENT_MAIN_WORKFLOW rule 7 — write new files, delete old, let the user stage.
+5. **Phase 2 — API migration**, one notebook at a time, per plan §2.1–§2.6. Use `NotebookEdit` with `cell_id=...` (see KB skill `content/how-to/NOTEBOOK_WRITING_SKILL.md` §8) so edits address cells by their stable IDs rather than by index. After each notebook, re-run `nb_migrate.py audit <file>` — it must report `legacy-API hits: none`. Pay attention to:
+   - The return-tuple order change documented in the plan's cheat-sheet (`histories` and `nature_history` swap positions). Notebooks unpacking with `_, _, _, _, _` are unaffected; named-target unpacks need fixing.
+   - The TD divergence caveat — TDLearningAgent under the canonical API drifts by ~1% from the legacy flow. This is expected and documented; do not chase byte-identical TD output.
+   - `04_parameter_optimization.ipynb` stays Colab-only — introduce `RUNNING_LOCALLY` for consistency but do not pretend the full sweep runs on a laptop.
+6. **Phase 3 — validation.** For each migrated notebook, Restart-and-Run-All on a fresh `rl_signaling` kernel with `SMOKE_TEST=True`. Confirm no errors, no `DeprecationWarning` from `rl_signaling.*`, and `nbformat.validate(nb)` succeeds. Run `pytest tests/ -v` — must stay at 63 passed.
+7. **Phase 5 — documentation + nbstripout.** One-time setup at the repo level:
+   ```bash
+   pip install nbstripout
+   nbstripout --install
+   nbstripout --install --attributes .gitattributes
+   ```
+   Add `nbstripout` to the `[dev]` extras in [pyproject.toml](pyproject.toml). Update [README.md](README.md) to mention the `nbstripout --install` step in the Setup section. Update [notebooks/NOTEBOOKS_README.md](notebooks/NOTEBOOKS_README.md) to note the strip-on-commit convention. Append a `WORKLOG.md` entry summarizing the refactor.
+8. **Phase 4 is out of scope for this task.** The plan file already records that decision. The separate `todo.verify_notebook_drive_paths` task (which depends on this one) covers the Drive-path verification needed before any Colab re-run.
+
+**Verification:**
+- `python notebooks/_tools/nb_migrate.py audit notebooks/` reports `legacy-API hits: none` and `nbformat=4.5 OK; kernel='rl_signaling' OK` for every notebook.
+- `pytest tests/ -v` reports 63 passed.
+- Each migrated notebook completes Restart-and-Run-All under `SMOKE_TEST=True` with no errors and no `DeprecationWarning` from the `rl_signaling.*` namespace.
+- [README.md](README.md) **Notebooks** and **Reproducing the figures** sections reference the renamed files.
+- [.gitattributes](.gitattributes) contains the `nbstripout` filter line and [pyproject.toml](pyproject.toml) `[dev]` extras include `nbstripout`.
+
+**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a WORKLOG entry summarizing what changed and noting that `todo.verify_notebook_drive_paths` is now unblocked. Delete [NOTEBOOK_REFACTOR_PLAN.md](NOTEBOOK_REFACTOR_PLAN.md) from the repo root once Phase 5 is done (the plan was an in-flight document; the WORKLOG entry preserves the historical record).
+
+---
+
+## Verify Google Drive dump paths match the migrated notebooks
+- status: todo
+- type: task
+- id: todo.verify_notebook_drive_paths
+- description: After the notebook refactor wires every notebook to a single `BASE_PATH` constant under `RUNNING_LOCALLY=False`, confirm that the Drive layout the new notebooks expect actually exists in the user's Google Drive and that the legacy CSVs are still where the new code looks for them.
+- owner: user
+- blocked_by: [todo.notebook_refactor]
+- last_checked: 2026-05-15
+<!-- content -->
+**Context.** The notebook refactor planned in [NOTEBOOK_REFACTOR_PLAN.md](NOTEBOOK_REFACTOR_PLAN.md) replaces the scattered Colab path strings (each notebook currently hard-codes its own `dump_path = '/content/drive/My Drive/Colab Projects/Python ABMs/Communication/Plots and Datasets/'`) with a single `BASE_PATH` constant derived from the KB notebook skill §7 pattern. Three of the six notebooks ([Run_Simulations.ipynb](notebooks/Run_Simulations.ipynb), [Parameter_Optimization_wchoices.ipynb](notebooks/Parameter_Optimization_wchoices.ipynb), [Final_Costly_Signaling_Run_Simulations.ipynb](notebooks/Final_Costly_Signaling_Run_Simulations.ipynb)) read from / write to Drive when running on Colab.
+
+The risk is that the *new* `BASE_PATH` chosen by the refactor (whatever value lands in the migrated notebooks) does not match the *actual* folder where the legacy CSVs live on Drive, and the Colab branch will either:
+- Write into the wrong folder and silently fragment the result set, or
+- Fail to find the inputs that [plotting_results.ipynb](notebooks/plotting_results.ipynb) expects when run on Colab.
+
+Only the user can verify this — the agent has no access to the user's personal Google Drive without explicit MCP auth.
+
+**Preconditions:**
+- The notebook refactor (Phases 0–3 of [NOTEBOOK_REFACTOR_PLAN.md](NOTEBOOK_REFACTOR_PLAN.md)) has landed, so the new `BASE_PATH` values are committed somewhere reviewable.
+- You have access to the same Google account whose Drive backs the historical Colab runs.
+
+**Steps:**
+1. Identify the `BASE_PATH` (or `dump_path`) constant used in each of the three Colab-targeted notebooks after the refactor:
+   - `03_run_simulations.ipynb`
+   - `04_parameter_optimization.ipynb`
+   - `05_costly_signaling_simulations.ipynb`
+   Run `grep -n "BASE_PATH\|dump_path" notebooks/*.ipynb` to surface every path expression.
+2. Open Google Drive in a browser, signed in to the same account that hosts the historical runs. Confirm that the folder pointed to by each `BASE_PATH` exists.
+3. For each Drive folder, list its contents and verify the expected CSVs are present. The canonical input set that `06_plotting_results.ipynb` consumes is:
+   - `urnagent_results_canonical.csv`
+   - `urnagent_results_complex_randomized.csv`
+   - `qlearning_results_canonical.csv`
+   - `qlearning_results_complex_randomized.csv`
+   - `qlearning_results_canonical_costly_signal.csv`
+   - `td_learning_results_canonical.csv`
+   - `td_learning_results_complex_randomized.csv`
+4. If the Drive layout differs from what the migrated notebooks expect, choose one:
+   - **Migrate Drive to match the new code** — move/rename the existing folder so its path matches the new `BASE_PATH`.
+   - **Update the code to match Drive** — edit the `BASE_PATH` constants in the migrated notebooks to match the actual Drive folder.
+5. Smoke-test by opening `06_plotting_results.ipynb` in Colab with `RUNNING_LOCALLY=False`, mounting Drive, and running the data-load cells only. Confirm every CSV resolves.
+
+**Verification:**
+- Every `BASE_PATH` in the three Colab-targeted notebooks points to a folder that exists in Drive.
+- Every CSV listed in Step 3 is reachable under each notebook's `BASE_PATH` on Colab.
+- A Colab smoke-run of `06_plotting_results.ipynb` reaches at least the first plot without `FileNotFoundError`.
+
+**On completion:** Delete this entire task block from TODO_WORKFLOW.md. If the path mismatch required code edits in the migrated notebooks, mention them in the `WORKLOG.md` entry for the notebook refactor.
+
+---
+
+## Update analytics/ doc cross-references after results/ reorganization
+- status: todo
+- type: task
+- id: todo.update_doc_paths_after_results_reorg
+- description: After the 2026-05-15 reorganization of results/ into legacy/{datasets,plots} + new_code/{datasets,plots} + proof_of_concept/, several markdown files under analytics/ still reference the pre-reorg top-level paths. Update each reference to point at the new subfolder location.
+- owner: agent
+- blocked_by: []
+- last_checked: 2026-05-15
+<!-- content -->
+**Context.** The 2026-05-15 session moved 50 files out of `results/` root into three subfolders:
+- `legacy/datasets/` — 7 CSVs from pre-refactor experiment runs.
+- `legacy/plots/` — 35 PNGs derived from the legacy CSVs (canonical / complex / costly experiments + parameter-optimization frontiers).
+- `new_code/plots/` — 1 PNG so far (`figure_ql_vs_re_canonical.png`); `new_code/datasets/` reserved for the post-refactor re-run of the experiment notebooks (currently empty).
+- `proof_of_concept/` — 7 PNGs (`initializations_*`, `initializations_urn_*`, `poc_optionA/B/C_*`).
+
+The producer scripts under [analytics/scripts/](analytics/scripts/) and two notebooks ([Initializations_test.ipynb](notebooks/Initializations_test.ipynb), [Run_Simulations.ipynb](notebooks/Run_Simulations.ipynb)) were updated to write to the new subfolders. The remaining items are doc cross-references in markdown files that still reference the old top-level `results/foo.png` and `results/foo.csv` paths. Independent of `todo.notebook_refactor`.
+
+**Preconditions:**
+- The reorganization is complete. Verify with `ls results/` — only `legacy/`, `new_code/`, `proof_of_concept/` (plus `.DS_Store`) should be present at the top level.
+
+**Steps:**
+1. Update [analytics/docs/Proof of Concept (Paper Draft).md](analytics/docs/Proof of Concept (Paper Draft).md):
+   - `results/initializations_urn_rewards.png` → `results/proof_of_concept/initializations_urn_rewards.png`
+   - `results/initializations_urn_nmi.png` → `results/proof_of_concept/initializations_urn_nmi.png`
+   - `results/figure_init_paradox_scatter.{csv,png}` → `results/proof_of_concept/figure_init_paradox_scatter.{csv,png}`
+   - In the Figure 3 sketch script block: `results/qlearning_results_canonical.csv` → `results/legacy/datasets/qlearning_results_canonical.csv`; `results/urnagent_results_canonical.csv` → `results/legacy/datasets/urnagent_results_canonical.csv`; `results/figure_ql_vs_re_canonical.png` → `results/new_code/plots/figure_ql_vs_re_canonical.png`.
+2. Update [analytics/metrics_aggregation.md](analytics/metrics_aggregation.md): audit every `results/*.png` and `results/*.csv` reference and replace each with the appropriate `results/legacy/{datasets,plots}/...` path.
+3. Update [analytics/costly_signaling.md](analytics/costly_signaling.md): references to `results/Roth-Erev_canonical_costly_signal_*.png` → `results/legacy/plots/Roth-Erev_canonical_costly_signal_*.png` (these PNGs are flagged in [LEGACY_ERRORS_LOG.md](LEGACY_ERRORS_LOG.md) as retired/unreproducible — keep the references, just fix the paths). Also: `results/q_costs_vs_nmi.png` and `results/q_costly_vs_reward.png` do not exist in `results/` at all — verify whether these refer to never-produced figures and either remove the references or file a separate task to produce them.
+4. Audit [README.md](README.md) for `results/` paths that need updating to reflect the new subfolder structure (the **Reproducing the figures** section in particular).
+5. Final verification grep:
+   ```bash
+   grep -rIn "results/[A-Za-z0-9_-]\+\.\(png\|csv\)" analytics/ README.md \
+     | grep -v "results/legacy\|results/new_code\|results/proof_of_concept"
+   ```
+   Should return no matches.
+
+**Verification:**
+- The grep in Step 5 returns no matches.
+- A spot-check in [analytics/docs/Proof of Concept (Paper Draft).md](analytics/docs/Proof of Concept (Paper Draft).md) confirms the markdown links resolve when clicked from VS Code.
+
+**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a one-line `WORKLOG.md` entry recording the doc cross-reference cleanup.
+
+---
+
+## Finalize §2.3 figure selection for the philosophical paper
+- status: todo
+- type: task
+- id: todo.finalize_section_2_3_figure
+- description: User-side decision about which of the four candidate figures to commit to in §2.3 of [analytics/docs/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf](analytics/docs/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf). Once chosen, the paper-ready draft needs to be revised from "audit + sketches" to a committed selection.
+- owner: user
+- blocked_by: []
+- last_checked: 2026-05-15
+<!-- content -->
+**Context.** During the 2026-05-15 session the §2.3 paper draft was rewritten ([analytics/docs/Proof of Concept (Paper Draft).md](analytics/docs/Proof of Concept (Paper Draft).md)) and three new candidate figures were generated under [results/proof_of_concept/](results/proof_of_concept/):
+- `poc_optionA_phase_portrait.png` — (NMI_t, reward_t) trajectories per init regime, single-seed close-ups.
+- `poc_optionB_cell_concentration.png` — per-cell hot-fraction trajectories under (1,1) and (5,1).
+- `poc_optionC_absorbing_distribution.png` — marginal + joint distribution of mean reward over the 2304 absorbing states.
+
+In addition, the existing post-fix re-run figures from [Initializations_test.ipynb](notebooks/Initializations_test.ipynb) live at:
+- [results/proof_of_concept/initializations_urn_rewards.png](results/proof_of_concept/initializations_urn_rewards.png)
+- [results/proof_of_concept/initializations_urn_nmi.png](results/proof_of_concept/initializations_urn_nmi.png)
+
+The agent's recommendation in [analytics/docs/Proof of Concept (Paper Draft).md](analytics/docs/Proof of Concept (Paper Draft).md) §"Plot audit and figure sketches" was: keep the existing init sweep as Figure 1, add Option C as Figure 2, drop Option A (visually weak as rendered) and Option B (too technical for a philosophy paper).
+
+**Decision needed:**
+- Which figure(s) to commit to as the §2.3 figure(s).
+- Once chosen, the paper draft should be revised to bake in the choice. The current draft presents A/B/C as candidates rather than committing.
+
+**On completion:**
+- If accepting the agent's recommendation: instruct an agent session to revise [analytics/docs/Proof of Concept (Paper Draft).md](analytics/docs/Proof of Concept (Paper Draft).md) to commit to "existing init sweep as Figure 1 + Option C as Figure 2," remove the multi-option discussion, and update the corresponding caption text. Then delete this task block.
+- If choosing differently: leave a note here with the chosen combination and instruct an agent session to revise the draft accordingly. Then delete this task block.
+- If deferring further: keep this task block and update `last_checked`.
+
+---
+
 ## Task Template
 
 Copy the block below (without the outer fences), fill in all fields, and insert it as a new `## [Task Title]` task block.
