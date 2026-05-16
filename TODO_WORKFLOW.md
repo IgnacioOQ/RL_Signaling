@@ -465,6 +465,74 @@ The agent's recommendation in [analytics/docs/Proof of Concept (Paper Draft).md]
 
 ---
 
+## Re-render §2.3 figure candidates from the bug-fixed notebook, then pick the figures and rewrite §2.3
+
+- status: todo
+- type: task
+- id: todo.finalize_section_2_3_with_figures
+- description: Pick up the §2.3 work where the 2026-05-16 session left off — re-render every plot from the bug-fixed `proof_of_concept_figures.ipynb` (the basin-sweep figures and several others were produced under a `build_env_from_spec` bug that has since been fixed), then collaborate with the user to commit to a final set of figures for §2.3, then rewrite §2.3 of `Signaling_Games_with_Distributed_Rewards.pdf` using those figures and the empirical findings recorded in the paper draft.
+- owner: agent + user (figure choice is the user's; everything else is agent-pickable)
+- blocked_by: []
+- last_checked: 2026-05-16
+<!-- content -->
+**Context.** The 2026-05-16 session built [notebooks/proof_of_concept_figures.ipynb](notebooks/proof_of_concept_figures.ipynb) (31 cells) — a single place that renders every candidate figure for §2.3 of *Signaling Games with Distributed Rewards*. The notebook produced rendered plots on Colab. Late in the session a bug was caught in `build_env_from_spec` (shared `action_urns` dict across both agents, fixed by creating a fresh table per agent inside the loop), so several already-rendered plots — including the headline Option D-β basin sweep — were produced with broken dynamics. The fix is in the current notebook; a re-run reproduces correct dynamics. See the [WORKLOG entry](WORKLOG.md) `2026-05-16 — Built the §2.3 proof-of-concept figures notebook` for the full session record.
+
+The user explicitly deferred figure choice to a future session: "I have to do something else now, so I want to make sure all of the relevant information is stored for a next session. In that session we will examine the plots, and continue with them if necessary. We will make a choice on which plots to use. After that, we will draft again the proof of concept section."
+
+This task supersedes the scope of `todo.finalize_section_2_3_figure` (which was filed before the new notebook existed and refers to older candidate figures). Delete that block once this one is acted on.
+
+**Preconditions:**
+
+- Notebook [notebooks/proof_of_concept_figures.ipynb](notebooks/proof_of_concept_figures.ipynb) builds (`nbformat.validate` passes) and runs end-to-end on Colab with `RUNNING_LOCALLY = False`. Build script at [notebooks/_tools/build_poc_notebook.py](notebooks/_tools/build_poc_notebook.py) is the round-trip source.
+- The bug fix in `build_env_from_spec` (fresh `create_initial_signals` call per agent inside the loop) is in place — verify by grepping the setup cell for `new_action_table = create_initial_signals(`; it must appear *inside* the `for agent in env.agents` loop, not before it.
+- The user has the rendered PNGs on Drive at `/content/drive/My Drive/Colab Projects/Python ABMs/Distributed Signaling/Plots and Datasets/Proof of Concept/`. The local laptop copies in [results/proof_of_concept/](results/proof_of_concept/) may be stale from the buggy run — the local ones called `Option D-beta 1.png` (pre-bug, correct shape) and `Option D-beta 2.png` (with-bug, flat reward) document the bug's empirical signature.
+
+**Steps:**
+
+1. **Re-render every plot from the bug-fixed notebook.** On Colab with `RUNNING_LOCALLY = False`, Restart-and-Run-All. The `BASIN_N_SEEDS = 200` Colab tier gives tight error bands on the basin sweep; bump higher if the histograms still look noisy. Expected total runtime: 15–25 minutes on a normal Colab box.
+
+2. **Eyeball each candidate against the predictions in the paper draft note.** Open [analytics/docs/Proof of Concept (Paper Draft).md](analytics/docs/Proof%20of%20Concept%20(Paper%20Draft).md) — the "Observation — NMI vs reward dissociation in `sig=[5,1]` vs `sig=[1,1]` (2026-05-16)" section makes specific empirical predictions (orange bimodality, green wider than orange, Q-learning flatter than Roth–Erev). Confirm or refute each. The orange bimodality finding is the strongest piece of evidence for the §2.3 honest framing and should not be lost.
+
+3. **Pick the figure(s) for §2.3.** Six candidates: Figure 1 (init sweep), Figure 2 (per-seed scatter), Option A (phase portrait), Option B (per-cell hot-fraction), Option C (absorbing-state distribution), Option D (α/β/γ — basin sweeps), Option E (Roth–Erev vs Q-learning). The user has expressed:
+   - **Liked**: Option D-β (the basin reach with reward + NMI overlay was called "pretty good"), Option C ("Reward distribution over the 2304 absorbing states" — called "quite interesting"), Option A ("quite interesting").
+   - **Maybe-not**: Figure 2 ("not sure I want to use figure 2", but the orange-bimodality finding should be mentioned in §2.3 prose if dropped — see the paper-draft note's "Figure 2 — status (undecided)" subsection).
+   - **Notebook-only**: Option B was flagged as too technical for the philosophy paper.
+   The user reads philosophy and game-theory contexts; figure budget should be conservative.
+
+4. **Commit to chosen figures in the paper draft.** Edit [analytics/docs/Proof of Concept (Paper Draft).md](analytics/docs/Proof%20of%20Concept%20(Paper%20Draft).md): remove the "Plot audit and figure sketches" section's "candidate" framing, replace with the committed selection, write the final captions, and update the "Figure 2 — status (undecided)" subsection of the 2026-05-16 observation note to "committed" (or note that Figure 2 was dropped and the finding migrated to §2.3 prose).
+
+5. **Rewrite §2.3 of `Signaling_Games_with_Distributed_Rewards.pdf`** using the committed figures. The current draft prose in [analytics/docs/Proof of Concept (Paper Draft).md](analytics/docs/Proof%20of%20Concept%20(Paper%20Draft).md) is largely usable but needs two updates:
+   - **Anchor the philosophical content on the lock-in vs co-adaptation finding** (the continuous version of the old `(1, 0)` paradox) — this is the cleanest empirical evidence for "high NMI ≠ successful communication."
+   - **Promote the orange bimodality** to a load-bearing observation — it's the strongest empirical witness for "attractors exist but the basin is not provably reached" (the framing the reviewer responses commit §2.3 to).
+   - The reviewer-response checklist in [analytics/docs/Generated Responses to Reviewers.md](analytics/docs/Generated%20Responses%20to%20Reviewers.md) (R2·C1, R2·C2, R3·C2) is the audit list — every checklist item should be addressed in the new §2.3.
+
+6. **Update [Proof of Concept (Paper Draft).md](analytics/docs/Proof%20of%20Concept%20(Paper%20Draft).md) header** with a date marker once the rewrite is incorporated into the PDF, so future sessions know which paragraphs are stale.
+
+**Verification:**
+
+- Every figure that ends up in §2.3 of the PDF has a matching PNG under [results/proof_of_concept/](results/proof_of_concept/) (or its Drive equivalent) and a citation in the paper draft.
+- A grep of [analytics/docs/Proof of Concept (Paper Draft).md](analytics/docs/Proof%20of%20Concept%20(Paper%20Draft).md) for "candidate", "sketch", "undecided", "consider" returns no matches in the main §2.3 prose (acceptable in marginal notes only).
+- The §2.3 PDF rewrite addresses each of the three reviewer concerns landing on §2.3 (R2·C1, R2·C2, R3·C2) — confirmed by a brief review against [analytics/docs/Generated Responses to Reviewers.md](analytics/docs/Generated%20Responses%20to%20Reviewers.md).
+
+**On completion:**
+
+- Delete this entire task block from `TODO_WORKFLOW.md`.
+- Also delete `todo.finalize_section_2_3_figure` (the older user-side task that this supersedes).
+- Append a `WORKLOG.md` entry recording the chosen figures, the §2.3 rewrite, and any further empirical findings that surfaced during the re-render.
+
+**Pointers:**
+
+- **Live notebook** — [notebooks/proof_of_concept_figures.ipynb](notebooks/proof_of_concept_figures.ipynb)
+- **Build script (round-trip source)** — [notebooks/_tools/build_poc_notebook.py](notebooks/_tools/build_poc_notebook.py)
+- **Paper draft (under active rewrite)** — [analytics/docs/Proof of Concept (Paper Draft).md](analytics/docs/Proof%20of%20Concept%20(Paper%20Draft).md)
+- **Reviewer responses + checklist** — [analytics/docs/Generated Responses to Reviewers.md](analytics/docs/Generated%20Responses%20to%20Reviewers.md)
+- **Empirical findings note (this session)** — [analytics/docs/Proof of Concept (Paper Draft).md](analytics/docs/Proof%20of%20Concept%20(Paper%20Draft).md) — section "Observation — NMI vs reward dissociation…"
+- **Combinatorial companion** — [analytics/docs/Urn Absorbing States.md](analytics/docs/Urn%20Absorbing%20States.md)
+- **Formal Markov-chain reference** — [analytics/proof_of_concept_markov.md](analytics/proof_of_concept_markov.md)
+- **Drive root for Colab artifacts** — `/content/drive/My Drive/Colab Projects/Python ABMs/Distributed Signaling/Plots and Datasets/Proof of Concept/` (documented in [notebooks/NOTEBOOKS_README.md](notebooks/NOTEBOOKS_README.md))
+
+---
+
 ## Task Template
 
 Copy the block below (without the outer fences), fill in all fields, and insert it as a new `## [Task Title]` task block.
