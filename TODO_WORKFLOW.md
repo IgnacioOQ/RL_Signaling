@@ -533,6 +533,61 @@ This task supersedes the scope of `todo.finalize_section_2_3_figure` (which was 
 
 ---
 
+## KB capture — add timer + progress-bar guidance for heavy-compute notebook cells
+- status: todo
+- type: task
+- id: todo.kb_notebook_visibility_capture
+- description: Add a §10 subsection and a Quick-checklist bullet to `content/how-to/NOTEBOOK_WRITING_SKILL.md` requiring `%%time` + a progress bar (`tqdm` / `joblib.Parallel(verbose=…)`) on any heavy-compute notebook cell. Deferred from the 2026-05-16 session because the KB markdown-writing conventions are being reworked in parallel.
+- owner: agent
+- blocked_by: []
+- last_checked: 2026-05-16
+<!-- content -->
+**Context.** During the 2026-05-16 RL_Signaling session, runtime estimates documented in [notebooks/proof_of_concept_figures.ipynb](notebooks/proof_of_concept_figures.ipynb) were off by ~10× (claimed "~5–10 min" for an Option D-γ Colab grid; observed ~60–80 min). Root cause: the heavy-compute cells had no `%%time` and no in-loop progress bars, so neither the agent nor the user could calibrate from prior runs. The notebook-side fix landed in the 2026-05-16 session (`%%time` prepended to every compute cell via a new `code_timed` helper in [notebooks/_tools/build_poc_notebook.py](notebooks/_tools/build_poc_notebook.py); the example code in §10 of the KB skill already shows `tqdm` + `joblib.Parallel(verbose=…)`). The KB rule itself — "any heavy-compute cell MUST have `%%time` and a progress bar" — has not yet been captured in the skill doc.
+
+The KB write was attempted in-session but rejected by `knowledge_base_update` with `Content is missing the '<!-- content -->' separator`, which suggests `content/how-to/NOTEBOOK_WRITING_SKILL.md` is currently out of spec under the new KB markdown-writing conventions the user is reworking in parallel. Retrying before conventions settle would land on a moving target.
+
+**Preconditions.**
+- KB markdown-writing conventions stable (the user signals they are no longer in flux).
+- `content/how-to/NOTEBOOK_WRITING_SKILL.md` passes `knowledge_base_update` validation under the current spec. May need a separate housekeeping pass (move `<!-- content -->` between metadata and body, verify preamble word count) before the visibility addition lands; do this as a precursor step or as a separate task if scope requires.
+
+**Steps:**
+1. Read `MD_CONVENTIONS.md` (and any new schema reference) to confirm the current `<!-- content -->` placement rule and preamble length window.
+2. Call `knowledge_base_read(path="content/how-to/NOTEBOOK_WRITING_SKILL.md")` — note `content_hash`. Run a dry-run patch (`dry_run=True`) of any trivial edit to verify the doc currently passes validation under the new spec.
+3. If the doc is out of spec under the new conventions, fix the spec violation first (e.g., move `<!-- content -->` to the correct position). Confirm the dry-run passes before proceeding.
+4. Apply two additions via `knowledge_base_update`:
+   - **Addition 1** — new `### Visibility — \`%%time\` and progress bars` subsection at the end of §10 (Parallel processing). Draft text below.
+   - **Addition 2** — new bullet in the Quick checklist at the end of the doc: `- [ ] Heavy-compute cells: \`%%time\` as the first line; \`tqdm\` or \`joblib.Parallel(verbose=…)\` for progress.`
+5. Record a KB performance event (`event_type="miss"`) noting that no prior doc on visibility for heavy cells existed, plus the session-summary event for the session that picks this up.
+
+**Draft text for Addition 1** (preserve verbatim; the user has approved the wording in the 2026-05-16 session):
+
+````markdown
+### Visibility — `%%time` and progress bars
+
+Any code cell that takes more than a few seconds to run — whether it parallelises or not — should publish two pieces of information while it runs: how much time it has used, and how much work is left. Without them, the user is left staring at `[*]` with no way to tell whether the cell is making progress, stuck, or hung.
+
+- **`%%time`** as the *first line* of the cell. This is a Jupyter cell magic and breaks if anything precedes it (including docstrings or comments). On completion it prints CPU time and wall time. Those numbers are enough to calibrate runtime estimates in the doc, decide whether a cell needs a smoke-test gate, or notice that a cell got slower after a refactor. For sub-second cells the overhead is negligible; for hour-long ones it is invaluable.
+
+- **A progress bar** inside any loop or `Parallel` call. `tqdm` is the default for sequential loops:
+
+  ```python
+  for x in tqdm(items, desc="processing"):
+      results.append(process(x))
+  ```
+
+  `joblib.Parallel(verbose=…)` is the equivalent for joblib-based parallel work and emits `[Parallel(n_jobs=-1)]: Done N tasks | elapsed: …` lines every few percent. `multiprocessing.Pool.imap_unordered` paired with `tqdm` is the pattern when using the stdlib `Pool` (see the example earlier in this section).
+
+The two together — `%%time` at the top, progress bar inside — turn an opaque `[*]` into a continuously updating status line plus a final timing report. A reviewer reading the notebook later can read off the runtime without re-running anything; an agent estimating runtime cost has concrete numbers to work with.
+````
+
+**Verification:**
+- `knowledge_base_grep(pattern="%%time", path_glob="content/how-to/NOTEBOOK_WRITING_SKILL.md")` returns at least one match inside the §10 region and one in the Quick checklist.
+- A fresh `knowledge_base_read` of the doc with `sections=["10. Parallel processing"]` shows the new subsection.
+
+**On completion:** Delete this entire task block from `TODO_WORKFLOW.md`. Optional: append a one-line `WORKLOG.md` entry recording the KB capture.
+
+---
+
 ## Task Template
 
 Copy the block below (without the outer fences), fill in all fields, and insert it as a new `## [Task Title]` task block.

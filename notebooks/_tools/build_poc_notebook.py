@@ -312,12 +312,15 @@ SETUP_CODE = '''\
 
 import random
 from collections import Counter
+from contextlib import contextmanager
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
+import joblib
 from joblib import Parallel, delayed
+from tqdm.auto import tqdm
 
 from rl_signaling import MultiAgentEnv, UrnAgent, run_simulation
 from rl_signaling.agents import QLearningAgent
@@ -331,6 +334,28 @@ N_ACT = 4
 
 %matplotlib inline
 plt.rcParams["figure.dpi"] = 110
+
+
+@contextmanager
+def tqdm_joblib(tqdm_obj):
+    """Patch joblib's batch-completion callback to drive a tqdm progress bar.
+
+    Usage:
+        with tqdm_joblib(tqdm(desc="...", total=len(tasks))):
+            results = Parallel(n_jobs=N_JOBS)(delayed(f)(x) for x in tasks)
+    """
+    class _Cb(joblib.parallel.BatchCompletionCallBack):
+        def __call__(self, *args, **kw):
+            tqdm_obj.update(n=self.batch_size)
+            return super().__call__(*args, **kw)
+
+    old = joblib.parallel.BatchCompletionCallBack
+    joblib.parallel.BatchCompletionCallBack = _Cb
+    try:
+        yield tqdm_obj
+    finally:
+        joblib.parallel.BatchCompletionCallBack = old
+        tqdm_obj.close()
 
 
 def build_env_from_spec(spec, seed: int,
@@ -560,9 +585,10 @@ else:
 
     tasks = [(spec, s) for spec in INITS for s in range(N_SEEDS_FIG2)]
     print(f"Running {len(tasks)} sims ({N_SEEDS_FIG2} seeds × {len(INITS)} inits)...")
-    records = Parallel(n_jobs=N_JOBS, verbose=5)(
-        delayed(run_one_seed)(spec, s) for (spec, s) in tasks
-    )
+    with tqdm_joblib(tqdm(desc="per-seed scatter", total=len(tasks))):
+        records = Parallel(n_jobs=N_JOBS)(
+            delayed(run_one_seed)(spec, s) for (spec, s) in tasks
+        )
     df_fig2 = pd.DataFrame(records)
     save_csv(df_fig2, "figure_init_paradox_scatter.csv")
 
@@ -646,9 +672,10 @@ def run_for_A(spec, seed: int) -> dict:
 OPTA_SPECS = [s for s in INITS if s.label != "sig=[1,0]"]
 tasks_A = [(spec, s) for spec in OPTA_SPECS for s in range(N_SEEDS_OPT_A)]
 print(f"Running {len(tasks_A)} sims ({N_SEEDS_OPT_A} seeds × {len(OPTA_SPECS)} inits)...")
-records_A = Parallel(n_jobs=N_JOBS, verbose=5)(
-    delayed(run_for_A)(spec, s) for (spec, s) in tasks_A
-)
+with tqdm_joblib(tqdm(desc="phase portrait trajectories", total=len(tasks_A))):
+    records_A = Parallel(n_jobs=N_JOBS)(
+        delayed(run_for_A)(spec, s) for (spec, s) in tasks_A
+    )
 
 fig, axes = plt.subplots(1, len(OPTA_SPECS), figsize=(4.3 * len(OPTA_SPECS), 4),
                          sharex=True, sharey=True)
@@ -767,9 +794,10 @@ def run_for_B(spec, seed: int) -> dict:
 
 tasks_B = [(spec, s) for spec in B_SPECS for s in range(N_SEEDS_OPT_B)]
 print(f"Running {len(tasks_B)} sims ({N_SEEDS_OPT_B} seeds × {len(B_SPECS)} inits)...")
-records_B = Parallel(n_jobs=N_JOBS, verbose=5)(
-    delayed(run_for_B)(spec, s) for (spec, s) in tasks_B
-)
+with tqdm_joblib(tqdm(desc="per-cell concentration", total=len(tasks_B))):
+    records_B = Parallel(n_jobs=N_JOBS)(
+        delayed(run_for_B)(spec, s) for (spec, s) in tasks_B
+    )
 
 fig, axes = plt.subplots(1, 2, figsize=(11, 4.5), sharey=True)
 for ax, spec in zip(axes, B_SPECS):
@@ -957,9 +985,10 @@ def run_basin_seed(sig_n, sig_m, seed):
 
 tasks_D = [(n, 1, s) for n in BASIN_SIG_N_VALUES for s in range(BASIN_N_SEEDS)]
 print(f"Running {len(tasks_D)} sims ({BASIN_N_SEEDS} seeds × {len(BASIN_SIG_N_VALUES)} sig_n values)...")
-records_D = Parallel(n_jobs=N_JOBS, verbose=5)(
-    delayed(run_basin_seed)(n, m, s) for (n, m, s) in tasks_D
-)
+with tqdm_joblib(tqdm(desc="basin sweep (Roth-Erev)", total=len(tasks_D))):
+    records_D = Parallel(n_jobs=N_JOBS)(
+        delayed(run_basin_seed)(n, m, s) for (n, m, s) in tasks_D
+    )
 df_basin = pd.DataFrame(records_D)
 save_csv(df_basin, "basin_sweep_data.csv")
 print(f"Collected {len(df_basin)} records over sig_n = {BASIN_SIG_N_VALUES}")
@@ -1105,9 +1134,10 @@ tasks_G = [
 ]
 print(f"Running {len(tasks_G)} sims "
       f"({GRID_N_SEEDS} seeds × {len(GRID_SIG_N_VALUES)} sig_n × {len(GRID_ACT_N_VALUES)} act_n)...")
-records_G = Parallel(n_jobs=N_JOBS, verbose=5)(
-    delayed(run_grid_seed)(sn, an, s) for (sn, an, s) in tasks_G
-)
+with tqdm_joblib(tqdm(desc="(sig_n, act_n) grid", total=len(tasks_G))):
+    records_G = Parallel(n_jobs=N_JOBS)(
+        delayed(run_grid_seed)(sn, an, s) for (sn, an, s) in tasks_G
+    )
 df_grid = pd.DataFrame(records_G)
 save_csv(df_grid, "basin_gamma_grid_data.csv")
 print(f"Collected {len(df_grid)} records over {len(GRID_SIG_N_VALUES)} × {len(GRID_ACT_N_VALUES)} grid.")
@@ -1220,9 +1250,10 @@ def run_basin_seed_ql(sig_n, sig_m, seed):
 tasks_E = [(n, 1, s) for n in BASIN_SIG_N_VALUES for s in range(BASIN_N_SEEDS)]
 print(f"Running {len(tasks_E)} Q-learning sims "
       f"({BASIN_N_SEEDS} seeds × {len(BASIN_SIG_N_VALUES)} sig_n values)...")
-records_E = Parallel(n_jobs=N_JOBS, verbose=5)(
-    delayed(run_basin_seed_ql)(n, m, s) for (n, m, s) in tasks_E
-)
+with tqdm_joblib(tqdm(desc="basin sweep (Q-learning)", total=len(tasks_E))):
+    records_E = Parallel(n_jobs=N_JOBS)(
+        delayed(run_basin_seed_ql)(n, m, s) for (n, m, s) in tasks_E
+    )
 df_basin_ql = pd.DataFrame(records_E)
 save_csv(df_basin_ql, "basin_sweep_data_ql.csv")
 print(f"Collected {len(df_basin_ql)} Q-learning records over sig_n = {BASIN_SIG_N_VALUES}")
@@ -1381,10 +1412,11 @@ for n in BASIN_SIG_N_VALUES:
 
 print(f"Running {len(tasks_F)} time-horizon sims "
       f"({BASIN_N_SEEDS} seeds × {len(BASIN_SIG_N_VALUES)} sig_n × 2 agents)...")
-records_F_nested = Parallel(n_jobs=N_JOBS, verbose=5)(
-    delayed(run_horizon_seed)(n, m, s, agent_type, extra)
-    for (n, m, s, agent_type, extra) in tasks_F
-)
+with tqdm_joblib(tqdm(desc="time-horizon sweep (both agents)", total=len(tasks_F))):
+    records_F_nested = Parallel(n_jobs=N_JOBS)(
+        delayed(run_horizon_seed)(n, m, s, agent_type, extra)
+        for (n, m, s, agent_type, extra) in tasks_F
+    )
 records_F = [rec for sublist in records_F_nested for rec in sublist]
 df_horizon = pd.DataFrame(records_F)
 save_csv(df_horizon, "horizon_sweep_data.csv")

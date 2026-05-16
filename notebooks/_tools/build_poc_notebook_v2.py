@@ -117,9 +117,10 @@ if RUN_OPT_D_GAMMA:
     ]
     print(f"Running {len(tasks_G)} sims "
           f"({GRID_N_SEEDS} seeds × {len(GRID_SIG_N_VALUES)} sig_n × {len(GRID_ACT_N_VALUES)} act_n)...")
-    records_G = Parallel(n_jobs=N_JOBS, verbose=5)(
-        delayed(run_grid_seed)(sn, an, s) for (sn, an, s) in tasks_G
-    )
+    with tqdm_joblib(tqdm(desc="(sig_n, act_n) grid", total=len(tasks_G))):
+        records_G = Parallel(n_jobs=N_JOBS)(
+            delayed(run_grid_seed)(sn, an, s) for (sn, an, s) in tasks_G
+        )
     df_grid = pd.DataFrame(records_G)
     save_csv(df_grid, "basin_gamma_grid_data.csv")
     print(f"Collected {len(df_grid)} records over {len(GRID_SIG_N_VALUES)} × {len(GRID_ACT_N_VALUES)} grid.")
