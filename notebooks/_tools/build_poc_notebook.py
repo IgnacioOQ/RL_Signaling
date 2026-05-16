@@ -28,6 +28,11 @@ def code(slug: str, source: str) -> dict:
     }
 
 
+def code_timed(slug: str, source: str) -> dict:
+    """Code cell with `%%time` prepended so Jupyter reports wall + CPU time."""
+    return code(slug, "%%time\n" + source)
+
+
 # ---------------------------------------------------------------------------
 # Cell sources
 # ---------------------------------------------------------------------------
@@ -1068,9 +1073,9 @@ simulations.
 
 | Mode | Grid | Seeds/cell | Total sims | Estimated wall-clock |
 |---|---|---:|---:|---|
-| Smoke | 3 × 3 | 5 | 45 | ~10 sec |
-| Local (`RUNNING_LOCALLY = True`) | 5 × 5 | 20 | 500 | ~3–5 min on 4 cores |
-| Colab (`RUNNING_LOCALLY = False`) | 9 × 9 | 50 | 4 050 | ~5–10 min |
+| Smoke | 3 × 3 | 5 | 45 | ~30 sec |
+| Local (`RUNNING_LOCALLY = True`) | 5 × 5 | 20 | 500 | ~5–10 min on 4 cores |
+| Colab (`RUNNING_LOCALLY = False`) | 9 × 9 | 50 | 4 050 | ~60–80 min (empirically observed at ~1 s/task wall-clock under `n_jobs=-1` on a standard Colab box) |
 """
 
 BASIN_GAMMA_COMPUTE_CODE = '''\
@@ -1265,6 +1270,179 @@ save_and_show("basin_e_comparison.png")
 '''
 
 # ---------------------------------------------------------------------------
+# Option F — Time-horizon sweep: when does initial bias matter?
+# ---------------------------------------------------------------------------
+
+OPTION_F_MD = """\
+## Option F — Time-horizon sweep: when does initial bias matter?
+
+Option E's side-by-side plot averages reward and NMI over the **last 1000
+of 10,000 episodes** — a deep-asymptotic measurement. The Roth–Erev panel
+shows a clean basin-reach curve; the Q-learning panel is essentially flat.
+A natural question is whether the flatness reflects a structural property
+of the learning rule or an artifact of looking only at the long-horizon
+limit.
+
+### Mechanism (why we expect a difference)
+
+- **Roth–Erev** updates urns *additively*: `urn[chosen] += reward`. Counts
+  only grow. An initial bias of `[n, m]` persists for roughly `n + m`
+  reinforcements before the additions overwhelm it — a *linear-time*
+  decay.
+- **Q-learning** updates Q-values *contractively*: with constant learning
+  rate `α = 0.1`, `Q[chosen] ← 0.9 · Q[chosen] + 0.1 · reward`. The
+  initial Q-value decays exponentially toward an EMA of reward, with time
+  constant `τ ≈ -1 / log(0.9) ≈ 9.5` episodes per state-action visit.
+  Whatever the magnitude of the initial bias, it falls below the reward
+  scale within ~50-100 episodes (empirically verified — see the session
+  WORKLOG entry for the decay table).
+
+So Roth–Erev's initial bias survives for thousands of episodes; Q-learning's
+survives for ~100. If we look at *both* agents at horizon 10,000, Q-learning
+has long forgotten its initialization and the right panel reads as flat.
+
+### Prediction
+
+For each agent, plot the final-reward / final-NMI curve at horizons
+`H ∈ {100, 300, 1000, 3000, 10000}`. Then:
+
+- **Roth–Erev** curves should be *shape-stable* across horizons: the basin
+  reach is monotone in the initial bias, and that gradient persists from
+  short to long horizons (modulo overall slope changes as the chain
+  approaches absorption).
+- **Q-learning** curves should *flatten* with horizon: visible bias
+  effect at `H = 100`, partial wash-out at `H = 300`, mostly flat at
+  `H = 1000`, fully flat at `H = 10000`.
+
+If that prediction holds, Option F is the cleanest visual evidence that
+Q-learning's apparent robustness in Option E is a **consequence of
+horizon choice** — the structural difference is real (contractive vs
+additive updates), but framing it as "Q-learning always succeeds" hides
+the mechanism. The §2.3 narrative anchors cleanly on Roth–Erev alone;
+Q-learning's behavior is then a §4 story about update structure.
+
+### Runtime
+
+`len(BASIN_SIG_N_VALUES) × BASIN_N_SEEDS × 2` sims — twice Option E's
+cost (Roth–Erev + Q-learning, run fresh so this cell is standalone). On
+Colab at `BASIN_N_SEEDS = 200`, expect ~60 minutes wall-clock (at the
+empirically observed ~1 s/task Colab rate). To shrink, lower
+`BASIN_N_SEEDS` in the Parameters cell or set `SMOKE_TEST = True`.
+"""
+
+OPTION_F_COMPUTE_CODE = '''\
+"""Option F — time-horizon sweep: run sims fresh and snapshot reward + NMI
+at multiple horizons. Standalone (does not depend on df_basin / df_basin_ql)."""
+
+HORIZON_VALUES = [100, 300, 1000, 3000, 10_000]
+# Window for averaging at each horizon: 100 episodes when horizon allows,
+# otherwise horizon // 10. Matches the Option E convention (last-1000 of 10000).
+HORIZON_WINDOWS = {h: max(10, min(1000, h // 10)) for h in HORIZON_VALUES}
+
+assert max(HORIZON_VALUES) <= N_EPISODES, (
+    f"Max horizon {max(HORIZON_VALUES)} exceeds N_EPISODES {N_EPISODES}. "
+    "Increase N_EPISODES in the Parameters cell or shorten HORIZON_VALUES."
+)
+
+
+def run_horizon_seed(sig_n, sig_m, seed, agent_type, agent_kwargs):
+    spec = InitSpec(label=f"sig=[{sig_n},{sig_m}]", sig=(sig_n, sig_m),
+                    act=(1, 1), color="tab:gray")
+    env = build_env_from_spec(
+        spec, seed,
+        agent_type=agent_type,
+        extra_kwargs=agent_kwargs,
+    )
+    _, rewards, nmi, _, _ = run_simulation(env, N_EPISODES, with_signals=True, plot=False)
+    # rewards / nmi are lists of arrays, one per agent. Average across the
+    # two agents at each horizon to match the Option D / E single-agent
+    # convention used in their dataframes (rewards[0]).
+    records = []
+    for H in HORIZON_VALUES:
+        W = HORIZON_WINDOWS[H]
+        records.append({
+            "agent": agent_type.__name__,
+            "sig_n": sig_n,
+            "sig_m": sig_m,
+            "seed": seed,
+            "horizon": H,
+            "window": W,
+            "final_reward": float(np.mean(rewards[0][H - W : H])),
+            "final_nmi":    float(np.mean(nmi[0][H - W : H])),
+        })
+    return records
+
+
+tasks_F = []
+for n in BASIN_SIG_N_VALUES:
+    for s in range(BASIN_N_SEEDS):
+        tasks_F.append((n, 1, s, UrnAgent, None))
+        tasks_F.append((n, 1, s, QLearningAgent, QLEARN_PARAMS))
+
+print(f"Running {len(tasks_F)} time-horizon sims "
+      f"({BASIN_N_SEEDS} seeds × {len(BASIN_SIG_N_VALUES)} sig_n × 2 agents)...")
+records_F_nested = Parallel(n_jobs=N_JOBS, verbose=5)(
+    delayed(run_horizon_seed)(n, m, s, agent_type, extra)
+    for (n, m, s, agent_type, extra) in tasks_F
+)
+records_F = [rec for sublist in records_F_nested for rec in sublist]
+df_horizon = pd.DataFrame(records_F)
+save_csv(df_horizon, "horizon_sweep_data.csv")
+print(f"Collected {len(df_horizon)} records over "
+      f"sig_n = {BASIN_SIG_N_VALUES}, horizons = {HORIZON_VALUES}")
+'''
+
+OPTION_F_PLOT_CODE = '''\
+"""Option F — 2×2 grid: rows = {reward, NMI}, cols = {Roth–Erev, Q-learning}.
+Each panel shows one curve per horizon, color-coded with viridis."""
+
+import matplotlib as mpl
+
+agents = ["UrnAgent", "QLearningAgent"]
+agent_titles = {"UrnAgent": "Roth–Erev", "QLearningAgent": "Q-learning"}
+metrics = [("final_reward", "Final reward", "firebrick"),
+           ("final_nmi",    "Final NMI",    "darkgreen")]
+
+# Color each horizon with viridis from short (dark) to long (bright).
+cmap = mpl.colormaps["viridis"]
+horizon_colors = {H: cmap(i / (len(HORIZON_VALUES) - 1))
+                  for i, H in enumerate(HORIZON_VALUES)}
+
+fig, axes = plt.subplots(2, 2, figsize=(14, 9), sharex=True, sharey="row")
+
+for row, (metric_col, metric_label, _) in enumerate(metrics):
+    for col, agent in enumerate(agents):
+        ax = axes[row, col]
+        df_sub = df_horizon[df_horizon["agent"] == agent]
+        for H in HORIZON_VALUES:
+            df_H = df_sub[df_sub["horizon"] == H]
+            g = df_H.groupby("sig_n")[metric_col]
+            mean = g.mean()
+            ax.plot(mean.index, mean.values,
+                    color=horizon_colors[H], lw=2, marker="o",
+                    label=f"{H:,} episodes")
+        ax.axhline(0.5, ls=":", c="grey", alpha=0.6)
+        ax.set_xscale("log")
+        ax.set_ylim(0, 1.05)
+        if row == 0:
+            ax.set_title(agent_titles[agent])
+        if col == 0:
+            ax.set_ylabel(metric_label)
+        if row == 1:
+            ax.set_xlabel("Initial signaling bias (log scale)")
+
+axes[0, 1].legend(title="Horizon (episodes)",
+                  loc="lower right", fontsize=8, framealpha=0.9)
+fig.suptitle(
+    f"Final reward and NMI vs initial signaling bias, by horizon  "
+    f"(Roth–Erev vs Q-learning; {BASIN_N_SEEDS} trials per value)",
+    fontsize=12,
+)
+plt.tight_layout()
+save_and_show("horizon_sweep_comparison.png")
+'''
+
+# ---------------------------------------------------------------------------
 # Disconnect (Colab only)
 # ---------------------------------------------------------------------------
 
@@ -1303,25 +1481,28 @@ cells = [
     md("setup-header", SETUP_MD),
     code("setup", SETUP_CODE),
     md("fig1-md", FIG1_MD),
-    code("fig1-code", FIG1_CODE),
+    code_timed("fig1-code", FIG1_CODE),
     md("fig2-md", FIG2_MD),
-    code("fig2-code", FIG2_CODE),
+    code_timed("fig2-code", FIG2_CODE),
     md("optA-md", OPTA_MD),
-    code("optA-code", OPTA_CODE),
+    code_timed("optA-code", OPTA_CODE),
     md("optB-md", OPTB_MD),
-    code("optB-code", OPTB_CODE),
+    code_timed("optB-code", OPTB_CODE),
     md("optC-md", OPTC_MD),
-    code("optC-code", OPTC_CODE),
+    code_timed("optC-code", OPTC_CODE),
     md("basin-md", BASIN_MD),
-    code("basin-compute", BASIN_COMPUTE_CODE),
+    code_timed("basin-compute", BASIN_COMPUTE_CODE),
     code("basin-alpha", BASIN_ALPHA_CODE),
     code("basin-beta", BASIN_BETA_CODE),
     md("basin-gamma-md", BASIN_GAMMA_MD),
-    code("basin-gamma-compute", BASIN_GAMMA_COMPUTE_CODE),
+    code_timed("basin-gamma-compute", BASIN_GAMMA_COMPUTE_CODE),
     code("basin-gamma-plot", BASIN_GAMMA_PLOT_CODE),
     md("option-e-md", OPTION_E_MD),
-    code("option-e-ql-compute", OPTION_E_QL_COMPUTE_CODE),
+    code_timed("option-e-ql-compute", OPTION_E_QL_COMPUTE_CODE),
     code("option-e-plot", OPTION_E_PLOT_CODE),
+    md("option-f-md", OPTION_F_MD),
+    code_timed("option-f-compute", OPTION_F_COMPUTE_CODE),
+    code("option-f-plot", OPTION_F_PLOT_CODE),
     md("disconnect-md", DISCONNECT_MD),
     code("disconnect-code", DISCONNECT_CODE),
 ]
