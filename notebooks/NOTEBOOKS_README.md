@@ -47,9 +47,25 @@ Set `RUNNING_LOCALLY = False` at the top of the notebook. The setup cells will:
 1. Wipe and force-fresh-clone the repo.
 2. `os.chdir(...)` into the clone and put it on `sys.path`.
 3. `subprocess.run(['pip', 'install', '-q', '-e', '.'])` inside the clone.
-4. Mount `/content/drive/My Drive/<project>/` and derive every result path from `BASE_PATH`.
+4. Mount Google Drive and derive every result path from `BASE_PATH`.
 
 The last cell of each Colab-targeted notebook disconnects the runtime so you stop being billed.
+
+### Colab Drive root
+
+All Colab-targeted notebooks in this project save their PNG and CSV artifacts under a single shared Drive root:
+
+```text
+/content/drive/My Drive/Colab Projects/Python ABMs/Distributed Signaling/Plots and Datasets/
+```
+
+Each notebook adds its own subfolder under this root so artifacts don't collide. Current convention:
+
+| Notebook                          | Drive subfolder     |
+|-----------------------------------|---------------------|
+| `proof_of_concept_figures.ipynb`  | `Proof of Concept/` |
+
+When adding a new Colab-targeted notebook, pick a fresh subfolder name under the root above and bake the full path into the notebook's env-switch cell. Update this table at the same time.
 
 ## Tooling
 
