@@ -225,7 +225,7 @@ GAME_SEED_OPT_C = 0                               # enumeration is deterministic
 # Basin sweep (Option D-α, D-β) — continuous sig_n sweep with m_sig=1 and act=(1,1) fixed.
 BASIN_SIG_N_VALUES = [1, 2, 3, 5, 8, 13, 25, 50, 100] if not SMOKE_TEST else [1, 5, 50]
 # More seeds on Colab where the parallelism is essentially free.
-BASIN_N_SEEDS = 10 if SMOKE_TEST else (50 if RUNNING_LOCALLY else 200)
+BASIN_N_SEEDS = 10 if SMOKE_TEST else (50 if RUNNING_LOCALLY else 500)
 
 # Basin grid (Option D-γ) — 2D heatmap over (sig_n, act_n). Relaxes act=(1,1).
 if SMOKE_TEST:
