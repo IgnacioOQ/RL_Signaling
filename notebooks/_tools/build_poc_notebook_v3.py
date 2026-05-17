@@ -3,6 +3,7 @@ subset of proof_of_concept_figures_v2.ipynb.
 
 v3 drops:
   - Option D-gamma (2D heatmap over (sig_n, act_n)) entirely.
+  - Option E (Roth-Erev vs Q-learning side-by-side) -- v3 is Roth-Erev only.
 
 v3 modifies:
   - Option F: Roth-Erev only; horizon set extended to include 10 and 50
@@ -35,6 +36,9 @@ DROP_SLUGS = {
     "basin-gamma-md",
     "basin-gamma-compute",
     "basin-gamma-plot",
+    "option-e-md",
+    "option-e-ql-compute",
+    "option-e-plot",
 }
 
 
@@ -47,9 +51,11 @@ TITLE_V3 = """\
 
 This notebook is a Roth-Erev-focused subset of
 [`proof_of_concept_figures_v2.ipynb`](proof_of_concept_figures_v2.ipynb).
-It drops Option D-γ (2D heatmap) entirely, refocuses Option F on Roth-Erev
-alone (Q-learning's flat-curve story is deferred to §4), and adds a
-combined view that places Option D-β and the new Option F side by side.
+It drops Option D-γ (2D heatmap) and Option E (Q-learning comparison)
+entirely — every figure here is Roth-Erev. Q-learning's story is deferred
+to §4 of the paper and to `todo.qlearning_proof_of_concept`. It also
+refocuses Option F on Roth-Erev alone and adds a combined view that places
+Option D-β and the new Option F side by side.
 
 Runs **locally** or on **Google Colab**, controlled by the
 `RUNNING_LOCALLY` switch in the first code cell:
@@ -69,7 +75,6 @@ Runs **locally** or on **Google Colab**, controlled by the
 | 1 | Initialization sweep (rewards + NMI) | Time-series per init regime; the basin-reachability story. |
 | A | Phase-portrait trajectories | Same runs as Fig. 1 but as motion in (NMI, reward) space. |
 | D-β | Basin of attraction (mean ± std curves) | Continuous `sig_n` sweep at H=10,000, reward and NMI overlaid. |
-| E | Roth–Erev vs Q-learning side-by-side | D-β-style plot for both agents on shared axes. |
 | F | Time-horizon sweep (Roth-Erev) | Reward and NMI vs `sig_n` with one curve per horizon and std bands. |
 | F + D-β combined | Side-by-side composite | Deep asymptotic (D-β) next to the horizon ladder (F). |
 
@@ -85,7 +90,8 @@ OPTION_F_MD_V3 = """\
 Option D-β fixes the horizon at 10,000 episodes — a deep-asymptotic
 measurement that hides the dynamics. Option F unfolds the same Roth-Erev
 basin sweep across a horizon ladder so the transient story becomes
-visible.
+visible. Q-learning has been removed from v3 entirely; see v2 if you
+need the Roth-Erev vs Q-learning comparison.
 
 For each `sig_n` in `BASIN_SIG_N_VALUES` and each horizon
 `H ∈ {10, 50, 100, 300, 1000, 3000, 10000}` we record the final-window
@@ -115,8 +121,8 @@ the initial-policy baseline and answer "how quickly does the chain
 Option D-β (no extra horizons cost anything because every horizon is a
 slice of the same 10,000-episode trajectory). Default: 9 × 50 = 450
 sims, ~2 min on a 4-core laptop. Q-learning is intentionally dropped
-from this section; see Option E for the Roth-Erev vs Q-learning
-comparison and §4 (planned) for the Q-learning horizon story.
+from v3 entirely; the Roth-Erev vs Q-learning comparison lives in v2's
+Option E, and the Q-learning horizon story is deferred to §4 (planned).
 """
 
 OPTION_F_COMPUTE_V3 = '''\
