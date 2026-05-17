@@ -467,13 +467,24 @@ The agent's recommendation in [analytics/docs/Proof of Concept (Paper Draft).md]
 
 ## Re-render §2.3 figure candidates from the bug-fixed notebook, then pick the figures and rewrite §2.3
 
-- status: todo
+- status: in_progress
 - type: task
 - id: todo.finalize_section_2_3_with_figures
 - description: Pick up the §2.3 work where the 2026-05-16 session left off — re-render every plot from the bug-fixed `proof_of_concept_figures.ipynb` (the basin-sweep figures and several others were produced under a `build_env_from_spec` bug that has since been fixed), then collaborate with the user to commit to a final set of figures for §2.3, then rewrite §2.3 of `Signaling_Games_with_Distributed_Rewards.pdf` using those figures and the empirical findings recorded in the paper draft.
 - owner: agent + user (figure choice is the user's; everything else is agent-pickable)
 - blocked_by: []
-- last_checked: 2026-05-16
+- last_checked: 2026-05-17
+
+**Progress as of 2026-05-17 evening session** (see WORKLOG entry `§2.3 figure decisions: RE confirmed as headline...`):
+- ✅ Re-rendered Option F (RE) and Option G (QL) horizon-sweep plots with the bug-fixed notebook.
+- ✅ Figure-choice decision: **Roth-Erev confirmed as the §2.3 headline** (Figure 1 + Option A + Option F). Q-learning Option G is at best a robustness check or appendix figure, not a co-headline. Saved as [[feedback-paper-work]] Rule 7.
+- ✅ `QLEARN_PARAMS` switched from tuned UCB to textbook ε-greedy in `_final` and `_aggregate` (defensible defaults for a philosophy-paper audience; saved as [[feedback-paper-work]] Rule 6).
+- ✅ Notebook tree consolidated 7→3: `_final` (active), `_backup` (snapshot), `_aggregate` (catalog of all candidates).
+- ⏳ **Next**: user re-runs Option G with the new ε-greedy params and decides keep-in-§2.3 / appendix / drop. If kept, the QL NMI inversion at short horizons may need a one-line caveat in the caption (finite-sample bias in the plug-in NMI estimator is the leading hypothesis).
+- ⏳ **Then**: agent rewrites §2.3 of the PDF using the chosen figures, addressing R2·C1, R2·C2, R3·C2 from [analytics/docs/Generated Responses to Reviewers.md](analytics/docs/Generated%20Responses%20to%20Reviewers.md). Current draft prose in [analytics/docs/Proof of Concept (Paper Draft).md](analytics/docs/Proof%20of%20Concept%20(Paper%20Draft).md) is largely usable but needs to drop the "candidate framing" and commit to the chosen figures.
+
+The original task body below is retained for the broader scope (the rewrite phase is unchanged):
+
 <!-- content -->
 **Context.** The 2026-05-16 session built [notebooks/proof_of_concept_figures.ipynb](notebooks/proof_of_concept_figures.ipynb) (31 cells) — a single place that renders every candidate figure for §2.3 of *Signaling Games with Distributed Rewards*. The notebook produced rendered plots on Colab. Late in the session a bug was caught in `build_env_from_spec` (shared `action_urns` dict across both agents, fixed by creating a fresh table per agent inside the loop), so several already-rendered plots — including the headline Option D-β basin sweep — were produced with broken dynamics. The fix is in the current notebook; a re-run reproduces correct dynamics. See the [WORKLOG entry](WORKLOG.md) `2026-05-16 — Built the §2.3 proof-of-concept figures notebook` for the full session record.
 
