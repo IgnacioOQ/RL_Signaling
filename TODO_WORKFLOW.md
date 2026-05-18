@@ -288,14 +288,14 @@ This task verifies that:
 - status: todo
 - type: task
 - id: todo.notebook_refactor
-- description: Execute Phases 0–3 and Phase 5 of [NOTEBOOK_REFACTOR_PLAN.md](NOTEBOOK_REFACTOR_PLAN.md) — migrate the six notebooks under `notebooks/` from the legacy `NetMultiAgentEnv` / `simulation_function` surface to the canonical `MultiAgentEnv` + `run_simulation` API, with the metadata, kernel, and dual local/Colab scaffolding required by the project's notebook conventions. Phase 4 (re-running the experiments to refresh `results/`) is deferred and tracked separately.
+- description: Execute Phases 0–3 and Phase 5 of [NOTEBOOK_REFACTOR_PLAN.md](docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md) — migrate the six notebooks under `notebooks/` from the legacy `NetMultiAgentEnv` / `simulation_function` surface to the canonical `MultiAgentEnv` + `run_simulation` API, with the metadata, kernel, and dual local/Colab scaffolding required by the project's notebook conventions. Phase 4 (re-running the experiments to refresh `results/`) is deferred and tracked separately.
 - owner: agent
 - blocked_by: []
 - last_checked: 2026-05-15
 <!-- content -->
 **Context.** The six notebooks under [notebooks/](notebooks/) were authored before the seven-phase code refactor and still call the legacy API surface (`NetMultiAgentEnv`, `TempNetMultiAgentEnv`, `simulation_function`, `temp_simulation_function`), which now emits `DeprecationWarning`. Two of the six ([basic_unit_test.ipynb](notebooks/basic_unit_test.ipynb), [Initializations_test.ipynb](notebooks/Initializations_test.ipynb)) were partly updated during the original refactor; the remaining four still target the legacy surface plus a Colab-only setup section.
 
-[NOTEBOOK_REFACTOR_PLAN.md](NOTEBOOK_REFACTOR_PLAN.md) is the authoritative plan. It includes:
+[NOTEBOOK_REFACTOR_PLAN.md](docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md) is the authoritative plan. It includes:
 
 - A legacy → canonical API mapping cheat-sheet (read this before touching any notebook).
 - Per-notebook refactor recipes (§2.1 through §2.6).
@@ -307,7 +307,7 @@ This task verifies that:
 - `pytest tests/ -v` passes on the current branch — the migration should not change package behavior, so the test suite is the regression net.
 
 **Steps:**
-1. Read [NOTEBOOK_REFACTOR_PLAN.md](NOTEBOOK_REFACTOR_PLAN.md) end-to-end. The §"Legacy → canonical API mapping" table is the cheat-sheet for every notebook edit.
+1. Read [NOTEBOOK_REFACTOR_PLAN.md](docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md) end-to-end. The §"Legacy → canonical API mapping" table is the cheat-sheet for every notebook edit.
 2. Run the audit tool to confirm the starting state matches what the plan documents:
    ```bash
    python notebooks/_tools/nb_migrate.py audit notebooks/
@@ -336,7 +336,7 @@ This task verifies that:
 - [README.md](README.md) **Notebooks** and **Reproducing the figures** sections reference the renamed files.
 - [.gitattributes](.gitattributes) contains the `nbstripout` filter line and [pyproject.toml](pyproject.toml) `[dev]` extras include `nbstripout`.
 
-**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a WORKLOG entry summarizing what changed and noting that `todo.verify_notebook_drive_paths` is now unblocked. Delete [NOTEBOOK_REFACTOR_PLAN.md](NOTEBOOK_REFACTOR_PLAN.md) from the repo root once Phase 5 is done (the plan was an in-flight document; the WORKLOG entry preserves the historical record).
+**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a WORKLOG entry summarizing what changed and noting that `todo.verify_notebook_drive_paths` is now unblocked. Delete [NOTEBOOK_REFACTOR_PLAN.md](docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md) from `docs/code-audit/` once Phase 5 is done (the plan was an in-flight document; the WORKLOG entry preserves the historical record).
 
 ---
 
@@ -349,7 +349,7 @@ This task verifies that:
 - blocked_by: [todo.notebook_refactor]
 - last_checked: 2026-05-15
 <!-- content -->
-**Context.** The notebook refactor planned in [NOTEBOOK_REFACTOR_PLAN.md](NOTEBOOK_REFACTOR_PLAN.md) replaces the scattered Colab path strings (each notebook currently hard-codes its own `dump_path = '/content/drive/My Drive/Colab Projects/Python ABMs/Communication/Plots and Datasets/'`) with a single `BASE_PATH` constant derived from the KB notebook skill §7 pattern. Three of the six notebooks ([Run_Simulations.ipynb](notebooks/Run_Simulations.ipynb), [Parameter_Optimization_wchoices.ipynb](notebooks/Parameter_Optimization_wchoices.ipynb), [Final_Costly_Signaling_Run_Simulations.ipynb](notebooks/Final_Costly_Signaling_Run_Simulations.ipynb)) read from / write to Drive when running on Colab.
+**Context.** The notebook refactor planned in [NOTEBOOK_REFACTOR_PLAN.md](docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md) replaces the scattered Colab path strings (each notebook currently hard-codes its own `dump_path = '/content/drive/My Drive/Colab Projects/Python ABMs/Communication/Plots and Datasets/'`) with a single `BASE_PATH` constant derived from the KB notebook skill §7 pattern. Three of the six notebooks ([Run_Simulations.ipynb](notebooks/Run_Simulations.ipynb), [Parameter_Optimization_wchoices.ipynb](notebooks/Parameter_Optimization_wchoices.ipynb), [Final_Costly_Signaling_Run_Simulations.ipynb](notebooks/Final_Costly_Signaling_Run_Simulations.ipynb)) read from / write to Drive when running on Colab.
 
 The risk is that the *new* `BASE_PATH` chosen by the refactor (whatever value lands in the migrated notebooks) does not match the *actual* folder where the legacy CSVs live on Drive, and the Colab branch will either:
 - Write into the wrong folder and silently fragment the result set, or
@@ -358,7 +358,7 @@ The risk is that the *new* `BASE_PATH` chosen by the refactor (whatever value la
 Only the user can verify this — the agent has no access to the user's personal Google Drive without explicit MCP auth.
 
 **Preconditions:**
-- The notebook refactor (Phases 0–3 of [NOTEBOOK_REFACTOR_PLAN.md](NOTEBOOK_REFACTOR_PLAN.md)) has landed, so the new `BASE_PATH` values are committed somewhere reviewable.
+- The notebook refactor (Phases 0–3 of [NOTEBOOK_REFACTOR_PLAN.md](docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md)) has landed, so the new `BASE_PATH` values are committed somewhere reviewable.
 - You have access to the same Google account whose Drive backs the historical Colab runs.
 
 **Steps:**
@@ -417,7 +417,7 @@ The producer scripts under [analytics/scripts/](analytics/scripts/) and two note
    - `results/figure_init_paradox_scatter.{csv,png}` → `results/proof_of_concept/figure_init_paradox_scatter.{csv,png}`
    - In the Figure 3 sketch script block: `results/qlearning_results_canonical.csv` → `results/legacy/datasets/qlearning_results_canonical.csv`; `results/urnagent_results_canonical.csv` → `results/legacy/datasets/urnagent_results_canonical.csv`; `results/figure_ql_vs_re_canonical.png` → `results/new_code/plots/figure_ql_vs_re_canonical.png`.
 2. Update [analytics/math/metrics_aggregation.md](analytics/math/metrics_aggregation.md): audit every `results/*.png` and `results/*.csv` reference and replace each with the appropriate `results/legacy/{datasets,plots}/...` path.
-3. Update [analytics/math/costly_signaling.md](analytics/math/costly_signaling.md): references to `results/Roth-Erev_canonical_costly_signal_*.png` → `results/legacy/plots/Roth-Erev_canonical_costly_signal_*.png` (these PNGs are flagged in [LEGACY_ERRORS_LOG.md](LEGACY_ERRORS_LOG.md) as retired/unreproducible — keep the references, just fix the paths). Also: `results/q_costs_vs_nmi.png` and `results/q_costly_vs_reward.png` do not exist in `results/` at all — verify whether these refer to never-produced figures and either remove the references or file a separate task to produce them.
+3. Update [analytics/math/costly_signaling.md](analytics/math/costly_signaling.md): references to `results/Roth-Erev_canonical_costly_signal_*.png` → `results/legacy/plots/Roth-Erev_canonical_costly_signal_*.png` (these PNGs are flagged in [LEGACY_ERRORS_LOG.md](docs/code-audit/LEGACY_ERRORS_LOG.md) as retired/unreproducible — keep the references, just fix the paths). Also: `results/q_costs_vs_nmi.png` and `results/q_costly_vs_reward.png` do not exist in `results/` at all — verify whether these refer to never-produced figures and either remove the references or file a separate task to produce them.
 4. Audit [README.md](README.md) for `results/` paths that need updating to reflect the new subfolder structure (the **Reproducing the figures** section in particular).
 5. Final verification grep:
    ```bash

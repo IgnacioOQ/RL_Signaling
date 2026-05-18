@@ -27,7 +27,7 @@ $$Q[\mathbf{o}] \in \mathbb{R}^{n_{\text{actions}}} \quad \text{for signal-phase
 
 $$Q[\tilde{\mathbf{o}}] \in \mathbb{R}^{n_{\text{actions}}} \quad \text{for action-phase rows}.$$
 
-Phase 1 [Axis 20](../../DEBUGGING_PLAN.md#agent-learning-rules) confirms this is intentional. The two phases never collide because $\mathbf{o}$ and $\tilde{\mathbf{o}}$ have **different tuple lengths** — $\tilde{\mathbf{o}}$ appends 0..$|\mathcal{N}_i|$ extra tokens to $\mathbf{o}$ — so they hash to different dict slots.
+Phase 1 [Axis 20](../../docs/code-audit/DEBUGGING_PLAN.md#agent-learning-rules) confirms this is intentional. The two phases never collide because $\mathbf{o}$ and $\tilde{\mathbf{o}}$ have **different tuple lengths** — $\tilde{\mathbf{o}}$ appends 0..$|\mathcal{N}_i|$ extra tokens to $\mathbf{o}$ — so they hash to different dict slots.
 
 A parallel **count table** $N(s, a)$ counts how many times action $a$ has been selected from state $s$:
 

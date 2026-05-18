@@ -76,7 +76,7 @@ where $n$ and $m$ are the `initialization_weights` (default $(1, 0)$) and $\pi$ 
 
 With $(n, m) = (1, 0)$ the agent's initial signaling policy is **deterministic**: each observation maps to a unique signal with probability 1. With $(n, m) = (10, 1)$ the policy is mostly deterministic but allows occasional drift; the larger ratio $n/(n + (K-1)m)$ pins the dominant action more strongly.
 
-This is the lever that the `Initializations_test.ipynb` experiment was designed to study. (See Bug 5 in [LEGACY_BUGS_LOG.md](../../LEGACY_BUGS_LOG.md) for why the experiment as written silently bypassed this lever.)
+This is the lever that the `Initializations_test.ipynb` experiment was designed to study. (See Bug 5 in [LEGACY_BUGS_LOG.md](../../docs/code-audit/LEGACY_BUGS_LOG.md) for why the experiment as written silently bypassed this lever.)
 
 ## The Roth–Erev update
 
@@ -86,7 +86,7 @@ $$\boxed{\; \sigma\text{-urn}[\mathbf{o}][a] \;\leftarrow\; \max\big(0,\; \sigma
 
 Same rule for action urns with $a \to \alpha$ and $\sigma\text{-urn} \to \alpha\text{-urn}$. Implementation: [rl_signaling/agents.py:304-314](../../rl_signaling/agents.py#L304-L314).
 
-The non-negativity clamp at zero (Phase 1 [Axis 18](../../DEBUGGING_PLAN.md#agent-learning-rules)) is what differentiates this from the **un-clamped** Roth–Erev variant. Both are in the literature; the un-clamped variant allows urn weights to go negative (which breaks the probabilistic interpretation of the urn) so it requires a softmax or shift-and-renormalize step in `get_signal`. The project's clamped variant preserves the urn-as-distribution interpretation directly.
+The non-negativity clamp at zero (Phase 1 [Axis 18](../../docs/code-audit/DEBUGGING_PLAN.md#agent-learning-rules)) is what differentiates this from the **un-clamped** Roth–Erev variant. Both are in the literature; the un-clamped variant allows urn weights to go negative (which breaks the probabilistic interpretation of the urn) so it requires a softmax or shift-and-renormalize step in `get_signal`. The project's clamped variant preserves the urn-as-distribution interpretation directly.
 
 ### Properties of the clamped update
 
@@ -166,7 +166,7 @@ So roughly $\tfrac{3}{4}$ of episodes (sub-optimal actions are 3/4 of the action
 
 **Recommendation.** The costly-signaling extension should not be applied to UrnAgent in formal experiments. Q-learning and TD-learning handle real-valued and signed rewards natively (the TD update is a stochastic-approximation rule on $\mathbb{R}$, not a probability-counting scheme). If costly UrnAgent results must be reported, label them explicitly as "Roth-Erev with non-negativity-clamped costly extension" so the deviation from the canonical rule is visible to readers.
 
-This concern is recorded as an additional note in [Error 5a of LEGACY_ERRORS_LOG.md](../../LEGACY_ERRORS_LOG.md#error-5a--roth-erev-costly-figures-unreproducible-cost-protocol-drift).
+This concern is recorded as an additional note in [Error 5a of LEGACY_ERRORS_LOG.md](../../docs/code-audit/LEGACY_ERRORS_LOG.md#error-5a--roth-erev-costly-figures-unreproducible-cost-protocol-drift).
 
 ---
 

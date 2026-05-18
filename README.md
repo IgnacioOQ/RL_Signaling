@@ -56,13 +56,19 @@ manuscript/                     # paper sources for PHOS-17993 ("Signaling Games
 results/                        # saved CSVs and PNG figures from each experiment
 tests/                          # pytest suite (63 tests, ~5 s); includes a golden-run regression against tests/golden/baseline.json
 README.md                       # this file
-REFACTOR_PLAN.md                # phased refactor plan (Phases 1–7 complete)
 WORKLOG.md                      # append-only history of significant changes
 TODO_WORKFLOW.md                # cross-session task backlog
 HOUSEKEEPING.md                 # recurring repo health check
-LEGACY_BUGS_LOG.md              # catalog of bugs surfaced by the refactor
-DEBUGGING_PLAN.md               # phased audit of code vs intended model (next session)
 LP_TEX_REF.md                   # project-local LaTeX conventions for manuscript/
+docs/
+  archive/
+    REFACTOR_PLAN.md            # phased refactor plan (Phases 1–7 complete; historical)
+  code-audit/                   # dormant code-audit workstream (resumes after the paper)
+    DEBUGGING_PLAN.md           # phased audit of code vs intended model
+    NOTEBOOK_REFACTOR_PLAN.md   # plan to migrate notebooks onto the canonical API
+    MODELING_CHOICES_REF.md     # design-space catalog companion to DEBUGGING_PLAN
+    LEGACY_BUGS_LOG.md          # catalog of bugs surfaced by the refactor
+    LEGACY_ERRORS_LOG.md        # per-figure/CSV honesty audit (companion to LEGACY_BUGS_LOG)
 pyproject.toml, requirements.txt, LICENSE, .gitignore
 ```
 
@@ -181,7 +187,7 @@ Each agent's payoff is independent of the others' actions, so there is no immedi
 
 ## Status and known limitations
 
-- The seven-phase refactor described in [REFACTOR_PLAN.md](REFACTOR_PLAN.md) is **complete**. The next active workstream is the model-vs-implementation audit in [DEBUGGING_PLAN.md](DEBUGGING_PLAN.md). See [TODO_WORKFLOW.md](TODO_WORKFLOW.md) for the active cross-session task and [WORKLOG.md](WORKLOG.md) for the full history.
+- The seven-phase refactor described in [docs/archive/REFACTOR_PLAN.md](docs/archive/REFACTOR_PLAN.md) is **complete**. The next code-side workstream is the model-vs-implementation audit in [docs/code-audit/DEBUGGING_PLAN.md](docs/code-audit/DEBUGGING_PLAN.md) (and the notebook-side cleanup in [docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md](docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md)); both are parked while the paper rewrite is in flight. See [TODO_WORKFLOW.md](TODO_WORKFLOW.md) for the active cross-session task and [WORKLOG.md](WORKLOG.md) for the full history.
 - `signal_usage` history in [rl_signaling/env.py](rl_signaling/env.py) is appended every episode via `deepcopy`, which is memory-inefficient for long runs but kept for plotting compatibility.
 - **Legacy and canonical APIs diverge slightly for `TDLearningAgent`.** In the legacy two-step flow (`TempNetMultiAgentEnv` + `temp_simulation_function`), the signal-phase update decays `exploration_rate` **before** the action-phase `get_action` runs. In the canonical `MultiAgentEnv` + `run_simulation` flow, both TD updates run at end-of-episode inside `update_episode`. As a result, the action-phase `get_action` sees a slightly higher `exploration_rate` in the new flow, which causes roughly 1 in 100 episodes to take a different explore/exploit branch and produce a different reward. The Q-value math is unchanged — this is purely an exploration-schedule ordering difference. The golden-run baseline at [tests/golden/baseline.json](tests/golden/baseline.json) is captured against the canonical API; the deprecated path is no longer the reference. `UrnAgent` and `QLearningAgent` produce byte-identical output across both APIs.
-- Known legacy-code bugs are catalogued in [LEGACY_BUGS_LOG.md](LEGACY_BUGS_LOG.md). The `UrnAgent` action-urn initialization bug (Bug 1) was fixed during the refactor and changes the output of [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) — the saved `initializations_*.png` figures reflect the pre-fix behavior and need to be regenerated to reflect the corrected experiment.
+- Known legacy-code bugs are catalogued in [docs/code-audit/LEGACY_BUGS_LOG.md](docs/code-audit/LEGACY_BUGS_LOG.md), with a results-level figure-by-figure honesty audit in [docs/code-audit/LEGACY_ERRORS_LOG.md](docs/code-audit/LEGACY_ERRORS_LOG.md). The `UrnAgent` action-urn initialization bug (Bug 1) was fixed during the refactor and changes the output of [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) — the saved `initializations_*.png` figures reflect the pre-fix behavior and need to be regenerated to reflect the corrected experiment.

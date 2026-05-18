@@ -173,7 +173,7 @@ $$\text{bonus}(0) = c \sqrt{\frac{0.693}{1 + \varepsilon}} \approx 0.832 c, \qqu
 
 The unvisited arms get a huge bonus, so the second call picks one of them. The third call picks the next, and so on — UCB ends up doing the "play each arm once" initialization implicitly, just with the order biased to "action 0 first, then any other in argmax order."
 
-This is reflected in [Axis 23](../../DEBUGGING_PLAN.md#nmi-and-exploration-details) of the Phase 1 spec.
+This is reflected in [Axis 23](../../docs/code-audit/DEBUGGING_PLAN.md#nmi-and-exploration-details) of the Phase 1 spec.
 
 ### Properties
 

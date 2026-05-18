@@ -51,7 +51,7 @@ Each component is a non-negative-real-valued matrix. The state space is therefor
 
 $$\Sigma \;=\; \bigl(\mathbb{R}_{\ge 0}^{2 \times 2}\bigr)^2 \times \bigl(\mathbb{R}_{\ge 0}^{4 \times 4}\bigr)^2.$$
 
-Under integer-valued canonical-game rewards $r \in \{0, 1\}$ and `init_weights` integer-valued, every entry stays integer-valued (the bug fix in [LEGACY_BUGS_LOG.md](../../LEGACY_BUGS_LOG.md) Bug 9 makes the storage dtype float, but the values are integer-valued under integer rewards). So in practice $\Sigma$ is a countable lattice.
+Under integer-valued canonical-game rewards $r \in \{0, 1\}$ and `init_weights` integer-valued, every entry stays integer-valued (the bug fix in [LEGACY_BUGS_LOG.md](../../docs/code-audit/LEGACY_BUGS_LOG.md) Bug 9 makes the storage dtype float, but the values are integer-valued under integer rewards). So in practice $\Sigma$ is a countable lattice.
 
 This is a **larger** state than the §2.3 description ("a full description of the system including observed states of nature, $f$s and $g$s as tables, the signals and actions sent, and the reward obtained") — we drop the per-episode random outcomes from the state, since they are not Markov sufficient. The Markov property holds because, given $\sigma_t$, the next state $\sigma_{t+1}$ depends only on the random draws made in episode $t+1$ and not on the history of episode $1, \dots, t$.
 
@@ -96,7 +96,7 @@ The construction of `create_initial_signals` ([rl_signaling/games.py:115-160](..
 
 > **Corollary.** When `init_weights = (n, 0)` for any $n > 0$, the chain starts in an absorbing state and stays in the same policy forever.
 
-This is the formal statement underlying the empirical observation in [LEGACY_BUGS_LOG.md](../../LEGACY_BUGS_LOG.md) Bug 5's post-fix observation: under `[1, 0]`, NMI ≈ 1.0 (the policy is deterministic, so signals carry full information about the observation), while reward depends on whether the random initial bijection happens to be aligned with the games $G_0, G_1$.
+This is the formal statement underlying the empirical observation in [LEGACY_BUGS_LOG.md](../../docs/code-audit/LEGACY_BUGS_LOG.md) Bug 5's post-fix observation: under `[1, 0]`, NMI ≈ 1.0 (the policy is deterministic, so signals carry full information about the observation), while reward depends on whether the random initial bijection happens to be aligned with the games $G_0, G_1$.
 
 ## Counting absorbing states
 

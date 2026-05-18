@@ -200,5 +200,5 @@ After all open Phase 5 bugs land:
 | [agent_urn.md](agent_urn.md), [agent_q_learning.md](agent_q_learning.md), [agent_td_learning.md](agent_td_learning.md) | Agent-side updates that move the trajectories |
 | [information_theory.md](information_theory.md) | The NMI computation that fills `signal_information_history` |
 | [rl_signaling/plotting.py](../../rl_signaling/plotting.py) | The plotting helpers consuming the CSVs |
-| [DEBUGGING_PLAN.md](../../DEBUGGING_PLAN.md) Phase 5 | Bug ledger and fix plan that this file's "affected by" columns trace to |
-| [LEGACY_BUGS_LOG.md](../../LEGACY_BUGS_LOG.md) | Per-bug detail (Bug 2, Bug 5, Bug 6, Bug 7, Bug 8) |
+| [DEBUGGING_PLAN.md](../../docs/code-audit/DEBUGGING_PLAN.md) Phase 5 | Bug ledger and fix plan that this file's "affected by" columns trace to |
+| [LEGACY_BUGS_LOG.md](../../docs/code-audit/LEGACY_BUGS_LOG.md) | Per-bug detail (Bug 2, Bug 5, Bug 6, Bug 7, Bug 8) |

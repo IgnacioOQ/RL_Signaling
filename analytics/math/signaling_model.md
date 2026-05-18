@@ -25,7 +25,7 @@ In each episode $t$, nature draws
 
 $$\mathbf{v}_t = (v_{t,1}, \dots, v_{t,n_{\text{features}}}) \;\sim\; \text{Uniform}(\mathcal{V}),$$
 
-i.i.d. across episodes. Equivalently, each component $v_{t,k}$ is an independent fair coin (Phase 1 [Axis 1](../../DEBUGGING_PLAN.md#state-and-observations)).
+i.i.d. across episodes. Equivalently, each component $v_{t,k}$ is an independent fair coin (Phase 1 [Axis 1](../../docs/code-audit/DEBUGGING_PLAN.md#state-and-observations)).
 
 Implementation: [rl_signaling/env.py:148](../../rl_signaling/env.py#L148):
 
@@ -39,7 +39,7 @@ Fix a number of agents $N$ (the parameter `n_agents`). For each agent $i \in \{0
 
 $$I_i = (k_{i,1}, \dots, k_{i,m_i}), \qquad m_i := \lvert I_i\rvert, \qquad k_{i, \ell} \in \{1, \dots, n_{\text{features}}\}.$$
 
-This is the entry `agents_observed_variables[i]` in the env constructor. The lists are not required to be disjoint — overlap between agents is allowed (Phase 1 [Axis 2](../../DEBUGGING_PLAN.md#state-and-observations)).
+This is the entry `agents_observed_variables[i]` in the env constructor. The lists are not required to be disjoint — overlap between agents is allowed (Phase 1 [Axis 2](../../docs/code-audit/DEBUGGING_PLAN.md#state-and-observations)).
 
 Agent $i$'s **direct observation** is the projection of $\mathbf{v}$ onto the indices in $I_i$, in the order they appear in $I_i$:
 
@@ -65,7 +65,7 @@ The cost of emitting any non-null signal is fixed per agent at $c_i \ge 0$. See 
 
 ## Ingredient 4 — directed graph
 
-Fix a finite directed graph $G = (V, E)$ on the agent set $V = \{0, 1, \dots, N-1\}$. The convention (Phase 1 [Axis 7](../../DEBUGGING_PLAN.md#graph-and-message-passing)) is
+Fix a finite directed graph $G = (V, E)$ on the agent set $V = \{0, 1, \dots, N-1\}$. The convention (Phase 1 [Axis 7](../../docs/code-audit/DEBUGGING_PLAN.md#graph-and-message-passing)) is
 
 $$(u, v) \in E \;\;\Longleftrightarrow\;\; \text{agent } u \text{ sends to agent } v.$$
 
@@ -75,7 +75,7 @@ $$\mathcal{N}_i := \{ j : (j, i) \in E \},$$
 
 equivalently `graph.predecessors(i)` in NetworkX.
 
-**Self-loops** $(i, i) \in E$ are permitted by the env and not filtered, but assumed absent in practice (Phase 1 [Axis 8](../../DEBUGGING_PLAN.md#graph-and-message-passing)). **Parallel edges** are undefined behaviour: the env requires `nx.DiGraph` (single edge per ordered pair), not `nx.MultiDiGraph` (Phase 1 [Axis 9](../../DEBUGGING_PLAN.md#graph-and-message-passing)).
+**Self-loops** $(i, i) \in E$ are permitted by the env and not filtered, but assumed absent in practice (Phase 1 [Axis 8](../../docs/code-audit/DEBUGGING_PLAN.md#graph-and-message-passing)). **Parallel edges** are undefined behaviour: the env requires `nx.DiGraph` (single edge per ordered pair), not `nx.MultiDiGraph` (Phase 1 [Axis 9](../../docs/code-audit/DEBUGGING_PLAN.md#graph-and-message-passing)).
 
 ## Ingredient 5 — action alphabet
 
@@ -91,7 +91,7 @@ Each agent $i$ has a private payoff dictionary $G_i$. Mathematically:
 
 $$G_i : \mathcal{V} \times \mathcal{A}_{\text{act}} \to \mathbb{R}, \qquad G_i(\mathbf{v}, a) = \text{reward to agent } i \text{ when state is } \mathbf{v} \text{ and action is } a.$$
 
-The state key is the **full** $\mathbf{v}$, regardless of `full_information` (Phase 1 [Axis 10](../../DEBUGGING_PLAN.md#actions-and-payoffs)). This is what makes signaling necessary in the partial-information regime: an agent's payoff depends on features it cannot directly observe, so coordination via signals is required to reach the optimum.
+The state key is the **full** $\mathbf{v}$, regardless of `full_information` (Phase 1 [Axis 10](../../docs/code-audit/DEBUGGING_PLAN.md#actions-and-payoffs)). This is what makes signaling necessary in the partial-information regime: an agent's payoff depends on features it cannot directly observe, so coordination via signals is required to reach the optimum.
 
 Implementation:
 
@@ -123,7 +123,7 @@ Each agent $i$ chooses a signal independently, given its direct observation:
 
 $$\sigma_i \sim \pi_i^{\text{sig}}(\cdot \mid \mathbf{o}_i) \in \mathcal{A}_{\text{sig}}.$$
 
-The signal step is **simultaneous** (Phase 1 [Axis 6](../../DEBUGGING_PLAN.md#signals)): every agent samples from $\pi_i^{\text{sig}}(\cdot \mid \mathbf{o}_i)$ before any signal is delivered, so no agent's signal can depend on another agent's signal in the same episode.
+The signal step is **simultaneous** (Phase 1 [Axis 6](../../docs/code-audit/DEBUGGING_PLAN.md#signals)): every agent samples from $\pi_i^{\text{sig}}(\cdot \mid \mathbf{o}_i)$ before any signal is delivered, so no agent's signal can depend on another agent's signal in the same episode.
 
 ### Step 3 — propagate signals
 
@@ -133,7 +133,7 @@ $$\tilde{\mathbf{o}}_i := \big(\mathbf{o}_i, \sigma_{j_1}, \sigma_{j_2}, \dots\b
 
 where $j_1 < j_2 < \dots$ enumerate $\mathcal{N}_i$ in NetworkX's predecessor order. Concretely the implementation iterates in node-id order (which equals agent-index order for graphs constructed via `add_edges_from(...)`).
 
-When `costly_signaling=True`, signals equal to the null index $K$ are **suppressed** during propagation (Phase 1 [Axis 5](../../DEBUGGING_PLAN.md#signals)): they are not appended to the receiver's observation. So if all of $i$'s in-neighbours emit null, $\tilde{\mathbf{o}}_i = \mathbf{o}_i$ (length unchanged); if some emit null and others don't, only the non-null ones are appended (variable length, dependent on the realization).
+When `costly_signaling=True`, signals equal to the null index $K$ are **suppressed** during propagation (Phase 1 [Axis 5](../../docs/code-audit/DEBUGGING_PLAN.md#signals)): they are not appended to the receiver's observation. So if all of $i$'s in-neighbours emit null, $\tilde{\mathbf{o}}_i = \mathbf{o}_i$ (length unchanged); if some emit null and others don't, only the non-null ones are appended (variable length, dependent on the realization).
 
 Implementation: [rl_signaling/env.py:269-281](../../rl_signaling/env.py#L269-L281):
 
@@ -166,7 +166,7 @@ Each agent's policies are then updated using $r_i$ — see the agent-specific fi
 
 ## Information regimes
 
-The Phase 1 spec ([Axis 16](../../DEBUGGING_PLAN.md#information-regimes)) distinguishes three primary regimes by the boolean flags `(full_information, with_signals)`:
+The Phase 1 spec ([Axis 16](../../docs/code-audit/DEBUGGING_PLAN.md#information-regimes)) distinguishes three primary regimes by the boolean flags `(full_information, with_signals)`:
 
 | Regime | $\mathbf{o}_i$ | $\tilde{\mathbf{o}}_i$ |
 |---|---|---|

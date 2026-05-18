@@ -69,7 +69,7 @@ When adding a new Colab-targeted notebook, pick a fresh subfolder name under the
 
 ## Tooling
 
-`_tools/nb_migrate.py` is a small helper used during the on-going refactor described in [`../NOTEBOOK_REFACTOR_PLAN.md`](../NOTEBOOK_REFACTOR_PLAN.md):
+`_tools/nb_migrate.py` is a small helper used during the on-going refactor described in [`../NOTEBOOK_REFACTOR_PLAN.md`](../docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md):
 
 ```bash
 # Bump nbformat to 4.5, set the rl_signaling kernel, assign cell IDs:

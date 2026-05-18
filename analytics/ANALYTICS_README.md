@@ -15,8 +15,8 @@ This folder is the project's mathematical reference. It defines every quantity t
 
 The companion documents are:
 
-- [DEBUGGING_PLAN.md](../DEBUGGING_PLAN.md) — Phase 1 confirmed model specification (the *what*).
-- [MODELING_CHOICES_REF.md](../MODELING_CHOICES_REF.md) — design-space catalog (the *why this choice*).
+- [DEBUGGING_PLAN.md](../docs/code-audit/DEBUGGING_PLAN.md) — Phase 1 confirmed model specification (the *what*).
+- [MODELING_CHOICES_REF.md](../docs/code-audit/MODELING_CHOICES_REF.md) — design-space catalog (the *why this choice*).
 - This folder — the math behind those choices and what the code actually computes (the *how*, formally).
 
 ## Reading order
@@ -115,7 +115,7 @@ The files above focus on `UrnAgent` (Roth-Erev) because it has a discrete state 
 
 ## File metadata schema
 
-Every `.md` file in this folder follows the metadata format used elsewhere in the repository (see [LEGACY_BUGS_LOG.md](../LEGACY_BUGS_LOG.md), [DEBUGGING_PLAN.md](../DEBUGGING_PLAN.md), etc.):
+Every `.md` file in this folder follows the metadata format used elsewhere in the repository (see [LEGACY_BUGS_LOG.md](../docs/code-audit/LEGACY_BUGS_LOG.md), [DEBUGGING_PLAN.md](../docs/code-audit/DEBUGGING_PLAN.md), etc.):
 
 ```markdown
 # Title

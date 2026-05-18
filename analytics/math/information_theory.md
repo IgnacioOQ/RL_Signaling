@@ -193,11 +193,11 @@ $$\mathrm{NMI}_{\text{arith}}(X; Y) := \frac{2 I(X; Y)}{H(X) + H(Y)}.$$
 
 Range: $[0, 1]$. Symmetric. Also called the "redundancy."
 
-The project's choice of asymmetric output-side normalization is locked in by [Axis 21](../../DEBUGGING_PLAN.md#nmi-and-exploration-details) of the Phase 1 confirmed model specification.
+The project's choice of asymmetric output-side normalization is locked in by [Axis 21](../../docs/code-audit/DEBUGGING_PLAN.md#nmi-and-exploration-details) of the Phase 1 confirmed model specification.
 
 ### Edge case: zero-entropy denominator
 
-If $H(Y) = 0$ — meaning $Y$ is constant — the asymmetric NMI is undefined ($0/0$). The project's convention ([Axis 22](../../DEBUGGING_PLAN.md#nmi-and-exploration-details)) is
+If $H(Y) = 0$ — meaning $Y$ is constant — the asymmetric NMI is undefined ($0/0$). The project's convention ([Axis 22](../../docs/code-audit/DEBUGGING_PLAN.md#nmi-and-exploration-details)) is
 
 $$\mathrm{NMI}(X; Y) := 0 \quad \text{when} \quad H(Y) = 0.$$
 
