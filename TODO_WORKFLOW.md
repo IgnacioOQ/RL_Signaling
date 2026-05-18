@@ -26,75 +26,6 @@ This file is the per-repository instance of the `TODO_WORKFLOW_TEMPLATE.md` patt
 
 ---
 
-## Q-learning version of the §2.3 proof of concept — continuous-state stochastic approximation
-- status: todo
-- type: task
-- id: todo.qlearning_proof_of_concept
-- description: Lift the modeler-perspective Markov-chain analysis of §2.3 to the QLearningAgent (continuous state space). Frame the constant-α TD update as a stochastic-approximation algorithm, identify the ODE limit on the joint Q-table simplex, characterize the fixed points and basins, and either prove convergence to ideal Q-tables or document the obstruction.
-- owner: agent
-- blocked_by: []
-- last_checked: 2026-05-09
-<!-- content -->
-**Context.** `todo.deepen_proof_of_concept` (closed 2026-05-09) formalized the §2.3 proof of concept for the Roth-Erev case (`UrnAgent`), where the chain has a discrete integer-lattice state space and a clean Pólya-urn structure. Q-learning is structurally different and was deferred to this follow-up.
-
-**Why this is a separate problem:**
-
-- **Continuous state space.** `QLearningAgent.q_table_signaling` and `q_table_action` live in $\mathbb{R}^{\dots}$, not $\mathbb{Z}^{\dots}$. The Pólya-urn machinery does not apply directly — there is no urn-fraction interpretation, no integer-lattice non-recurrence to flag, no closed-form factored kernel.
-- **Non-monotone update.** Constant-$\alpha$ TD: $Q[s, a] \leftarrow Q[s, a] + \alpha (r - Q[s, a])$. Unlike Roth-Erev's $\max(0, u + r)$, this update can *decrease* a cell with reward 0. So the absorbing-state analysis of [analytics/math/proof_of_concept_markov.md](analytics/math/proof_of_concept_markov.md) does not apply: there are no deterministic-policy fixed points in the integer-lattice sense.
-- **The right framework is stochastic approximation.** The constant-$\alpha$ TD chain is a Robbins-Monro algorithm with non-decaying step size; its mean field is an ODE on the joint Q-table simplex. Convergence is studied in Kushner-Yin / Borkar 2008 / Benaïm-Hofbauer-Sorin 2005. The distributed-reward obstruction documented in [analytics/math/argiento_obstruction.md](analytics/math/argiento_obstruction.md) — that the joint vector field is not a gradient flow without $G_1 = G_2$ — carries over verbatim.
-
-**Preconditions:**
-
-- [analytics/math/proof_of_concept_markov.md](analytics/math/proof_of_concept_markov.md) exists and contains the Pure-Pólya theorem (Roth-Erev).
-- [analytics/math/argiento_obstruction.md](analytics/math/argiento_obstruction.md) exists and documents the distributed-reward obstruction to lifting Argiento et al. (2009).
-- [analytics/math/agent_q_learning.md](analytics/math/agent_q_learning.md) provides the per-cell Q-learning math.
-- `pytest tests/` reports 63 passed.
-
----
-
-### Phase 1 — ODE limit
-
-1. State the SA embedding precisely: with constant step size $\alpha$ and time rescaling $t / \alpha$, the discrete TD trajectory is shadowed (in the Borkar 2008 ch. 9 sense) by an ODE $\dot Q = h(Q)$ where $h(Q) = \mathbb{E}[\Delta Q \mid Q]$ is the expected one-step displacement of the joint Q-table.
-2. Compute $h(Q)$ explicitly for the canonical 2-feature, 2-signal, 4-action setup. The expected-update factor depends on the choice rule (ε-greedy, softmax, UCB). Start with softmax (smoothest, gives a closed-form gradient-of-log-Z structure).
-3. Verify the formula numerically against a Monte Carlo estimate of $\mathbb{E}[\Delta Q]$ over many independent draws from a fixed $Q$. Cross-validation pattern follows [analytics/scripts/study_factored_kernel.py](analytics/scripts/study_factored_kernel.py).
-
-### Phase 2 — Fixed-point / linear-stability analysis
-
-4. Identify the fixed points of $\dot Q = h(Q)$. The 4 ideal absorbing states $\sigma^* \in \Sigma^*$ enumerated in [analytics/math/proof_of_concept_markov.md](analytics/math/proof_of_concept_markov.md) are the natural candidates (with $Q$-table entries arbitrarily large at the ideal action and zero elsewhere); verify by direct substitution into $h$.
-5. Linearize $h$ at each ideal $Q^*$ and compute the eigenvalues. If all non-tangential eigenvalues have negative real part, $Q^*$ is locally exponentially stable and Pemantle 2007 §3.2 applies: from a neighborhood, the SA reaches $Q^*$ a.s. with positive probability. This is salvage route (a) of [analytics/math/argiento_obstruction.md](analytics/math/argiento_obstruction.md).
-
-### Phase 3 — Lift to a.s. convergence (open)
-
-6. Without a global Lyapunov function (the obstruction in [analytics/math/argiento_obstruction.md](analytics/math/argiento_obstruction.md)), the global a.s.-convergence statement requires either Benaïm-Hofbauer-Sorin's set-valued SA framework, or a sum-potential check on $W^\Sigma(Q) = \sum_i \mathbb{E}[r_i \mid Q]$. Document either an extension or the obstruction.
-
-### Phase 4 — Empirical complement
-
-7. Adapt [analytics/scripts/study_coarse_grained_mle.py](analytics/scripts/study_coarse_grained_mle.py) to `QLearningAgent`: feature functions become "argmax over Q-table rows" rather than urn modal map; basin-reach probabilities at the same NMI thresholds. The expected outcome (per `WORKLOG.md` 2026-05-09 Bug 9 entry) is that QLearning at every `init_weights` reaches reward $\approx 1.0$ by mid-run — concretely test that.
-8. Compare to the UrnAgent results from [analytics/scripts/study_coarse_grained_mle.py](analytics/scripts/study_coarse_grained_mle.py): does QLearning's visit-time fraction in the high-NMI basin exceed UrnAgent's at every `init_weights`?
-
----
-
-**Verification:**
-
-- Phase 1: ODE formula matches a Monte Carlo estimate of $\mathbb{E}[\Delta Q]$ to within MC tolerance ($\le 5 / \sqrt{N}$ over $N \ge 10{,}000$ samples).
-- Phase 2: linearization eigenvalues at every ideal $Q^*$ are reported; sign pattern documented.
-- Phase 3: a section in (new) `analytics/qlearning_ode_analysis.md` documenting either an extension or the obstruction.
-- Phase 4: a new `analytics/scripts/study_qlearning_coarse_mle.py` with the visit-time-in-basin comparison.
-- All scripts under `analytics/scripts/` pass; `pytest tests/` still passes.
-
-**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a WORKLOG entry recording the Phase 1-3 outputs.
-
-**References:**
-
-- Borkar, V. S. (2008). *Stochastic Approximation: A Dynamical Systems Viewpoint*. Cambridge University Press. Ch. 2-3 (basic theory), Ch. 9 (no-Lyapunov case).
-- Sutton & Barto (2018). *Reinforcement Learning: An Introduction* (2nd ed.). Robbins-Monro conditions; constant-α TD discussion.
-- Benaïm, M., Hofbauer, J., Sorin, S. (2005). "Stochastic approximations and differential inclusions." *SIAM J. Control Optim.* 44(1), 328-348.
-- Pemantle, R. (2007). "A survey of random processes with reinforcement." *Probability Surveys* 4, 1-79. §3.2 (local stable-manifold theorem).
-- [analytics/math/agent_q_learning.md](analytics/math/agent_q_learning.md) — per-cell closed-forms.
-- [analytics/math/argiento_obstruction.md](analytics/math/argiento_obstruction.md) — distributed-reward obstruction analysis (carries over to Q-learning).
-
----
-
 ## Verify Experiment Reproducibility End-to-End
 - status: todo
 - type: task
@@ -217,86 +148,11 @@ This task verifies that:
 
 ---
 
-## Update analytics/ doc cross-references after results/ reorganization
-- status: todo
-- type: task
-- id: todo.update_doc_paths_after_results_reorg
-- description: After the 2026-05-15 reorganization of results/ into legacy/{datasets,plots} + new_code/{datasets,plots} + proof_of_concept/, several markdown files under analytics/ still reference the pre-reorg top-level paths. Update each reference to point at the new subfolder location.
-- owner: agent
-- blocked_by: []
-- last_checked: 2026-05-15
-<!-- content -->
-**Context.** The 2026-05-15 session moved 50 files out of `results/` root into three subfolders:
-- `legacy/datasets/` — 7 CSVs from pre-refactor experiment runs.
-- `legacy/plots/` — 35 PNGs derived from the legacy CSVs (canonical / complex / costly experiments + parameter-optimization frontiers).
-- `new_code/plots/` — 1 PNG so far (`figure_ql_vs_re_canonical.png`); `new_code/datasets/` reserved for the post-refactor re-run of the experiment notebooks (currently empty).
-- `proof_of_concept/` — 7 PNGs (`initializations_*`, `initializations_urn_*`, `poc_optionA/B/C_*`).
-
-The producer scripts under [analytics/scripts/](analytics/scripts/) and two notebooks ([Initializations_test.ipynb](notebooks/Initializations_test.ipynb), [Run_Simulations.ipynb](notebooks/Run_Simulations.ipynb)) were updated to write to the new subfolders. The remaining items are doc cross-references in markdown files that still reference the old top-level `results/foo.png` and `results/foo.csv` paths. Independent of `todo.notebook_refactor`.
-
-**Preconditions:**
-- The reorganization is complete. Verify with `ls results/` — only `legacy/`, `new_code/`, `proof_of_concept/` (plus `.DS_Store`) should be present at the top level.
-
-**Steps:**
-1. Update [analytics/math/Proof of Concept (Paper Draft).md](analytics/math/Proof of Concept (Paper Draft).md):
-   - `results/initializations_urn_rewards.png` → `results/proof_of_concept/initializations_urn_rewards.png`
-   - `results/initializations_urn_nmi.png` → `results/proof_of_concept/initializations_urn_nmi.png`
-   - `results/figure_init_paradox_scatter.{csv,png}` → `results/proof_of_concept/figure_init_paradox_scatter.{csv,png}`
-   - In the Figure 3 sketch script block: `results/qlearning_results_canonical.csv` → `results/legacy/datasets/qlearning_results_canonical.csv`; `results/urnagent_results_canonical.csv` → `results/legacy/datasets/urnagent_results_canonical.csv`; `results/figure_ql_vs_re_canonical.png` → `results/new_code/plots/figure_ql_vs_re_canonical.png`.
-2. Update [analytics/math/metrics_aggregation.md](analytics/math/metrics_aggregation.md): audit every `results/*.png` and `results/*.csv` reference and replace each with the appropriate `results/legacy/{datasets,plots}/...` path.
-3. Update [analytics/math/costly_signaling.md](analytics/math/costly_signaling.md): references to `results/Roth-Erev_canonical_costly_signal_*.png` → `results/legacy/plots/Roth-Erev_canonical_costly_signal_*.png` (these PNGs are flagged in [LEGACY_ERRORS_LOG.md](docs/code-audit/LEGACY_ERRORS_LOG.md) as retired/unreproducible — keep the references, just fix the paths). Also: `results/q_costs_vs_nmi.png` and `results/q_costly_vs_reward.png` do not exist in `results/` at all — verify whether these refer to never-produced figures and either remove the references or file a separate task to produce them.
-4. Audit [README.md](README.md) for `results/` paths that need updating to reflect the new subfolder structure (the **Reproducing the figures** section in particular).
-5. Final verification grep:
-   ```bash
-   grep -rIn "results/[A-Za-z0-9_-]\+\.\(png\|csv\)" analytics/ README.md \
-     | grep -v "results/legacy\|results/new_code\|results/proof_of_concept"
-   ```
-   Should return no matches.
-
-**Verification:**
-- The grep in Step 5 returns no matches.
-- A spot-check in [analytics/math/Proof of Concept (Paper Draft).md](analytics/math/Proof of Concept (Paper Draft).md) confirms the markdown links resolve when clicked from VS Code.
-
-**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a one-line `WORKLOG.md` entry recording the doc cross-reference cleanup.
-
----
-
-## Continue reviewer-comment revisions on main_v2.tex
-- status: todo
-- type: task
-- id: todo.continue_reviewer_revisions
-- description: Picked up next session (any agent, cold) — load `content/workflows/REVISION_WORKFLOW.md` for the per-item sub-loop, open `manuscript/reviewers/Reviewers Responses Checklist.md`, pick from R3·C1 / R3·C4 / R2·C5 (next natural items). Closure of the checklist unblocks `todo.editorial_review_and_port_main_v2`.
-- owner: agent + user
-- blocked_by: []
-- last_checked: 2026-05-18
-<!-- content -->
-**Context:** Operational tracker at [manuscript/reviewers/Reviewers Responses Checklist.md](manuscript/reviewers/Reviewers%20Responses%20Checklist.md). Formal response narrative at [manuscript/reviewers/Generated Responses to Reviewers.md](manuscript/reviewers/Generated%20Responses%20to%20Reviewers.md). Run state as of 2026-05-18: R2·C2 + R3·C3 fully `[x]`; R2·C1, R2·C3, R3·C2 `[~]` partial; R2·C4, R2·C5, R3·C1, R3·C4, R3·C5, R3·C6, R3·C7 `[ ]` open.
-
-**Preconditions:**
-- Working copy `manuscript/main_v2.tex` exists; `manuscript/main.tex` is the pre-revision snapshot.
-- [LP_TEX_REF.md](LP_TEX_REF.md) at repo root carries the local LaTeX conventions; load before any edit.
-- `pytest tests/` reports 63 passed (no code changes expected from this task).
-
-**Steps:**
-1. Load `content/workflows/REVISION_WORKFLOW.md` via `mcp__kb_mcp__knowledge_base_read` for the Phase 3 per-item sub-loop pattern.
-2. Open `manuscript/reviewers/Reviewers Responses Checklist.md` and pick the next open `[ ]` or partial `[~]` item from the top-line progress table.
-3. Per Phase 3 of the workflow: read the affected `.tex` passage; propose 2–3 edit options to the user; on selection, apply via `Edit`; compile (`cd manuscript/ && latexmk -pdf main_v2.tex`); verify no new errors / no overfull warnings beyond the pre-existing baseline (the ~1.3mm body-text micro-overflow in §2.3 is pre-existing); update the checkbox to `[x]` with the date; sync the formal response narrative if the edit was substantive.
-4. Repeat until the user pauses the session or all items close.
-
-**Verification:**
-- Every closed item is `[x]` with a date; any partial is `[~]` with a "remaining work" note.
-- `latexmk -pdf main_v2.tex` compiles with the same warning baseline as the start of the session.
-- Formal response narrative is consistent with actual `.tex` changes (Phase 4.3 of REVISION_WORKFLOW.md).
-
-**On completion:** Trigger Phase 4 of `REVISION_WORKFLOW.md` (final sanity check), then `todo.editorial_review_and_port_main_v2` (v2 → main rename gate). Delete this task block.
-
----
-
 ## Editorial review of §2.3 in main_v2.pdf, then port main_v2.tex → main.tex
 - status: todo
 - type: task
 - id: todo.editorial_review_and_port_main_v2
-- description: User-side editorial review of the new §2.3 prose now living in main_v2.tex (compiled to main_v2.pdf). After acceptance, port the file by deleting main.tex and renaming main_v2.tex → main.tex (same V1 → V2 transition pattern done for the markdown draft on 2026-05-18). Supersedes the closed `todo.finalize_section_2_3_with_figures` and `todo.finalize_section_2_3_figure`.
+- description: Work through the remaining open/partial reviewer checklist items in main_v2.tex, then do a holistic editorial pass on main_v2.pdf, and finally port main_v2.tex → main.tex. Folds in the closed todo.continue_reviewer_revisions task.
 - owner: user + agent (review is user; mechanical port is agent)
 - blocked_by: []
 - last_checked: 2026-05-18
@@ -305,13 +161,16 @@ The producer scripts under [analytics/scripts/](analytics/scripts/) and two note
 
 The §2.3 prose addresses Reviewer 2's R2·C1 and R2·C2 (existence/reliability triplet; attractor-vs-basin-reach distinction in main text) and Reviewer 3's R3·C2 (proof-of-concept labeled as conceptual + simulation, not a convergence theorem). The Argiento obstruction is in the main text. The §3 intro was tightened to two scenarios (matching + random) with costly signaling deferred to the Appendix.
 
+Reviewer checklist state as of 2026-05-18: R2·C2 + R3·C3 fully `[x]`; R2·C1, R2·C3, R3·C2 `[~]` partial; R2·C4, R2·C5, R3·C1, R3·C4, R3·C5, R3·C6, R3·C7 `[ ]` open. Checklist at [manuscript/reviewers/Reviewers Responses Checklist.md](manuscript/reviewers/Reviewers%20Responses%20Checklist.md). Formal response narrative at [manuscript/reviewers/Generated Responses to Reviewers.md](manuscript/reviewers/Generated%20Responses%20to%20Reviewers.md).
+
 **Steps:**
 
-1. **Editorial pass on `main_v2.pdf`.** Open the PDF, re-read §2.3 (pages 13–14 area). Note wording changes or substantive concerns. Re-check that the four `\paragraph{...}` blocks (*The figure*, *Three observations*, *Reading*, *What this is, and what this is not*) read cleanly; if you'd prefer numbered §2.3.1–§2.3.4 instead, swap to `\subsubsection{...}` for all four.
-2. **Address remaining flagged items in [LP_TEX_REF.md](LP_TEX_REF.md):**
+1. **Reviewer checklist pass.** Load `content/workflows/REVISION_WORKFLOW.md` for the per-item sub-loop. Work through the partial (`[~]`) items first (R2·C1, R2·C3, R3·C2), then the open (`[ ]`) items (R2·C4, R2·C5, R3·C1, R3·C4, R3·C5, R3·C6, R3·C7). For each: read the affected `.tex` passage; propose 2–3 edit options to the user; on selection, apply via `Edit`; compile (`cd manuscript/ && latexmk -pdf main_v2.tex`); verify no new errors beyond the pre-existing baseline (the ~1.3mm body-text micro-overflow in §2.3 is pre-existing); update the checkbox to `[x]` with the date; sync the formal response narrative for substantive edits.
+2. **Holistic editorial pass on `main_v2.pdf`.** Open the PDF, re-read §2.3 (pages 13–14 area). Note wording changes or substantive concerns. Re-check that the four `\paragraph{...}` blocks (*The figure*, *Three observations*, *Reading*, *What this is, and what this is not*) read cleanly; if you'd prefer numbered §2.3.1–§2.3.4 instead, swap to `\subsubsection{...}` for all four.
+3. **Address remaining flagged items in [LP_TEX_REF.md](LP_TEX_REF.md):**
    - The Argiento footnote on §2.3 (line 517 of `main_v2.tex`) currently reads "documented in a companion technical note" — generic phrasing. Replace with a forward reference to an appendix subsection, or drop entirely if the prose stands on its own.
    - The `manuscript/section_2_3.tex` standalone fragment — delete if you no longer want it as a reference copy, since its content is now in `main_v2.tex`.
-3. **Port `main_v2.tex` → `main.tex`** (agent task, mechanical):
+4. **Port `main_v2.tex` → `main.tex`** (agent task, mechanical):
    ```bash
    rm "manuscript/main.tex"
    mv "manuscript/main_v2.tex" "manuscript/main.tex"
@@ -319,7 +178,7 @@ The §2.3 prose addresses Reviewer 2's R2·C1 and R2·C2 (existence/reliability 
    rm manuscript/main_v2.pdf  # if not already gone
    ```
    Verify the PDF rebuilds cleanly with the new filename.
-4. **Optional follow-ups (independent of the port):**
+5. **Optional follow-ups (independent of the port):**
    - **Bare-name aliases for canonical TD figures.** Add `td_canonical_reward.png`, `td_canonical_nmi.png`, `td_canonical_regression.png` to `results/legacy/plots/` (copies or symlinks of the existing `TD-learning_canonical_*` files), then revert the three long-name `\includegraphics{}` calls in `Appendix.tex` Section B to bare names. Removes the bare-vs-long inconsistency documented in `LP_TEX_REF.md`.
    - **`.gitignore` LaTeX block.** Add the block below to `.gitignore` so build artifacts don't show in `git status`. Template is in `LP_TEX_REF.md` "Build artifacts" section.
      ```gitignore

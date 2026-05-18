@@ -153,7 +153,7 @@ The hypothesis stated in the [README](../../README.md#hypothesis):
 
 > Each agent's payoff is independent of the others' actions, so there is no immediate incentive to communicate meaningfully. The hypothesis is that, despite this, there exists a region of the parameter space in which agents coordinate.
 
-The costly extension lets the experiments locate that region as a function of $c_i$: if $c_i$ is too high, signaling is suppressed and partial information dominates; if $c_i$ is low, signaling emerges (under the right learning rule). The plots in [results/q_costs_vs_nmi.png](../../results/q_costs_vs_nmi.png) and [results/q_costly_vs_reward.png](../../results/q_costly_vs_reward.png) trace this trade-off empirically.
+The costly extension lets the experiments locate that region as a function of $c_i$: if $c_i$ is too high, signaling is suppressed and partial information dominates; if $c_i$ is low, signaling emerges (under the right learning rule). Figures tracing this trade-off empirically (NMI vs cost, reward vs cost) are saved in [results/legacy/plots/](../../results/legacy/plots/).
 
 ## Numerical worked example — full episode
 
