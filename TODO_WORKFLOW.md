@@ -434,6 +434,37 @@ The producer scripts under [analytics/scripts/](analytics/scripts/) and two note
 
 ---
 
+## Continue reviewer-comment revisions on main_v2.tex
+- status: todo
+- type: task
+- id: todo.continue_reviewer_revisions
+- description: Picked up next session (any agent, cold) — load `content/workflows/REVISION_WORKFLOW.md` for the per-item sub-loop, open `manuscript/reviewers/Reviewers Responses Checklist.md`, pick from R3·C1 / R3·C4 / R2·C5 (next natural items). Closure of the checklist unblocks `todo.editorial_review_and_port_main_v2`.
+- owner: agent + user
+- blocked_by: []
+- last_checked: 2026-05-18
+<!-- content -->
+**Context:** Operational tracker at [manuscript/reviewers/Reviewers Responses Checklist.md](manuscript/reviewers/Reviewers%20Responses%20Checklist.md). Formal response narrative at [manuscript/reviewers/Generated Responses to Reviewers.md](manuscript/reviewers/Generated%20Responses%20to%20Reviewers.md). Run state as of 2026-05-18: R2·C2 + R3·C3 fully `[x]`; R2·C1, R2·C3, R3·C2 `[~]` partial; R2·C4, R2·C5, R3·C1, R3·C4, R3·C5, R3·C6, R3·C7 `[ ]` open.
+
+**Preconditions:**
+- Working copy `manuscript/main_v2.tex` exists; `manuscript/main.tex` is the pre-revision snapshot.
+- [LP_TEX_REF.md](LP_TEX_REF.md) at repo root carries the local LaTeX conventions; load before any edit.
+- `pytest tests/` reports 63 passed (no code changes expected from this task).
+
+**Steps:**
+1. Load `content/workflows/REVISION_WORKFLOW.md` via `mcp__kb_mcp__knowledge_base_read` for the Phase 3 per-item sub-loop pattern.
+2. Open `manuscript/reviewers/Reviewers Responses Checklist.md` and pick the next open `[ ]` or partial `[~]` item from the top-line progress table.
+3. Per Phase 3 of the workflow: read the affected `.tex` passage; propose 2–3 edit options to the user; on selection, apply via `Edit`; compile (`cd manuscript/ && latexmk -pdf main_v2.tex`); verify no new errors / no overfull warnings beyond the pre-existing baseline (the ~1.3mm body-text micro-overflow in §2.3 is pre-existing); update the checkbox to `[x]` with the date; sync the formal response narrative if the edit was substantive.
+4. Repeat until the user pauses the session or all items close.
+
+**Verification:**
+- Every closed item is `[x]` with a date; any partial is `[~]` with a "remaining work" note.
+- `latexmk -pdf main_v2.tex` compiles with the same warning baseline as the start of the session.
+- Formal response narrative is consistent with actual `.tex` changes (Phase 4.3 of REVISION_WORKFLOW.md).
+
+**On completion:** Trigger Phase 4 of `REVISION_WORKFLOW.md` (final sanity check), then `todo.editorial_review_and_port_main_v2` (v2 → main rename gate). Delete this task block.
+
+---
+
 ## Editorial review of §2.3 in main_v2.pdf, then port main_v2.tex → main.tex
 - status: todo
 - type: task

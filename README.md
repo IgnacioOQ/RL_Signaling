@@ -46,12 +46,12 @@ analytics/                      # mathematical reference (every quantity the pac
   math/                         # math files: notation, info_theory, signaling_model, agents, proof_of_concept_markov, the §2.3 markdown drafts, and the authoritative roth_erev_polya_mle.md reference
   scripts/                      # standalone PASS/FAIL verification scripts (see analytics/scripts/SCRIPTS_README.md)
 manuscript/                     # paper sources for PHOS-17993 ("Signaling Games with Distributed Rewards")
-  main.tex                      # original paper source (pre-§2.3-rewrite)
-  main_v2.tex                   # working copy of main.tex with the new §2.3; compiles to main_v2.pdf
+  main.tex                      # pre-revision snapshot (frozen); compiles to main.pdf
+  main_v2.tex                   # working copy with reviewer revisions in progress; compiles to main_v2.pdf
   Appendix.tex                  # standalone appendix document (own \documentclass); compiles to Appendix.pdf
   section_2_3.tex               # standalone LaTeX fragment of §2.3 prose (reference copy)
   References.bib                # BibTeX file (shared cross-paper library, ~28 cited from main.tex)
-  reviewers/                    # reviewer responses (Generated Responses to Reviewers.md + the original .docx)
+  reviewers/                    # Generated Responses to Reviewers.md (formal narrative) + Reviewers Responses Checklist.md (operational tracker) + the original .docx
   submission/                   # original submitted PDF
 results/                        # saved CSVs and PNG figures from each experiment
 tests/                          # pytest suite (63 tests, ~5 s); includes a golden-run regression against tests/golden/baseline.json
