@@ -11,9 +11,9 @@
 - last_checked: 2026-05-09
 <!-- content -->
 
-This file documents the open theoretical step in §2.3 of [docs/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf](docs/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf) (Phase 3 of `TODO_WORKFLOW.md::todo.deepen_proof_of_concept`). Argiento, Pemantle, Skyrms, and Volkov [1] proved a.s. convergence to stable separating equilibria for the **cooperative-payoff** Lewis–Skyrms sender–receiver game; the open question is whether their argument lifts to the **distributed-reward** signal-trading game where each agent has its own payoff function $G_i$. The short answer is: it does not lift directly, and the precise step that breaks is the construction of the Lyapunov potential. This file states the obstruction and identifies three salvage routes.
+This file documents the open theoretical step in §2.3 of [docs/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf](../../manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf) (Phase 3 of `TODO_WORKFLOW.md::todo.deepen_proof_of_concept`). Argiento, Pemantle, Skyrms, and Volkov [1] proved a.s. convergence to stable separating equilibria for the **cooperative-payoff** Lewis–Skyrms sender–receiver game; the open question is whether their argument lifts to the **distributed-reward** signal-trading game where each agent has its own payoff function $G_i$. The short answer is: it does not lift directly, and the precise step that breaks is the construction of the Lyapunov potential. This file states the obstruction and identifies three salvage routes.
 
-The reader is assumed to have read [proof_of_concept_markov.md](proof_of_concept_markov.md) §"Pure-Pólya signaling-urn convergence" (the static-partner reduction) and [docs/roth_erev_polya_mle.md](docs/roth_erev_polya_mle.md) §3 (the Pólya structure of a single signaling table).
+The reader is assumed to have read [proof_of_concept_markov.md](proof_of_concept_markov.md) §"Pure-Pólya signaling-urn convergence" (the static-partner reduction) and [roth_erev_polya_mle.md](roth_erev_polya_mle.md) §3 (the Pólya structure of a single signaling table).
 
 ## 1. Argiento et al.'s argument in the cooperative case
 

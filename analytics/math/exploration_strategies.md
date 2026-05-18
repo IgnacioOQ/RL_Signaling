@@ -11,7 +11,7 @@
 - last_checked: 2026-05-08
 <!-- content -->
 
-The three exploration strategies — ε-greedy, softmax (Boltzmann), and UCB — are factored into a single helper [_select_action](../rl_signaling/agents.py#L38-L116) and shared by both `QLearningAgent` and `TDLearningAgent`. This file gives the formal action-selection distribution for each, derives the relevant regret/optimality properties, and walks through the project-specific UCB implementation choice (small-epsilon on counts to avoid div-by-zero on the first call).
+The three exploration strategies — ε-greedy, softmax (Boltzmann), and UCB — are factored into a single helper [_select_action](../../rl_signaling/agents.py#L38-L116) and shared by both `QLearningAgent` and `TDLearningAgent`. This file gives the formal action-selection distribution for each, derives the relevant regret/optimality properties, and walks through the project-specific UCB implementation choice (small-epsilon on counts to avoid div-by-zero on the first call).
 
 The selector's signature is
 
@@ -44,7 +44,7 @@ if choice == "egreedy":
     return max(actions, key=lambda a: q_values[a])
 ```
 
-at [rl_signaling/agents.py:83-90](../rl_signaling/agents.py#L83-L90).
+at [rl_signaling/agents.py:83-90](../../rl_signaling/agents.py#L83-L90).
 
 ### Properties
 
@@ -54,7 +54,7 @@ at [rl_signaling/agents.py:83-90](../rl_signaling/agents.py#L83-L90).
 
 ### When to use
 
-ε-greedy is the default cognitive baseline — simple, robust, fully exploring. It is the project's default for `TDLearningAgent` (`choice="egreedy"` at [agents.py:541](../rl_signaling/agents.py#L541)).
+ε-greedy is the default cognitive baseline — simple, robust, fully exploring. It is the project's default for `TDLearningAgent` (`choice="egreedy"` at [agents.py:541](../../rl_signaling/agents.py#L541)).
 
 ## Softmax (Boltzmann)
 
@@ -83,7 +83,7 @@ if available_actions is None:
     return int(np.random.choice(n_actions, p=probabilities))
 ```
 
-at [rl_signaling/agents.py:92-98](../rl_signaling/agents.py#L92-L98). The lower bound `tau = max(exploration_rate, 1e-6)` prevents division by zero when `exploration_rate` decays to a very small value.
+at [rl_signaling/agents.py:92-98](../../rl_signaling/agents.py#L92-L98). The lower bound `tau = max(exploration_rate, 1e-6)` prevents division by zero when `exploration_rate` decays to a very small value.
 
 ### Properties
 
@@ -127,7 +127,7 @@ The bound assumes stationary rewards, single-state setting, and reward in $[0, 1
 
 The textbook formula has a problem on the first call: $N(a) = 0$ for all $a$, so $\ln t / N(a)$ is $\ln 0 / 0$, undefined.
 
-The project's workaround at [rl_signaling/agents.py:105-114](../rl_signaling/agents.py#L105-L114):
+The project's workaround at [rl_signaling/agents.py:105-114](../../rl_signaling/agents.py#L105-L114):
 
 ```python
 if choice == "ucb":
@@ -173,7 +173,7 @@ $$\text{bonus}(0) = c \sqrt{\frac{0.693}{1 + \varepsilon}} \approx 0.832 c, \qqu
 
 The unvisited arms get a huge bonus, so the second call picks one of them. The third call picks the next, and so on — UCB ends up doing the "play each arm once" initialization implicitly, just with the order biased to "action 0 first, then any other in argmax order."
 
-This is reflected in [Axis 23](../DEBUGGING_PLAN.md#nmi-and-exploration-details) of the Phase 1 spec.
+This is reflected in [Axis 23](../../DEBUGGING_PLAN.md#nmi-and-exploration-details) of the Phase 1 spec.
 
 ### Properties
 
@@ -183,7 +183,7 @@ This is reflected in [Axis 23](../DEBUGGING_PLAN.md#nmi-and-exploration-details)
 
 ### When to use
 
-UCB is the default for `QLearningAgent` (`choice="ucb"` at [agents.py:381](../rl_signaling/agents.py#L381)) and is empirically the strongest performer in the project's hyperparameter optimization runs.
+UCB is the default for `QLearningAgent` (`choice="ucb"` at [agents.py:381](../../rl_signaling/agents.py#L381)) and is empirically the strongest performer in the project's hyperparameter optimization runs.
 
 ## Decay schedule (ε-greedy and softmax)
 
@@ -209,11 +209,11 @@ The decay is applied **per channel** for `QLearningAgent` (separate rates for si
 
 | Concept | Code | Spec axis | Test |
 |---|---|---|---|
-| ε-greedy formula | [agents.py:83-90](../rl_signaling/agents.py#L83-L90) | (constructor) | [test_agents.py::test_select_action_egreedy_at_zero_exploration_is_greedy](../tests/test_agents.py#L37-L42) |
-| Softmax with stable subtraction | [agents.py:92-103](../rl_signaling/agents.py#L92-L103) | (constructor) | (smoke-tested in `test_q_learning_get_signal_each_strategy`) |
-| UCB with epsilon-on-counts | [agents.py:105-114](../rl_signaling/agents.py#L105-L114) | Axis 23 | [test_agents.py::test_select_action_ucb_with_unit_counts](../tests/test_agents.py#L45-L49) |
-| Available-actions mask | [agents.py:79-81, 110-114](../rl_signaling/agents.py#L79-L81) | (TD subset selection) | [test_agents.py::test_select_action_respects_available_actions](../tests/test_agents.py#L52-L58) |
-| Decay schedule | [agents.py:461-464, 479-482, 636-639](../rl_signaling/agents.py#L461-L464) | Axis 19 (Q-learning, per-channel); Axis 20 (TD, single-channel) | [test_agents.py::test_q_learning_exploration_decays_after_update](../tests/test_agents.py#L118-L129) |
+| ε-greedy formula | [agents.py:83-90](../../rl_signaling/agents.py#L83-L90) | (constructor) | [test_agents.py::test_select_action_egreedy_at_zero_exploration_is_greedy](../../tests/test_agents.py#L37-L42) |
+| Softmax with stable subtraction | [agents.py:92-103](../../rl_signaling/agents.py#L92-L103) | (constructor) | (smoke-tested in `test_q_learning_get_signal_each_strategy`) |
+| UCB with epsilon-on-counts | [agents.py:105-114](../../rl_signaling/agents.py#L105-L114) | Axis 23 | [test_agents.py::test_select_action_ucb_with_unit_counts](../../tests/test_agents.py#L45-L49) |
+| Available-actions mask | [agents.py:79-81, 110-114](../../rl_signaling/agents.py#L79-L81) | (TD subset selection) | [test_agents.py::test_select_action_respects_available_actions](../../tests/test_agents.py#L52-L58) |
+| Decay schedule | [agents.py:461-464, 479-482, 636-639](../../rl_signaling/agents.py#L461-L464) | Axis 19 (Q-learning, per-channel); Axis 20 (TD, single-channel) | [test_agents.py::test_q_learning_exploration_decays_after_update](../../tests/test_agents.py#L118-L129) |
 
 ## Independent verification
 

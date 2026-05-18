@@ -17,7 +17,7 @@ This file walks through the chain end-to-end, gives the exact slice / mean / agg
 
 ## The five trajectory data structures
 
-Every env exposes a `report_metrics()` method returning a 5-tuple. The canonical [MultiAgentEnv.report_metrics](../rl_signaling/env.py#L283-L293):
+Every env exposes a `report_metrics()` method returning a 5-tuple. The canonical [MultiAgentEnv.report_metrics](../../rl_signaling/env.py#L283-L293):
 
 ```python
 return (
@@ -31,11 +31,11 @@ return (
 
 | Element | Type | Shape | Per-episode appended at | Meaning |
 |---|---|---|---|---|
-| `signal_usage` | `list[dict]` (one per agent) | `dict[obs_tuple, np.ndarray[K]]` | [env.py:174-183](../rl_signaling/env.py#L174-L183) inside `step_signal` | Cumulative count of `signal_usage[agent_i][obs][signal_index]` over all episodes. |
-| `rewards_history` | `list[list[float]]` (one inner list per agent) | `(N_agents, T)` | [env.py:255](../rl_signaling/env.py#L255) inside `update` | Per-episode net reward for each agent (already including any signaling cost). |
-| `signal_information_history` | `list[list[float]]` (one per agent) | `(N_agents, T)` (canonical), `(N_agents, 2T)` (legacy `TempNetMultiAgentEnv`, see Bug 2) | [env.py:185-187](../rl_signaling/env.py#L185-L187) inside `step_signal` | Per-episode NMI computed from the cumulative `signal_usage[agent_i]`. |
-| `nature_history` | `list[tuple]` | `(T,)` | [env.py:149](../rl_signaling/env.py#L149) inside `reset` | The full nature vector for each episode. |
-| `histories` | `dict[agent_i, dict[str, list]]` | `histories[agent][channel][t] = deepcopy(usage[agent])` | [env.py:263-264](../rl_signaling/env.py#L263-L264) inside `update` | Snapshot of `signal_usage` and `action_usage` after every episode. Memory-inefficient by design (used by `plot_simulation_summary` to render the urn-proportion-over-time panel). |
+| `signal_usage` | `list[dict]` (one per agent) | `dict[obs_tuple, np.ndarray[K]]` | [env.py:174-183](../../rl_signaling/env.py#L174-L183) inside `step_signal` | Cumulative count of `signal_usage[agent_i][obs][signal_index]` over all episodes. |
+| `rewards_history` | `list[list[float]]` (one inner list per agent) | `(N_agents, T)` | [env.py:255](../../rl_signaling/env.py#L255) inside `update` | Per-episode net reward for each agent (already including any signaling cost). |
+| `signal_information_history` | `list[list[float]]` (one per agent) | `(N_agents, T)` (canonical), `(N_agents, 2T)` (legacy `TempNetMultiAgentEnv`, see Bug 2) | [env.py:185-187](../../rl_signaling/env.py#L185-L187) inside `step_signal` | Per-episode NMI computed from the cumulative `signal_usage[agent_i]`. |
+| `nature_history` | `list[tuple]` | `(T,)` | [env.py:149](../../rl_signaling/env.py#L149) inside `reset` | The full nature vector for each episode. |
+| `histories` | `dict[agent_i, dict[str, list]]` | `histories[agent][channel][t] = deepcopy(usage[agent])` | [env.py:263-264](../../rl_signaling/env.py#L263-L264) inside `update` | Snapshot of `signal_usage` and `action_usage` after every episode. Memory-inefficient by design (used by `plot_simulation_summary` to render the urn-proportion-over-time panel). |
 
 Indexing convention: $T$ is the number of episodes (`n_episodes`). The lists are zero-indexed in Python; episode $t$ (one-based) corresponds to slot `t-1`.
 
@@ -66,7 +66,7 @@ The values themselves are still NMI estimates — they are just **duplicated** w
 
 For non-costly runs, `rewards_history[i][t-1]` is simply $G_i(\mathbf{v}_t, \alpha_{i,t})$, the game-dict lookup at episode $t$.
 
-For costly runs, [env.py:236-241](../rl_signaling/env.py#L236-L241):
+For costly runs, [env.py:236-241](../../rl_signaling/env.py#L236-L241):
 
 $$\text{rewards\_history}[i][t-1] = G_i(\mathbf{v}_t, \alpha_{i,t}) - c_i \cdot \mathbb{1}[\sigma_{i,t} \neq \nu].$$
 
@@ -90,7 +90,7 @@ for agent_id in range(n_agents):
     ])
 ```
 
-(taken verbatim from [notebooks/Run_Simulations.ipynb](../notebooks/Run_Simulations.ipynb) UrnAgent block).
+(taken verbatim from [notebooks/Run_Simulations.ipynb](../../notebooks/Run_Simulations.ipynb) UrnAgent block).
 
 So the four scalar columns per agent are:
 
@@ -123,7 +123,7 @@ The `Agent_X_avg_reward` and `Agent_X_final_reward` columns are **unaffected** b
 
 ## How `plotting_results.ipynb` consumes the CSVs
 
-`plotting_results.ipynb` reads each CSV, then dispatches to helpers in [rl_signaling/plotting.py](../rl_signaling/plotting.py):
+`plotting_results.ipynb` reads each CSV, then dispatches to helpers in [rl_signaling/plotting.py](../../rl_signaling/plotting.py):
 
 | Helper | Reads columns | Emits |
 |---|---|---|
@@ -143,25 +143,25 @@ The complete map of saved figures back to their producing notebook, organized by
 
 | Figure | Consumer cell | CSV | Producer notebook | Affected by |
 |---|---|---|---|---|
-| `Roth-Erev_canonical_Agent_0_NMI.png` | `plot_all_histograms` | `urnagent_results_canonical.csv` | [Run_Simulations.ipynb](../notebooks/Run_Simulations.ipynb) UrnAgent canonical block | (none) |
+| `Roth-Erev_canonical_Agent_0_NMI.png` | `plot_all_histograms` | `urnagent_results_canonical.csv` | [Run_Simulations.ipynb](../../notebooks/Run_Simulations.ipynb) UrnAgent canonical block | (none) |
 | `Roth-Erev_canonical_Agent_0_avg_reward.png` | same | same | same | (none) |
 | `Roth-Erev_canonical_Agent_0_final_reward.png` | same | same | same | (none) |
 | `Roth-Erev_canonical_regression_signals_*.png` | `plot_regression` | same | same | (none) |
-| `Q-learning_canonical_*.png` | `plot_all_histograms` + `plot_regression` | `qlearning_results_canonical.csv` | [Run_Simulations.ipynb](../notebooks/Run_Simulations.ipynb) QLearning canonical block | (none) |
-| `TD-learning_canonical_*.png` | same | `td_learning_results_canonical.csv` | [Run_Simulations.ipynb](../notebooks/Run_Simulations.ipynb) TDAgent canonical block | **Bug 2** (slices land on first 5 / last 50 instead of first 10 / last 100) |
+| `Q-learning_canonical_*.png` | `plot_all_histograms` + `plot_regression` | `qlearning_results_canonical.csv` | [Run_Simulations.ipynb](../../notebooks/Run_Simulations.ipynb) QLearning canonical block | (none) |
+| `TD-learning_canonical_*.png` | same | `td_learning_results_canonical.csv` | [Run_Simulations.ipynb](../../notebooks/Run_Simulations.ipynb) TDAgent canonical block | **Bug 2** (slices land on first 5 / last 50 instead of first 10 / last 100) |
 
 ### Costly signaling
 
 | Figure | Consumer cell | CSV | Producer notebook | Affected by |
 |---|---|---|---|---|
-| `Roth-Erev_canonical_costly_signal_*.png` | `plot_all_histograms` + `plot_reward_vs_cost` + `plot_nmi_vs_cost` | `urnagent_results_canonical_costly_signal.csv` | [Final_Costly_Signaling_Run_Simulations.ipynb](../notebooks/Final_Costly_Signaling_Run_Simulations.ipynb) UrnAgent block | (none) |
+| `Roth-Erev_canonical_costly_signal_*.png` | `plot_all_histograms` + `plot_reward_vs_cost` + `plot_nmi_vs_cost` | `urnagent_results_canonical_costly_signal.csv` | [Final_Costly_Signaling_Run_Simulations.ipynb](../../notebooks/Final_Costly_Signaling_Run_Simulations.ipynb) UrnAgent block | (none) |
 | `QLearning_canonical_costly_signal_*.png` | same | `qlearning_results_canonical_costly_signal.csv` | (same notebook, QLearning block — currently `simulate=False`-gated) | (none) |
 
 ### Initialization study
 
 | Figure | Consumer cell | CSV | Producer notebook | Affected by |
 |---|---|---|---|---|
-| `initializations_rewards.png` | inline plt cell | (none — written from in-memory dicts) | [Initializations_test.ipynb](../notebooks/Initializations_test.ipynb) | **Bug 5** (env.agents overwrite — every curve is the same configuration) |
+| `initializations_rewards.png` | inline plt cell | (none — written from in-memory dicts) | [Initializations_test.ipynb](../../notebooks/Initializations_test.ipynb) | **Bug 5** (env.agents overwrite — every curve is the same configuration) |
 | `initializations_nmi.png` | same | same | same | **Bug 5** (same reason) |
 
 ### Complex / general games
@@ -173,13 +173,13 @@ The complete map of saved figures back to their producing notebook, organized by
 | `TD-learning_complex_randomized_*.png` (3 PNGs) | `plot_all_histograms` only — the regression PNGs do not exist | `td_learning_results_complex_randomized.csv` | **No current producer** | **Bug 6** |
 | `Q-learning_complex_randomized_regression_signals_*.png` | `plot_regression` last cell | `td_learning_results_complex_randomized.csv` (TD data!) | **No current producer**, and the cell uses Q prefix for TD data | **Bug 6** + **Bug 8** (the Q PNG actually contains TD content; the TD regression PNG is never produced) |
 
-The `_complex` (no `_randomized`) CSVs are written by [Run_Simulations.ipynb](../notebooks/Run_Simulations.ipynb) but consumed by no figure. The `_complex_randomized` CSVs in `results/` are consumed by figures but produced by no current notebook. The two sides of the chain are disconnected — the substance of Bug 6.
+The `_complex` (no `_randomized`) CSVs are written by [Run_Simulations.ipynb](../../notebooks/Run_Simulations.ipynb) but consumed by no figure. The `_complex_randomized` CSVs in `results/` are consumed by figures but produced by no current notebook. The two sides of the chain are disconnected — the substance of Bug 6.
 
 ### Hyperparameter optimization (research log)
 
 | Output | Consumer | Producer notebook | Affected by |
 |---|---|---|---|
-| `q_opt_canonical.png`, `q_opt_games.png`, `td_opt_canonical.png`, `td_opt_games.png` | none (saved as a research record, not consumed by `plotting_results`) | [Parameter_Optimization_wchoices.ipynb](../notebooks/Parameter_Optimization_wchoices.ipynb) | **Bug 7** (notebook fails Restart-and-Run-All due to missing imports; existing figures are from a prior run) |
+| `q_opt_canonical.png`, `q_opt_games.png`, `td_opt_canonical.png`, `td_opt_games.png` | none (saved as a research record, not consumed by `plotting_results`) | [Parameter_Optimization_wchoices.ipynb](../../notebooks/Parameter_Optimization_wchoices.ipynb) | **Bug 7** (notebook fails Restart-and-Run-All due to missing imports; existing figures are from a prior run) |
 | `q_costs_vs_reward.png`, `q_costs_vs_nmi.png` | none | (one of the costly notebooks; not currently in `plotting_results.ipynb`) | (none) |
 
 ## Cross-bug summary in CSV-trace form
@@ -199,6 +199,6 @@ After all open Phase 5 bugs land:
 | [signaling_model.md](signaling_model.md) | What an episode produces (the sources of `rewards_history` etc.) |
 | [agent_urn.md](agent_urn.md), [agent_q_learning.md](agent_q_learning.md), [agent_td_learning.md](agent_td_learning.md) | Agent-side updates that move the trajectories |
 | [information_theory.md](information_theory.md) | The NMI computation that fills `signal_information_history` |
-| [rl_signaling/plotting.py](../rl_signaling/plotting.py) | The plotting helpers consuming the CSVs |
-| [DEBUGGING_PLAN.md](../DEBUGGING_PLAN.md) Phase 5 | Bug ledger and fix plan that this file's "affected by" columns trace to |
-| [LEGACY_BUGS_LOG.md](../LEGACY_BUGS_LOG.md) | Per-bug detail (Bug 2, Bug 5, Bug 6, Bug 7, Bug 8) |
+| [rl_signaling/plotting.py](../../rl_signaling/plotting.py) | The plotting helpers consuming the CSVs |
+| [DEBUGGING_PLAN.md](../../DEBUGGING_PLAN.md) Phase 5 | Bug ledger and fix plan that this file's "affected by" columns trace to |
+| [LEGACY_BUGS_LOG.md](../../LEGACY_BUGS_LOG.md) | Per-bug detail (Bug 2, Bug 5, Bug 6, Bug 7, Bug 8) |

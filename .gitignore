@@ -28,3 +28,19 @@ htmlcov/
 # Type checkers / linters
 .mypy_cache/
 .ruff_cache/
+
+# LaTeX build artifacts (manuscript/ is the canonical source tree)
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+
+# macOS metadata
+.DS_Store

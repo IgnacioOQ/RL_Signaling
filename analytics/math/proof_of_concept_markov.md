@@ -11,13 +11,13 @@
 - last_checked: 2026-05-09
 <!-- content -->
 
-This file is the formal companion to §2.3 of [analytics/docs/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf](docs/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf). The paper sketches an informal "miracle drift" argument: the joint signal-trading game is a Markov chain over states; the ideal signaling profiles are *attractors*; if the system happens to enter the basin of attraction the ideal becomes reachable. The argument is acknowledged in footnote 4 to fall short of convergence in probability — only $\\|f_t - f^\\star\\|, \\|g_t - g^\\star\\|$ are shown to decrease in the right direction.
+This file is the formal companion to §2.3 of [manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf](../../manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf). The paper sketches an informal "miracle drift" argument: the joint signal-trading game is a Markov chain over states; the ideal signaling profiles are *attractors*; if the system happens to enter the basin of attraction the ideal becomes reachable. The argument is acknowledged in footnote 4 to fall short of convergence in probability — only $\\|f_t - f^\\star\\|, \\|g_t - g^\\star\\|$ are shown to decrease in the right direction.
 
-This document tightens the argument by writing out the chain explicitly, identifying the absorbing states for `UrnAgent` under `init_weights = [1, 0]`, counting them, and showing that the reward distribution over absorbing states explains the empirical NMI ≈ 1.0 / reward ≈ 0.25 pattern observed at `[1, 0]` in the post-fix re-run of [notebooks/Initializations_test.ipynb](../notebooks/Initializations_test.ipynb).
+This document tightens the argument by writing out the chain explicitly, identifying the absorbing states for `UrnAgent` under `init_weights = [1, 0]`, counting them, and showing that the reward distribution over absorbing states explains the empirical NMI ≈ 1.0 / reward ≈ 0.25 pattern observed at `[1, 0]` in the post-fix re-run of [notebooks/Initializations_test.ipynb](../../notebooks/Initializations_test.ipynb).
 
 The related document [initialization_basins.md](initialization_basins.md) addresses a narrower question: the role of the four `init_weights` settings as starting measures on policy space; basin-of-attraction structure for $m > 0$.
 
-The new authoritative reference for the Roth–Erev factored kernel and the Pólya-urn analysis of the signaling tables is [docs/roth_erev_polya_mle.md](docs/roth_erev_polya_mle.md); it supersedes the conceptual scaffolding of this file in §"Transition kernel" and motivates the Pure-Pólya theorem appended below.
+The new authoritative reference for the Roth–Erev factored kernel and the Pólya-urn analysis of the signaling tables is [roth_erev_polya_mle.md](roth_erev_polya_mle.md); it supersedes the conceptual scaffolding of this file in §"Transition kernel" and motivates the Pure-Pólya theorem appended below.
 
 Conventions match [notation.md](notation.md). All numerical claims in this file are reproduced by the scripts at [scripts/study_toy_markov_chain.py](scripts/study_toy_markov_chain.py), [scripts/enumerate_absorbing_states.py](scripts/enumerate_absorbing_states.py), and [scripts/study_urn_basin_drift.py](scripts/study_urn_basin_drift.py); the math derivations and the scripts are designed to cross-validate each other.
 
@@ -31,8 +31,8 @@ We work in the canonical setup of §2.3 / Figure 1:
 - **Signals.** Each agent emits a signal from $\mathcal{A}_{\text{sig}} = \{0, 1\}$ (so $K = 2$).
 - **Actions.** Each agent picks a final action from $\mathcal{A}_{\text{act}} = \{0, 1, 2, 3\}$ (so $M = 4$).
 - **Games.** A per-agent canonical matching game $G_i \colon \mathcal{V} \to \mathcal{A}_{\text{act}} \to \{0, 1\}$ such that for every world state $\mathbf{v}$ exactly one action $\alpha^\star_i(\mathbf{v}) \in \mathcal{A}_{\text{act}}$ pays $1$ and the other three pay $0$.
-- **Learning rule.** `UrnAgent` (Roth-Erev). The continuous-state TD-learning dynamics are deferred to a separate task — see [TODO_WORKFLOW.md](../TODO_WORKFLOW.md) `todo.qlearning_proof_of_concept`.
-- **Initialization.** `init_weights = (n, m)` controls how the urns are pre-seeded by [rl_signaling/games.py:115-160](../rl_signaling/games.py#L115-L160), `create_initial_signals`. The four notebook settings are $(1, 0)$, $(1, 1)$, $(5, 1)$, $(100, 1)$.
+- **Learning rule.** `UrnAgent` (Roth-Erev). The continuous-state TD-learning dynamics are deferred to a separate task — see [TODO_WORKFLOW.md](../../TODO_WORKFLOW.md) `todo.qlearning_proof_of_concept`.
+- **Initialization.** `init_weights = (n, m)` controls how the urns are pre-seeded by [rl_signaling/games.py:115-160](../../rl_signaling/games.py#L115-L160), `create_initial_signals`. The four notebook settings are $(1, 0)$, $(1, 1)$, $(5, 1)$, $(100, 1)$.
 
 This is the smallest setting in which the proof of concept is non-trivial. Generalizations to more features, more signals, more agents, or random games (§3.2) are noted but not formalized here.
 
@@ -51,13 +51,13 @@ Each component is a non-negative-real-valued matrix. The state space is therefor
 
 $$\Sigma \;=\; \bigl(\mathbb{R}_{\ge 0}^{2 \times 2}\bigr)^2 \times \bigl(\mathbb{R}_{\ge 0}^{4 \times 4}\bigr)^2.$$
 
-Under integer-valued canonical-game rewards $r \in \{0, 1\}$ and `init_weights` integer-valued, every entry stays integer-valued (the bug fix in [LEGACY_BUGS_LOG.md](../LEGACY_BUGS_LOG.md) Bug 9 makes the storage dtype float, but the values are integer-valued under integer rewards). So in practice $\Sigma$ is a countable lattice.
+Under integer-valued canonical-game rewards $r \in \{0, 1\}$ and `init_weights` integer-valued, every entry stays integer-valued (the bug fix in [LEGACY_BUGS_LOG.md](../../LEGACY_BUGS_LOG.md) Bug 9 makes the storage dtype float, but the values are integer-valued under integer rewards). So in practice $\Sigma$ is a countable lattice.
 
 This is a **larger** state than the §2.3 description ("a full description of the system including observed states of nature, $f$s and $g$s as tables, the signals and actions sent, and the reward obtained") — we drop the per-episode random outcomes from the state, since they are not Markov sufficient. The Markov property holds because, given $\sigma_t$, the next state $\sigma_{t+1}$ depends only on the random draws made in episode $t+1$ and not on the history of episode $1, \dots, t$.
 
 ## Transition kernel
 
-One episode produces $\sigma_{t+1}$ from $\sigma_t$ via the following decomposition (matching the structure of [rl_signaling/simulation.py](../rl_signaling/simulation.py)):
+One episode produces $\sigma_{t+1}$ from $\sigma_t$ via the following decomposition (matching the structure of [rl_signaling/simulation.py](../../rl_signaling/simulation.py)):
 
 1. **Nature draws** $\mathbf{v} = (v_1, v_2) \sim \mathrm{Uniform}(\mathcal{V})$. Independent of $\sigma_t$.
 2. **Signaling.** Each agent $i$ emits $\sigma_i \in \mathcal{A}_{\text{sig}}$ with probability proportional to $u^{(i)}_{\text{sig}, t}[\mathbf{o}_i]$, where $\mathbf{o}_i$ is its direct observation. Specifically:
@@ -66,7 +66,7 @@ One episode produces $\sigma_{t+1}$ from $\sigma_t$ via the following decomposit
 
 3. **Action.** Each agent $i$ receives the signal $\sigma_{j(i)}$ from its in-neighbour $j(i)$ (here, $j(0) = 1$ and $j(1) = 0$). It picks an action with probability proportional to $u^{(i)}_{\text{act}, t}[(\mathbf{o}_i, \sigma_{j(i)})]$.
 4. **Reward.** Agent $i$ collects $r_i = G_i(\mathbf{v})[\alpha_i] \in \{0, 1\}$.
-5. **Update.** The chosen cells get reinforced; for `UrnAgent` ([rl_signaling/agents.py:304-314](../rl_signaling/agents.py#L304-L314)),
+5. **Update.** The chosen cells get reinforced; for `UrnAgent` ([rl_signaling/agents.py:304-314](../../rl_signaling/agents.py#L304-L314)),
 
    $$u^{(i)}_{\text{sig}, t+1}[\mathbf{o}_i][\sigma_i] \;\leftarrow\; \max\bigl(0,\; u^{(i)}_{\text{sig}, t}[\mathbf{o}_i][\sigma_i] + r_i\bigr),$$
 
@@ -92,11 +92,11 @@ A state $\sigma$ is **absorbing** if $\mathbb{P}(\sigma_{t+1} = \sigma \mid \sig
 
 *Proof sketch.* Pick a non-one-hot cell, say a signaling cell with $u^{(i)}_{\text{sig}}[\mathbf{o}_i] = (a, b, \dots)$ with $a, b > 0$. With positive probability nature picks an episode where (i) $\mathbf{o}_i$ matches the chosen cell, (ii) the rolled signal is the smaller-weight option, (iii) the resulting joint reward is $r_i = 1$. Then update step increments the smaller entry by 1, changing the cell's distribution — so the policy is changed. The inequality $\mathbb{P}(\sigma_{t+1} \neq \sigma \mid \sigma_t = \sigma) > 0$ holds. $\square$
 
-The construction of `create_initial_signals` ([rl_signaling/games.py:115-160](../rl_signaling/games.py#L115-L160)) with `n_init = n, m_init = 0` produces a deterministic state at $t = 0$. So:
+The construction of `create_initial_signals` ([rl_signaling/games.py:115-160](../../rl_signaling/games.py#L115-L160)) with `n_init = n, m_init = 0` produces a deterministic state at $t = 0$. So:
 
 > **Corollary.** When `init_weights = (n, 0)` for any $n > 0$, the chain starts in an absorbing state and stays in the same policy forever.
 
-This is the formal statement underlying the empirical observation in [LEGACY_BUGS_LOG.md](../LEGACY_BUGS_LOG.md) Bug 5's post-fix observation: under `[1, 0]`, NMI ≈ 1.0 (the policy is deterministic, so signals carry full information about the observation), while reward depends on whether the random initial bijection happens to be aligned with the games $G_0, G_1$.
+This is the formal statement underlying the empirical observation in [LEGACY_BUGS_LOG.md](../../LEGACY_BUGS_LOG.md) Bug 5's post-fix observation: under `[1, 0]`, NMI ≈ 1.0 (the policy is deterministic, so signals carry full information about the observation), while reward depends on whether the random initial bijection happens to be aligned with the games $G_0, G_1$.
 
 ## Counting absorbing states
 
@@ -189,7 +189,7 @@ This reduction makes the §2.3 sub-martingale argument formal in the simplest no
 
 ## Pure-Pólya signaling-urn convergence
 
-The toy single-state model above is the simplest reduction. The next-largest tractable case fixes the partner's policy but lets *one* agent's signaling table run free across all of its observation rows. In this case, each row is a Pólya urn with Bernoulli-thinned reinforcement and a per-color reinforcement probability that does not depend on the color sampled — the formal core of the §2.3 attractor picture, and the content of §3 of [docs/roth_erev_polya_mle.md](docs/roth_erev_polya_mle.md).
+The toy single-state model above is the simplest reduction. The next-largest tractable case fixes the partner's policy but lets *one* agent's signaling table run free across all of its observation rows. In this case, each row is a Pólya urn with Bernoulli-thinned reinforcement and a per-color reinforcement probability that does not depend on the color sampled — the formal core of the §2.3 attractor picture, and the content of §3 of [roth_erev_polya_mle.md](roth_erev_polya_mle.md).
 
 > **Theorem (Pólya signaling urn under fixed partner and fixed own action policy).** Fix agents $i \neq j$, and freeze the partner's full policy $(f^{(j)}, g^{(j)})$ and agent $i$'s own action policy $g^{(i)}$ for all time. For each $x \in \mathcal{V}_i$, define
 > $$q^*(x) \;:=\; \mathbb{P}\bigl[r^{(i)}_t = 1 \,\big|\, \mathbf{o}^{(i)}_t = x\bigr] \;=\; \sum_{y, \sigma_j, a} P(y \mid x)\, \pi_j(\sigma_j \mid y)\, \pi_i(a \mid x, \sigma_j)\, \mathbf{1}\!\big[G_i(a, x, y) = 1\big],$$
@@ -216,7 +216,7 @@ $$n_{\tau_{k+1}} \;=\; n_{\tau_k} + e_{\sigma}, \qquad \sigma \sim n_{\tau_k} / 
 
 By the classical Eggenberger–Pólya theorem (see Pemantle 2007, §2 or Mahmoud 2008, Ch. 3), the proportion vector $n_{\tau_k} / S_{\tau_k}$ converges almost surely to a random limit on the $(K-1)$-simplex with law $\mathrm{Dir}(n_0)$ as $k \to \infty$. Between two visit-and-reinforce steps the row is unchanged, so the proportion at any non-$\tau$ step equals the proportion at the most recent $\tau$ step. Hence $\hat{f}^{(i)}_t[x] \xrightarrow{a.s.} \mathrm{Dir}(n_0)$ as $t \to \infty$. $\square$
 
-The theorem makes precise what the §2.3 informal "miracle drift" picture says about a single agent in a static environment: the signaling table does *not* converge to a deterministic optimum — it converges to *some* random extreme point on the simplex, picked out by initial bias and the path realization. **The random selection of *which* signaling system is delivered by the Pólya structure of the $f^{(i)}$ urns; the *correctness* of the resulting communication is delivered by the $g^{(i)}$ urns adapting to whatever the $f^{(i)}$ urns drift into** ([docs/roth_erev_polya_mle.md](docs/roth_erev_polya_mle.md) §3, §7).
+The theorem makes precise what the §2.3 informal "miracle drift" picture says about a single agent in a static environment: the signaling table does *not* converge to a deterministic optimum — it converges to *some* random extreme point on the simplex, picked out by initial bias and the path realization. **The random selection of *which* signaling system is delivered by the Pólya structure of the $f^{(i)}$ urns; the *correctness* of the resulting communication is delivered by the $g^{(i)}$ urns adapting to whatever the $f^{(i)}$ urns drift into** ([roth_erev_polya_mle.md](roth_erev_polya_mle.md) §3, §7).
 
 The independence-of-color condition for $q^*(x)$ is fragile: if agent $j$'s policy is allowed to evolve, $q^*(x)$ becomes a function of $g^{(j)}_t$ — so the urn becomes a *generalized* Pólya urn whose reinforcement probability drifts. The theorem above is the static-partner reduction; the joint-chain extension is the open problem of the next section. The theorem and its empirical validation on a single agent against a frozen partner are in [scripts/study_polya_signaling_convergence.py](scripts/study_polya_signaling_convergence.py); a Kolmogorov–Smirnov test against the Beta marginal of $\mathrm{Dir}(n_0)$ does not reject at $\alpha = 0.005$ at $T = 8{,}000$ episodes across $M = 200$ seeds.
 
@@ -234,14 +234,14 @@ We do not solve this here. The `[1, 0]` empirical pattern (concentrate at a unif
 
 ## Q-learning — deferred
 
-Q-learning's joint chain is analyzed in stochastic-approximation language; deferred — see [TODO_WORKFLOW.md](../TODO_WORKFLOW.md) `todo.qlearning_proof_of_concept`.
+Q-learning's joint chain is analyzed in stochastic-approximation language; deferred — see [TODO_WORKFLOW.md](../../TODO_WORKFLOW.md) `todo.qlearning_proof_of_concept`.
 
 ## Cross-references
 
 | Claim | Code / data |
 |---|---|
-| State space and transition kernel | [rl_signaling/simulation.py](../rl_signaling/simulation.py), [rl_signaling/env.py](../rl_signaling/env.py) |
-| Absorbing $\Leftrightarrow$ deterministic for `UrnAgent` | [rl_signaling/agents.py:304-314](../rl_signaling/agents.py#L304-L314) (clamped update) |
+| State space and transition kernel | [rl_signaling/simulation.py](../../rl_signaling/simulation.py), [rl_signaling/env.py](../../rl_signaling/env.py) |
+| Absorbing $\Leftrightarrow$ deterministic for `UrnAgent` | [rl_signaling/agents.py:304-314](../../rl_signaling/agents.py#L304-L314) (clamped update) |
 | 2304 absorbing states | [scripts/enumerate_absorbing_states.py](scripts/enumerate_absorbing_states.py) §2 |
 | 4 ideal / 324 trap states | [scripts/enumerate_absorbing_states.py](scripts/enumerate_absorbing_states.py) §4 |
 | Mean reward $1/M$ over $\Sigma_{\text{abs}}$ | [scripts/enumerate_absorbing_states.py](scripts/enumerate_absorbing_states.py) §7 |

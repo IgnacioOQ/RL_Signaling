@@ -498,7 +498,7 @@ starts from scratch.
 - Green and orange may dissociate: green can end with *higher NMI* but
   *lower reward* than orange (lock-in to a random bijection vs
   co-adaptation to a useful one). See the
-  [paper-draft note](../analytics/docs/Proof%20of%20Concept%20(Paper%20Draft).md).
+  [paper-draft note](../analytics/math/Proof%20of%20Concept%20(Paper%20Draft).md).
 """
 
 FIG1_CODE = '''\

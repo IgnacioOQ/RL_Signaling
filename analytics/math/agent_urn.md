@@ -11,9 +11,9 @@
 - last_checked: 2026-05-08
 <!-- content -->
 
-The simplest of the three agents in [rl_signaling/agents.py](../rl_signaling/agents.py) is `UrnAgent`, a Roth–Erev–style learner that samples actions in proportion to "urn counts" and reinforces the chosen action by the reward received. This file gives the formal definitions, derives the sampling distribution, walks through the update rule including the non-negativity clamp, and derives the asymptotic behavior under stationary feedback.
+The simplest of the three agents in [rl_signaling/agents.py](../../rl_signaling/agents.py) is `UrnAgent`, a Roth–Erev–style learner that samples actions in proportion to "urn counts" and reinforces the chosen action by the reward received. This file gives the formal definitions, derives the sampling distribution, walks through the update rule including the non-negativity clamp, and derives the asymptotic behavior under stationary feedback.
 
-The implementation is at [rl_signaling/agents.py:162-327](../rl_signaling/agents.py#L162-L327).
+The implementation is at [rl_signaling/agents.py:162-327](../../rl_signaling/agents.py#L162-L327).
 
 ## State of the agent
 
@@ -31,7 +31,7 @@ $$\alpha\text{-urn}[\tilde{\mathbf{o}}] \in \mathbb{R}_{\ge 0}^{M}.$$
 
 Note the **distinct keys** for the two dictionaries: $\sigma\text{-urn}$ is keyed by the direct observation $\mathbf{o}$, while $\alpha\text{-urn}$ is keyed by the post-signal observation $\tilde{\mathbf{o}}$. The two are different lengths whenever signals are present and not all neighbours emit null.
 
-Implementation: `self.signaling_urns: dict` and `self.action_urns: dict` at [rl_signaling/agents.py:221-238](../rl_signaling/agents.py#L221-L238).
+Implementation: `self.signaling_urns: dict` and `self.action_urns: dict` at [rl_signaling/agents.py:221-238](../../rl_signaling/agents.py#L221-L238).
 
 ## Sampling probability
 
@@ -41,11 +41,11 @@ $$\boxed{\; \mathbb{P}[\sigma = a \mid \mathbf{u}] \;=\; \frac{u_a}{\sum_{a'=0}^
 
 The same formula holds for action selection by replacing the alphabet size and the urn role.
 
-Implementation: `np.random.choice(self.n_signaling_actions, p=probability_weights)` at [rl_signaling/agents.py:273](../rl_signaling/agents.py#L273) for signals and [rl_signaling/agents.py:302](../rl_signaling/agents.py#L302) for actions.
+Implementation: `np.random.choice(self.n_signaling_actions, p=probability_weights)` at [rl_signaling/agents.py:273](../../rl_signaling/agents.py#L273) for signals and [rl_signaling/agents.py:302](../../rl_signaling/agents.py#L302) for actions.
 
 ### Edge case: empty urn
 
-If at any point $\sum_a u_a = 0$ — for example, after a long run of negative rewards has clamped every entry to zero — the formula above is undefined (0/0). The code handles this defensively at [rl_signaling/agents.py:267-270](../rl_signaling/agents.py#L267-L270):
+If at any point $\sum_a u_a = 0$ — for example, after a long run of negative rewards has clamped every entry to zero — the formula above is undefined (0/0). The code handles this defensively at [rl_signaling/agents.py:267-270](../../rl_signaling/agents.py#L267-L270):
 
 ```python
 if total_sum <= 0:
@@ -64,7 +64,7 @@ $$\sigma\text{-urn}[\mathbf{o}] := \mathbf{1} = (1, 1, \dots, 1) \in \mathbb{R}^
 
 This makes the very first signal selection at $\mathbf{o}$ uniform over the alphabet. Same logic for $\alpha\text{-urn}$.
 
-Implementation: [rl_signaling/agents.py:259-260](../rl_signaling/agents.py#L259-L260) and [rl_signaling/agents.py:290-291](../rl_signaling/agents.py#L290-L291).
+Implementation: [rl_signaling/agents.py:259-260](../../rl_signaling/agents.py#L259-L260) and [rl_signaling/agents.py:290-291](../../rl_signaling/agents.py#L290-L291).
 
 ## Eager (one-hot) initialization
 
@@ -76,7 +76,7 @@ where $n$ and $m$ are the `initialization_weights` (default $(1, 0)$) and $\pi$ 
 
 With $(n, m) = (1, 0)$ the agent's initial signaling policy is **deterministic**: each observation maps to a unique signal with probability 1. With $(n, m) = (10, 1)$ the policy is mostly deterministic but allows occasional drift; the larger ratio $n/(n + (K-1)m)$ pins the dominant action more strongly.
 
-This is the lever that the `Initializations_test.ipynb` experiment was designed to study. (See Bug 5 in [LEGACY_BUGS_LOG.md](../LEGACY_BUGS_LOG.md) for why the experiment as written silently bypassed this lever.)
+This is the lever that the `Initializations_test.ipynb` experiment was designed to study. (See Bug 5 in [LEGACY_BUGS_LOG.md](../../LEGACY_BUGS_LOG.md) for why the experiment as written silently bypassed this lever.)
 
 ## The Roth–Erev update
 
@@ -84,9 +84,9 @@ The **update** after observing reward $r$ for choosing signal $a$ in state $\mat
 
 $$\boxed{\; \sigma\text{-urn}[\mathbf{o}][a] \;\leftarrow\; \max\big(0,\; \sigma\text{-urn}[\mathbf{o}][a] + r\big). \;}$$
 
-Same rule for action urns with $a \to \alpha$ and $\sigma\text{-urn} \to \alpha\text{-urn}$. Implementation: [rl_signaling/agents.py:304-314](../rl_signaling/agents.py#L304-L314).
+Same rule for action urns with $a \to \alpha$ and $\sigma\text{-urn} \to \alpha\text{-urn}$. Implementation: [rl_signaling/agents.py:304-314](../../rl_signaling/agents.py#L304-L314).
 
-The non-negativity clamp at zero (Phase 1 [Axis 18](../DEBUGGING_PLAN.md#agent-learning-rules)) is what differentiates this from the **un-clamped** Roth–Erev variant. Both are in the literature; the un-clamped variant allows urn weights to go negative (which breaks the probabilistic interpretation of the urn) so it requires a softmax or shift-and-renormalize step in `get_signal`. The project's clamped variant preserves the urn-as-distribution interpretation directly.
+The non-negativity clamp at zero (Phase 1 [Axis 18](../../DEBUGGING_PLAN.md#agent-learning-rules)) is what differentiates this from the **un-clamped** Roth–Erev variant. Both are in the literature; the un-clamped variant allows urn weights to go negative (which breaks the probabilistic interpretation of the urn) so it requires a softmax or shift-and-renormalize step in `get_signal`. The project's clamped variant preserves the urn-as-distribution interpretation directly.
 
 ### Properties of the clamped update
 
@@ -117,7 +117,7 @@ Quantitatively, for the test scenario $u_0 = 1$, $K = 4$, $r = 1$, $n = 250$ (on
 
 $$\mathbb{P}[\sigma = a^\star] = \frac{1 + 250}{4 + 250} = \frac{251}{254} \approx 0.988.$$
 
-This is the basis for the convergence assertion in [tests/test_numerical_sanity.py::test_urn_agent_converges_to_optimal_action_in_full_information](../tests/test_numerical_sanity.py#L186-L228) — the assertion bar is set at $\ge 0.95$ to leave headroom for stochastic exploration that picks suboptimal actions early in training.
+This is the basis for the convergence assertion in [tests/test_numerical_sanity.py::test_urn_agent_converges_to_optimal_action_in_full_information](../../tests/test_numerical_sanity.py#L186-L228) — the assertion bar is set at $\ge 0.95$ to leave headroom for stochastic exploration that picks suboptimal actions early in training.
 
 The full derivation generalizes to time-varying reward streams. If the reward at episode $t$ is $r_t \ge 0$ and the chosen action is $a_t$:
 
@@ -149,7 +149,7 @@ When $r < 0$ and the clamp fires, $\mathrm{urn}[a]$ collapses to zero. Then $\ma
 
 This is structurally different from Q-learning (where $Q[a]$ can dip negative and exploration $\varepsilon > 0$ keeps re-sampling) and TD-learning (where the count-based learning rate $1/N(s,a)$ eventually dominates and pulls $Q$ toward $\mathbb{E}[r]$). For UrnAgent, an action killed by a streak of negative rewards stays dead.
 
-Defensively, `get_signal` and `get_action` reset the *whole row* to ones if `total_sum <= 0` ([rl_signaling/agents.py:267-270](../rl_signaling/agents.py#L267-L270)), so a complete row-collapse cannot occur. But individual actions hitting the absorbing barrier is reachable and not handled.
+Defensively, `get_signal` and `get_action` reset the *whole row* to ones if `total_sum <= 0` ([rl_signaling/agents.py:267-270](../../rl_signaling/agents.py#L267-L270)), so a complete row-collapse cannot occur. But individual actions hitting the absorbing barrier is reachable and not handled.
 
 ### Implication for costly signaling
 
@@ -166,7 +166,7 @@ So roughly $\tfrac{3}{4}$ of episodes (sub-optimal actions are 3/4 of the action
 
 **Recommendation.** The costly-signaling extension should not be applied to UrnAgent in formal experiments. Q-learning and TD-learning handle real-valued and signed rewards natively (the TD update is a stochastic-approximation rule on $\mathbb{R}$, not a probability-counting scheme). If costly UrnAgent results must be reported, label them explicitly as "Roth-Erev with non-negativity-clamped costly extension" so the deviation from the canonical rule is visible to readers.
 
-This concern is recorded as an additional note in [Error 5a of LEGACY_ERRORS_LOG.md](../LEGACY_ERRORS_LOG.md#error-5a--roth-erev-costly-figures-unreproducible-cost-protocol-drift).
+This concern is recorded as an additional note in [Error 5a of LEGACY_ERRORS_LOG.md](../../LEGACY_ERRORS_LOG.md#error-5a--roth-erev-costly-figures-unreproducible-cost-protocol-drift).
 
 ---
 
@@ -188,21 +188,21 @@ This is monotone non-increasing in $|r|$ for negative $r$, hits zero precisely w
 
 | Operation | Code | Effect |
 |---|---|---|
-| Construct | [agents.py:202-238](../rl_signaling/agents.py#L202-L238) | Initializes urns: lazy (`{}`) or eager (one-hot via `create_initial_signals`) |
-| `get_signal(state)` | [agents.py:245-273](../rl_signaling/agents.py#L245-L273) | Lazy-init if missing; sample $\sigma \sim \text{urn}/\text{sum}(\text{urn})$ |
-| `get_action(state)` | [agents.py:275-302](../rl_signaling/agents.py#L275-L302) | Same shape as `get_signal` for $\alpha\text{-urn}$ |
-| `update_signals(state, sig, r)` | [agents.py:304-308](../rl_signaling/agents.py#L304-L308) | $\sigma\text{-urn}[\text{state}][\sigma] \leftarrow \max(0, \sigma\text{-urn}[\text{state}][\sigma] + r)$ |
-| `update_actions(state, act, r)` | [agents.py:310-314](../rl_signaling/agents.py#L310-L314) | $\alpha\text{-urn}[\text{state}][\alpha] \leftarrow \max(0, \alpha\text{-urn}[\text{state}][\alpha] + r)$ |
-| `update_episode(...)` | [agents.py:316-327](../rl_signaling/agents.py#L316-L327) | Calls `update_signals` then `update_actions` (skipping signals if `signal is None`) |
+| Construct | [agents.py:202-238](../../rl_signaling/agents.py#L202-L238) | Initializes urns: lazy (`{}`) or eager (one-hot via `create_initial_signals`) |
+| `get_signal(state)` | [agents.py:245-273](../../rl_signaling/agents.py#L245-L273) | Lazy-init if missing; sample $\sigma \sim \text{urn}/\text{sum}(\text{urn})$ |
+| `get_action(state)` | [agents.py:275-302](../../rl_signaling/agents.py#L275-L302) | Same shape as `get_signal` for $\alpha\text{-urn}$ |
+| `update_signals(state, sig, r)` | [agents.py:304-308](../../rl_signaling/agents.py#L304-L308) | $\sigma\text{-urn}[\text{state}][\sigma] \leftarrow \max(0, \sigma\text{-urn}[\text{state}][\sigma] + r)$ |
+| `update_actions(state, act, r)` | [agents.py:310-314](../../rl_signaling/agents.py#L310-L314) | $\alpha\text{-urn}[\text{state}][\alpha] \leftarrow \max(0, \alpha\text{-urn}[\text{state}][\alpha] + r)$ |
+| `update_episode(...)` | [agents.py:316-327](../../rl_signaling/agents.py#L316-L327) | Calls `update_signals` then `update_actions` (skipping signals if `signal is None`) |
 
 ## Cross-references
 
 | Concept | Code | Spec axis | Test |
 |---|---|---|---|
-| Sampling proportional to urn | [agents.py:272-273](../rl_signaling/agents.py#L272-L273) | Axis 18 | [test_agents.py::test_urn_agent_get_signal_in_range](../tests/test_agents.py#L71-L75) |
-| Clamp at zero | [agents.py:306, 312](../rl_signaling/agents.py#L306) | Axis 18 | [test_agents.py::test_urn_agent_update_clamps_at_zero](../tests/test_agents.py#L78-L82) |
-| Eager initialization | [agents.py:223-235](../rl_signaling/agents.py#L223-L235) | (constructor) | [test_agents.py::test_urn_agent_initialize_true_seeds_action_urns](../tests/test_agents.py#L85-L104) |
-| Convergence on stationary state | this file, "Closed form" | (asymptotic) | [test_numerical_sanity.py::test_urn_agent_converges_to_optimal_action_in_full_information](../tests/test_numerical_sanity.py#L186-L228) |
+| Sampling proportional to urn | [agents.py:272-273](../../rl_signaling/agents.py#L272-L273) | Axis 18 | [test_agents.py::test_urn_agent_get_signal_in_range](../../tests/test_agents.py#L71-L75) |
+| Clamp at zero | [agents.py:306, 312](../../rl_signaling/agents.py#L306) | Axis 18 | [test_agents.py::test_urn_agent_update_clamps_at_zero](../../tests/test_agents.py#L78-L82) |
+| Eager initialization | [agents.py:223-235](../../rl_signaling/agents.py#L223-L235) | (constructor) | [test_agents.py::test_urn_agent_initialize_true_seeds_action_urns](../../tests/test_agents.py#L85-L104) |
+| Convergence on stationary state | this file, "Closed form" | (asymptotic) | [test_numerical_sanity.py::test_urn_agent_converges_to_optimal_action_in_full_information](../../tests/test_numerical_sanity.py#L186-L228) |
 
 ## Independent verification
 

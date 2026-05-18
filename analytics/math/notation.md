@@ -87,8 +87,8 @@ The `TDLearningAgent` is an exception in spirit — its single-episode trajector
 
 When this folder cites a code line, it uses the form:
 
-> See [rl_signaling/info_theory.py:14-16](../rl_signaling/info_theory.py#L14-L16).
+> See [rl_signaling/info_theory.py:14-16](../../rl_signaling/info_theory.py#L14-L16).
 
-The link points at the canonical implementation. Deprecated paths in the same module ([rl_signaling/env.py](../rl_signaling/env.py)'s `NetMultiAgentEnv` and `TempNetMultiAgentEnv`) are noted only when their behavior diverges from the canonical implementation.
+The link points at the canonical implementation. Deprecated paths in the same module ([rl_signaling/env.py](../../rl_signaling/env.py)'s `NetMultiAgentEnv` and `TempNetMultiAgentEnv`) are noted only when their behavior diverges from the canonical implementation.
 
-When this folder cites a Phase 1 confirmed-model axis from [DEBUGGING_PLAN.md](../DEBUGGING_PLAN.md), the citation reads "Axis $n$" and refers to the numbered axes in the [Phase 1 — Confirmed model specification](../DEBUGGING_PLAN.md#phase-1--confirmed-model-specification) section.
+When this folder cites a Phase 1 confirmed-model axis from [DEBUGGING_PLAN.md](../../DEBUGGING_PLAN.md), the citation reads "Axis $n$" and refers to the numbered axes in the [Phase 1 — Confirmed model specification](../../DEBUGGING_PLAN.md#phase-1--confirmed-model-specification) section.

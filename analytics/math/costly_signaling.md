@@ -13,7 +13,7 @@
 
 The base signaling game in [signaling_model.md](signaling_model.md) assumes signals are free. The **costly** extension makes every non-null signal incur a per-agent cost; a special **null** signal lets an agent opt out of speaking at no charge. This file gives the formal definitions, derives the reward arithmetic exactly, and connects the setup to standard signaling-game equilibrium concepts.
 
-The implementation is gated by the boolean `costly_signaling` on `MultiAgentEnv` and threaded through to [rl_signaling/env.py:236-241](../rl_signaling/env.py#L236-L241).
+The implementation is gated by the boolean `costly_signaling` on `MultiAgentEnv` and threaded through to [rl_signaling/env.py:236-241](../../rl_signaling/env.py#L236-L241).
 
 ## Augmenting the alphabet with null
 
@@ -30,19 +30,19 @@ self.n_signaling_actions = n_signaling_actions + 1 if costly_signaling else n_si
 self._null_signal_index   = self.n_signaling_actions - 1 if costly_signaling else None
 ```
 
-(at [rl_signaling/env.py:107-110](../rl_signaling/env.py#L107-L110)).
+(at [rl_signaling/env.py:107-110](../../rl_signaling/env.py#L107-L110)).
 
 So if the user passes `n_signaling_actions=2, costly_signaling=True`, the agents learn over an alphabet of size 3 with the null at index 2.
 
 ## Per-agent cost
 
-Each agent $i$ has a fixed cost $c_i \ge 0$ (Phase 1 [Axis 13](../DEBUGGING_PLAN.md#costly-signaling)). The cost is per-agent — it does **not** depend on which non-null symbol was emitted, nor on the world state, nor on time.
+Each agent $i$ has a fixed cost $c_i \ge 0$ (Phase 1 [Axis 13](../../DEBUGGING_PLAN.md#costly-signaling)). The cost is per-agent — it does **not** depend on which non-null symbol was emitted, nor on the world state, nor on time.
 
 In the experiment notebooks, $c_i$ is sampled uniformly per iteration:
 
 $$c_0 = c_1 = c \sim \text{Uniform}(0, 0.5),$$
 
-so both agents pay the same cost in a given iteration but the cost varies across iterations. See [notebooks/Final_Costly_Signaling_Run_Simulations.ipynb](../notebooks/Final_Costly_Signaling_Run_Simulations.ipynb).
+so both agents pay the same cost in a given iteration but the cost varies across iterations. See [notebooks/Final_Costly_Signaling_Run_Simulations.ipynb](../../notebooks/Final_Costly_Signaling_Run_Simulations.ipynb).
 
 ## Cost flow into the reward
 
@@ -61,9 +61,9 @@ rewards = [
 ]
 ```
 
-at [rl_signaling/env.py:236-241](../rl_signaling/env.py#L236-L241), where `rewards` on the right-hand side is the pre-cost game-dict lookup $G_i(\mathbf{v}, \alpha_i)$.
+at [rl_signaling/env.py:236-241](../../rl_signaling/env.py#L236-L241), where `rewards` on the right-hand side is the pre-cost game-dict lookup $G_i(\mathbf{v}, \alpha_i)$.
 
-The cost is **subtracted from the per-episode reward** (Phase 1 [Axis 14](../DEBUGGING_PLAN.md#costly-signaling)). It is not tracked on a separate accumulator — `rewards_history` records the **net** value $r_i$. Recovering the gross reward and the cost separately would require adding parallel storage, which the env does not currently do.
+The cost is **subtracted from the per-episode reward** (Phase 1 [Axis 14](../../DEBUGGING_PLAN.md#costly-signaling)). It is not tracked on a separate accumulator — `rewards_history` records the **net** value $r_i$. Recovering the gross reward and the cost separately would require adding parallel storage, which the env does not currently do.
 
 ### Worked arithmetic — three cases
 
@@ -75,13 +75,13 @@ Take $G_i(\mathbf{v}, \alpha_i) = 1$ and $c_i = 0.25$. Then:
 | null ($\sigma_i = K$) | $0$ | $1 - 0 = 1.0$ exact |
 | (mixed across two agents — agent 0 non-null, agent 1 null) | $(0.25, 0)$ | $(0.75, 1.0)$ exact |
 
-These three cases are the assertions in [tests/test_numerical_sanity.py](../tests/test_numerical_sanity.py#L114-L150).
+These three cases are the assertions in [tests/test_numerical_sanity.py](../../tests/test_numerical_sanity.py#L114-L150).
 
 ## Suppression on the receiver side
 
-The null signal carries an additional special role: it is **not appended** to the receiver's post-signal observation $\tilde{\mathbf{o}}_i$ (Phase 1 [Axis 5](../DEBUGGING_PLAN.md#signals)). So if agent $j \in \mathcal{N}_i$ emits null, agent $i$ receives no token from $j$ — silence is silent.
+The null signal carries an additional special role: it is **not appended** to the receiver's post-signal observation $\tilde{\mathbf{o}}_i$ (Phase 1 [Axis 5](../../DEBUGGING_PLAN.md#signals)). So if agent $j \in \mathcal{N}_i$ emits null, agent $i$ receives no token from $j$ — silence is silent.
 
-Implementation: the suppression is at [rl_signaling/env.py:274-281](../rl_signaling/env.py#L274-L281):
+Implementation: the suppression is at [rl_signaling/env.py:274-281](../../rl_signaling/env.py#L274-L281):
 
 ```python
 for neig in self.graph.predecessors(i):
@@ -128,7 +128,7 @@ For the formal treatment of these constraints, see [agent_urn.md, "Applicability
 
 The costly-signaling experiment should be reported only for `QLearningAgent` and `TDLearningAgent`. If `UrnAgent` results under costly signaling are produced for any reason, they should be labeled as "Roth-Erev with non-negativity-clamped costly extension" so the deviation from the canonical Roth-Erev rule is visible to readers.
 
-The saved costly Roth-Erev figures in [results/](../results/) (`Roth-Erev_canonical_costly_signal_*.png`, `q_costly_*.png`, `q_learning_costly_single_run*.png`) are flagged in [LEGACY_ERRORS_LOG.md, Error 5a](../LEGACY_ERRORS_LOG.md#error-5a--roth-erev-costly-figures-unreproducible-cost-protocol-drift) for two compounding reasons: (i) the cost protocol drift surfaced during the audit, and (ii) the theoretical incompatibility documented in this section.
+The saved costly Roth-Erev figures in [results/](../../results/) (`Roth-Erev_canonical_costly_signal_*.png`, `q_costly_*.png`, `q_learning_costly_single_run*.png`) are flagged in [LEGACY_ERRORS_LOG.md, Error 5a](../../LEGACY_ERRORS_LOG.md#error-5a--roth-erev-costly-figures-unreproducible-cost-protocol-drift) for two compounding reasons: (i) the cost protocol drift surfaced during the audit, and (ii) the theoretical incompatibility documented in this section.
 
 ## Connection to the classical signaling-game literature
 
@@ -149,11 +149,11 @@ In the project's setup, every agent is *both* sender (it emits $\sigma_i$) and r
 
 The interesting question is whether **self-interested** learning rules can find a separating equilibrium under partial information: agent $j$ learns to emit informative $\sigma_j$ even though doing so does not directly help $j$'s own payoff. Information emerges (or fails to emerge) entirely from the dynamics of the chosen learning rule (Roth–Erev, Q-learning, TD-learning) interacting with the environment.
 
-The hypothesis stated in the [README](../README.md#hypothesis):
+The hypothesis stated in the [README](../../README.md#hypothesis):
 
 > Each agent's payoff is independent of the others' actions, so there is no immediate incentive to communicate meaningfully. The hypothesis is that, despite this, there exists a region of the parameter space in which agents coordinate.
 
-The costly extension lets the experiments locate that region as a function of $c_i$: if $c_i$ is too high, signaling is suppressed and partial information dominates; if $c_i$ is low, signaling emerges (under the right learning rule). The plots in [results/q_costs_vs_nmi.png](../results/q_costs_vs_nmi.png) and [results/q_costly_vs_reward.png](../results/q_costly_vs_reward.png) trace this trade-off empirically.
+The costly extension lets the experiments locate that region as a function of $c_i$: if $c_i$ is too high, signaling is suppressed and partial information dominates; if $c_i$ is low, signaling emerges (under the right learning rule). The plots in [results/q_costs_vs_nmi.png](../../results/q_costs_vs_nmi.png) and [results/q_costly_vs_reward.png](../../results/q_costly_vs_reward.png) trace this trade-off empirically.
 
 ## Numerical worked example — full episode
 
@@ -176,14 +176,14 @@ In one episode:
     - Agent 0: $G_0((0,0), 2) - c_0 \cdot \mathbb{1}[\sigma_0 \neq 2] = 1 - 0.25 \cdot 1 = 0.75$.
     - Agent 1: $G_1((0,0), 2) - c_1 \cdot \mathbb{1}[\sigma_1 \neq 2] = 1 - 0.25 \cdot 0 = 1.0$.
 
-This trace is the test case in [test_costly_signaling_mixed_signals_cost_only_non_null](../tests/test_numerical_sanity.py#L142-L150).
+This trace is the test case in [test_costly_signaling_mixed_signals_cost_only_non_null](../../tests/test_numerical_sanity.py#L142-L150).
 
 ## Cross-references
 
 | Concept | Code | Spec axis |
 |---|---|---|
-| Alphabet augmentation | [env.py:107-110](../rl_signaling/env.py#L107-L110) | Axis 5 |
-| Cost flow | [env.py:236-241](../rl_signaling/env.py#L236-L241) | Axis 14 |
+| Alphabet augmentation | [env.py:107-110](../../rl_signaling/env.py#L107-L110) | Axis 5 |
+| Cost flow | [env.py:236-241](../../rl_signaling/env.py#L236-L241) | Axis 14 |
 | Per-agent scalar cost | constructor argument `signal_cost` to `run_simulation` | Axis 13 |
-| Null is free | [env.py:238](../rl_signaling/env.py#L238) (the `else r` branch) | Axis 15 |
-| Null suppression on receiver side | [env.py:274-281](../rl_signaling/env.py#L274-L281) | Axis 5 |
+| Null is free | [env.py:238](../../rl_signaling/env.py#L238) (the `else r` branch) | Axis 15 |
+| Null suppression on receiver side | [env.py:274-281](../../rl_signaling/env.py#L274-L281) | Axis 5 |

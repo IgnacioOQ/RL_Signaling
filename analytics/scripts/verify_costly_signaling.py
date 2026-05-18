@@ -1,6 +1,6 @@
 """Independent verification of MultiAgentEnv costly-signaling reward arithmetic.
 
-Cross-checks the math derived in analytics/costly_signaling.md:
+Cross-checks the math derived in analytics/math/costly_signaling.md:
 
     r_i = G_i(v, alpha_i) - c_i * 1[sigma_i != null]
 

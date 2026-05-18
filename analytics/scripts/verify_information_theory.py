@@ -1,6 +1,6 @@
 """Independent verification of rl_signaling.info_theory using scipy as the reference.
 
-For each known case in analytics/information_theory.md, computes:
+For each known case in analytics/math/information_theory.md, computes:
   (a) the quantity from `rl_signaling.info_theory`, and
   (b) the same quantity from `scipy.stats.entropy` (independent implementation),
 asserts agreement to absolute tolerance 1e-12, and prints PASS/FAIL.

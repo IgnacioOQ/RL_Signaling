@@ -25,25 +25,25 @@ Read top-to-bottom; each file builds on the previous.
 
 | # | File | Topic | Depends on |
 |---|---|---|---|
-| 0 | [notation.md](notation.md) | Symbols, sets, indexing conventions | — |
-| 1 | [information_theory.md](information_theory.md) | Shannon entropy, mutual information, NMI | notation |
-| 2 | [signaling_model.md](signaling_model.md) | World state, observations, signals, payoff | notation |
-| 3 | [costly_signaling.md](costly_signaling.md) | Null signal, cost flow | signaling_model |
-| 4 | [agent_urn.md](agent_urn.md) | Roth–Erev urn dynamics | signaling_model |
-| 5 | [agent_q_learning.md](agent_q_learning.md) | Single-step TD, exploration decay | signaling_model |
-| 6 | [agent_td_learning.md](agent_td_learning.md) | Bootstrap, count-based α, two-phase update | signaling_model, agent_q_learning |
-| 7 | [exploration_strategies.md](exploration_strategies.md) | ε-greedy, softmax, UCB | agent_q_learning |
-| 8 | [metrics_aggregation.md](metrics_aggregation.md) | Trajectory → CSV column → figure pipeline; producer/consumer trace | all of the above |
-| 9 | [proof_of_concept_markov.md](proof_of_concept_markov.md) | Modeler-perspective Markov chain on policy space; absorbing structure under `[1, 0]`; 2304-state enumeration; what's missing for a convergence proof (Roth-Erev only) | agent_urn, signaling_model, information_theory |
-| 10 | [initialization_basins.md](initialization_basins.md) | Role of `init_weights = (n, m)` as a starting measure; per-cell drift rates; the [1,0] NMI/reward dissociation | proof_of_concept_markov |
-| 11 | [docs/roth_erev_polya_mle.md](docs/roth_erev_polya_mle.md) | Authoritative reference: factored Roth-Erev transition kernel (computed, not estimated); pure-Pólya signaling-urn structure; coarse-grained MLE recipe | proof_of_concept_markov, agent_urn |
-| 12 | [argiento_obstruction.md](argiento_obstruction.md) | Documents the specific step at which Argiento et al. (2009) fails to lift to distributed rewards; three concrete salvage routes | proof_of_concept_markov |
+| 0 | [notation.md](math/notation.md) | Symbols, sets, indexing conventions | — |
+| 1 | [information_theory.md](math/information_theory.md) | Shannon entropy, mutual information, NMI | notation |
+| 2 | [signaling_model.md](math/signaling_model.md) | World state, observations, signals, payoff | notation |
+| 3 | [costly_signaling.md](math/costly_signaling.md) | Null signal, cost flow | signaling_model |
+| 4 | [agent_urn.md](math/agent_urn.md) | Roth–Erev urn dynamics | signaling_model |
+| 5 | [agent_q_learning.md](math/agent_q_learning.md) | Single-step TD, exploration decay | signaling_model |
+| 6 | [agent_td_learning.md](math/agent_td_learning.md) | Bootstrap, count-based α, two-phase update | signaling_model, agent_q_learning |
+| 7 | [exploration_strategies.md](math/exploration_strategies.md) | ε-greedy, softmax, UCB | agent_q_learning |
+| 8 | [metrics_aggregation.md](math/metrics_aggregation.md) | Trajectory → CSV column → figure pipeline; producer/consumer trace | all of the above |
+| 9 | [proof_of_concept_markov.md](math/proof_of_concept_markov.md) | Modeler-perspective Markov chain on policy space; absorbing structure under `[1, 0]`; 2304-state enumeration; what's missing for a convergence proof (Roth-Erev only) | agent_urn, signaling_model, information_theory |
+| 10 | [initialization_basins.md](math/initialization_basins.md) | Role of `init_weights = (n, m)` as a starting measure; per-cell drift rates; the [1,0] NMI/reward dissociation | proof_of_concept_markov |
+| 11 | [math/roth_erev_polya_mle.md](math/roth_erev_polya_mle.md) | Authoritative reference: factored Roth-Erev transition kernel (computed, not estimated); pure-Pólya signaling-urn structure; coarse-grained MLE recipe | proof_of_concept_markov, agent_urn |
+| 12 | [argiento_obstruction.md](math/argiento_obstruction.md) | Documents the specific step at which Argiento et al. (2009) fails to lift to distributed rewards; three concrete salvage routes | proof_of_concept_markov |
 | — | [scripts/](scripts/) | Independent verification scripts | all of the above |
 
 ## Conventions
 
 - **Math notation.** GitHub-flavored markdown with native LaTeX (`$inline$`, `$$display$$`). Identifiers in code are rendered with backticks (e.g. `q_table`).
-- **Log base.** All entropies and mutual informations are in **bits**, i.e. base 2. The code uses `np.log2`. See [information_theory.md](information_theory.md) for the full convention.
+- **Log base.** All entropies and mutual informations are in **bits**, i.e. base 2. The code uses `np.log2`. See [information_theory.md](math/information_theory.md) for the full convention.
 - **Indexing.** Agent index $i \in \{0, 1, \dots, N-1\}$ (zero-based, matching Python). Episode index $t = 1, 2, \dots$ (one-based when discussing time, zero-based when slicing arrays — disambiguated explicitly where it matters).
 - **Tuples vs vectors.** State and observation values are written as tuples $\mathbf{v} = (v_1, \dots, v_n)$. Distributions are written as row vectors $\mathbf{p} = (p_1, \dots, p_k)$.
 - **Probability of an event.** $\mathbb{P}[\cdot]$ for events; $p(\cdot)$ for probability mass functions. $\mathbb{E}[\cdot]$ for expectation.
@@ -78,7 +78,7 @@ Each script prints a one-line PASS/FAIL summary per check and exits non-zero if 
 
 ## Proof-of-concept improvement work (2026-05-09)
 
-Files 9–10 above and the new authoritative reference [docs/roth_erev_polya_mle.md](docs/roth_erev_polya_mle.md) are companions to §2.3 ("Proof of Concept") of [analytics/docs/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf](docs/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf). They formalize the informal "miracle drift" argument and identify what is missing for a convergence-in-probability proof.
+Files 9–10 above and the new authoritative reference [math/roth_erev_polya_mle.md](math/roth_erev_polya_mle.md) are companions to §2.3 ("Proof of Concept") of [manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf](../manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf). They formalize the informal "miracle drift" argument and identify what is missing for a convergence-in-probability proof.
 
 ### Frame: modeler perspective only
 
@@ -86,13 +86,13 @@ Files 9–10 above and the new authoritative reference [docs/roth_erev_polya_mle
 
 ### Files
 
-- **[docs/roth_erev_polya_mle.md](docs/roth_erev_polya_mle.md)** is the new authoritative reference. It gives the **exact factored kernel** (computed, not estimated — every factor is a closed-form rational from the urn fractions), the **pure-Pólya signaling-urn observation** (agent $i$'s reward depends on the signal received from $j(i)$, not on the signal sent by $i$, so the per-color reinforcement probability $q^*(x)$ is constant across colors and the proportion vector converges almost surely to a Dirichlet limit), and the **coarse-grained MLE recipe** (project the trajectory onto a discrete feature — modal map, simplex bin, NMI bin — then count and row-normalize).
+- **[math/roth_erev_polya_mle.md](math/roth_erev_polya_mle.md)** is the new authoritative reference. It gives the **exact factored kernel** (computed, not estimated — every factor is a closed-form rational from the urn fractions), the **pure-Pólya signaling-urn observation** (agent $i$'s reward depends on the signal received from $j(i)$, not on the signal sent by $i$, so the per-color reinforcement probability $q^*(x)$ is constant across colors and the proportion vector converges almost surely to a Dirichlet limit), and the **coarse-grained MLE recipe** (project the trajectory onto a discrete feature — modal map, simplex bin, NMI bin — then count and row-normalize).
 
-- **[proof_of_concept_markov.md](proof_of_concept_markov.md)** is the modeler-perspective formalization for `UrnAgent` (Roth-Erev). It writes out the joint Markov chain explicitly, characterizes the absorbing states under `init_weights = [1, 0]` (counted at $|\Sigma_{\text{abs}}| = 2 \times 24 \times 2 \times 24 = 2304$), exhibits the per-agent reward distribution they induce (4 ideal, 324 trap, mean $1/M$), and identifies what is missing for a full convergence-in-probability statement. References Argiento et al. 2009 for the analogous result in the cooperative-payoff Lewis-Skyrms case.
+- **[proof_of_concept_markov.md](math/proof_of_concept_markov.md)** is the modeler-perspective formalization for `UrnAgent` (Roth-Erev). It writes out the joint Markov chain explicitly, characterizes the absorbing states under `init_weights = [1, 0]` (counted at $|\Sigma_{\text{abs}}| = 2 \times 24 \times 2 \times 24 = 2304$), exhibits the per-agent reward distribution they induce (4 ideal, 324 trap, mean $1/M$), and identifies what is missing for a full convergence-in-probability statement. References Argiento et al. 2009 for the analogous result in the cooperative-payoff Lewis-Skyrms case.
 
-- **[initialization_basins.md](initialization_basins.md)** focuses on the four notebook `init_weights` settings as starting measures on policy space. Tabulates initial sampling probability $n / (n + m)$, explains the NMI = 1 / reward = 0.25 dissociation observed at `[1, 0]`, and gives concrete drift rates for $m > 0$ from the toy single-state model.
+- **[initialization_basins.md](math/initialization_basins.md)** focuses on the four notebook `init_weights` settings as starting measures on policy space. Tabulates initial sampling probability $n / (n + m)$, explains the NMI = 1 / reward = 0.25 dissociation observed at `[1, 0]`, and gives concrete drift rates for $m > 0$ from the toy single-state model.
 
-- **[argiento_obstruction.md](argiento_obstruction.md)** documents the specific step at which Argiento, Pemantle, Skyrms, Volkov (2009)'s convergence theorem for the cooperative-payoff Lewis–Skyrms game fails to lift to the distributed-reward signal-trading game (the joint vector field is no longer a gradient flow without $G_1 = G_2$, so Pemantle's stable-manifold theorem does not apply directly). Identifies three concrete salvage routes: local linear stability at the ideal equilibria, sum-potential test on $W^\Sigma = \sum_i W_i$, and the Benaïm–Hofbauer–Sorin (2005) set-valued / differential-inclusion framework.
+- **[argiento_obstruction.md](math/argiento_obstruction.md)** documents the specific step at which Argiento, Pemantle, Skyrms, Volkov (2009)'s convergence theorem for the cooperative-payoff Lewis–Skyrms game fails to lift to the distributed-reward signal-trading game (the joint vector field is no longer a gradient flow without $G_1 = G_2$, so Pemantle's stable-manifold theorem does not apply directly). Identifies three concrete salvage routes: local linear stability at the ideal equilibria, sum-potential test on $W^\Sigma = \sum_i W_i$, and the Benaïm–Hofbauer–Sorin (2005) set-valued / differential-inclusion framework.
 
 ### Scripts that validate these files
 
@@ -111,7 +111,7 @@ For $m > 0$ the chain is non-absorbing and the toy model proves per-cell concent
 
 ### Roth-Erev first; Q-learning is a separate problem
 
-The files above focus on `UrnAgent` (Roth-Erev) because it has a discrete state space ($\mathbb{Z}_{\ge 0}^{\dots}$ under integer rewards) with a clean Pólya-urn structure. The absorbing-state argument, the factored kernel of [docs/roth_erev_polya_mle.md](docs/roth_erev_polya_mle.md), and the toy model all leverage this discreteness. `QLearningAgent`'s state lives in $\mathbb{R}^{\dots}$ and the constant-$\alpha$ TD update is non-monotone — it requires a different mathematical apparatus (stochastic approximation theory, the ODE limit, Robbins-Monro / Kushner-Clark conditions). [agent_q_learning.md](agent_q_learning.md) gives the per-cell math; the joint-chain analysis is deferred to `TODO_WORKFLOW.md::todo.qlearning_proof_of_concept`.
+The files above focus on `UrnAgent` (Roth-Erev) because it has a discrete state space ($\mathbb{Z}_{\ge 0}^{\dots}$ under integer rewards) with a clean Pólya-urn structure. The absorbing-state argument, the factored kernel of [math/roth_erev_polya_mle.md](math/roth_erev_polya_mle.md), and the toy model all leverage this discreteness. `QLearningAgent`'s state lives in $\mathbb{R}^{\dots}$ and the constant-$\alpha$ TD update is non-monotone — it requires a different mathematical apparatus (stochastic approximation theory, the ODE limit, Robbins-Monro / Kushner-Clark conditions). [agent_q_learning.md](math/agent_q_learning.md) gives the per-cell math; the joint-chain analysis is deferred to `TODO_WORKFLOW.md::todo.qlearning_proof_of_concept`.
 
 ## File metadata schema
 

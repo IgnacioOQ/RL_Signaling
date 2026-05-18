@@ -11,13 +11,13 @@
 - last_checked: 2026-05-09
 <!-- content -->
 
-This file extends [proof_of_concept_markov.md](proof_of_concept_markov.md) by focusing on the **initialization** axis. The notebook [notebooks/Initializations_test.ipynb](../notebooks/Initializations_test.ipynb) varies `init_weights ∈ {(1, 0), (1, 1), (5, 1), (100, 1)}` while fixing everything else; the empirical pattern for `UrnAgent` is striking and seemingly counterintuitive — the strongest pre-seed `(1, 0)` produces the **worst** reward but the **best** NMI. This document explains why, by formalizing what `(n, m)` means as a starting point on the Markov chain studied in [proof_of_concept_markov.md](proof_of_concept_markov.md).
+This file extends [proof_of_concept_markov.md](proof_of_concept_markov.md) by focusing on the **initialization** axis. The notebook [notebooks/Initializations_test.ipynb](../../notebooks/Initializations_test.ipynb) varies `init_weights ∈ {(1, 0), (1, 1), (5, 1), (100, 1)}` while fixing everything else; the empirical pattern for `UrnAgent` is striking and seemingly counterintuitive — the strongest pre-seed `(1, 0)` produces the **worst** reward but the **best** NMI. This document explains why, by formalizing what `(n, m)` means as a starting point on the Markov chain studied in [proof_of_concept_markov.md](proof_of_concept_markov.md).
 
 The companion document [proof_of_concept_markov.md](proof_of_concept_markov.md) defines the chain and its absorbing structure; it should be read first. Here we restrict attention to the initial state $\sigma_0$ and the trajectory of the first few hundred episodes, which is when the basin assignment is determined.
 
 ## What `init_weights = (n, m)` means
 
-The implementation at [rl_signaling/games.py:115-160](../rl_signaling/games.py#L115-L160) constructs each pre-seeded urn cell as
+The implementation at [rl_signaling/games.py:115-160](../../rl_signaling/games.py#L115-L160) constructs each pre-seeded urn cell as
 
 $$\mathbf{u}^{(\text{init})}[\mathbf{o}] \;=\; n \cdot \mathbf{e}_{\pi(\mathbf{o})} \;+\; m \cdot (\mathbf{1} - \mathbf{e}_{\pi(\mathbf{o})}),$$
 
@@ -77,7 +77,7 @@ Because $m = 1 > 0$, no cell is at the absorbing barrier. Every cell can grow in
 
 > **Toy bound.** Consider a single cell of agent $0$'s signaling urn at observation $v_1$. Suppose the partner $1$'s decoding map happens to be such that, when this cell would emit signal $a$, agent $0$'s expected reward conditional on emitting $a$ is some $\bar{r}(a)$. The recursion in [proof_of_concept_markov.md](proof_of_concept_markov.md) shows that, conditional on this partner state, the cell's sampling probability concentrates on $\arg\max_a \bar{r}(a)$.
 
-The non-trivial issue is that the partner state is itself evolving. So the per-cell "hot signal" is a moving target. Under the right luck, the joint state walks into the basin of an ideal absorbing state; under the wrong luck, it walks into the basin of a sub-ideal one. The empirical mean reward at $t = 30{,}000$ for `(1, 1)` is approximately $0.85$ ([LEGACY_BUGS_LOG.md](../LEGACY_BUGS_LOG.md) Bug 5 post-fix), and the empirical NMI is approximately $0.55$ — these are the long-run averages over the realization-by-realization basin assignments.
+The non-trivial issue is that the partner state is itself evolving. So the per-cell "hot signal" is a moving target. Under the right luck, the joint state walks into the basin of an ideal absorbing state; under the wrong luck, it walks into the basin of a sub-ideal one. The empirical mean reward at $t = 30{,}000$ for `(1, 1)` is approximately $0.85$ ([LEGACY_BUGS_LOG.md](../../LEGACY_BUGS_LOG.md) Bug 5 post-fix), and the empirical NMI is approximately $0.55$ — these are the long-run averages over the realization-by-realization basin assignments.
 
 ## The (5, 1) and (100, 1) cases — biased start with $m > 0$
 
@@ -101,7 +101,7 @@ Two takeaways from the toy model:
 1. **The hitting time is dominated by $m$, not by $n$.** Increasing $n$ from $1$ to $100$ at fixed $m = 1$ moves the median hitting time from $104$ to $0$, while the asymptotic value of $\rho_t$ is the same. The reason: $u_{\text{cold}} = m$ is a constant along trajectories, so the only quantity that matters for $\rho_t \to 1$ is whether $u_{\text{hot}, t} \gg m$. Larger $n$ starts further along.
 2. **For the joint chain, the toy bound is a lower bound on convergence speed but not directly on the final policy.** The toy model assumes the hot signal is the *correct* one. In the joint chain, whether a cell's pre-seeded hot is "correct" depends on the partner's decoding state — which is itself drifting. So even at `(100, 1)`, if the random bijection happens to be sub-ideal, the cell pulls toward the sub-ideal action quickly, and the agent has to overcome that bias before learning the correct one.
 
-> **The empirical pattern at `(100, 1)` for `UrnAgent`** ([LEGACY_BUGS_LOG.md](../LEGACY_BUGS_LOG.md) Bug 5 post-fix observation): reward climbs $0.20 \to 0.95\text{–}1.0$ across $30{,}000$ episodes, NMI stays around $0.9$. The slow climb in reward (compared to the toy hitting time of $0$ for $(100, 1)$) is precisely because the joint chain has to escape the partial bias toward the random-shuffle bijection, which the toy model abstracts away.
+> **The empirical pattern at `(100, 1)` for `UrnAgent`** ([LEGACY_BUGS_LOG.md](../../LEGACY_BUGS_LOG.md) Bug 5 post-fix observation): reward climbs $0.20 \to 0.95\text{–}1.0$ across $30{,}000$ episodes, NMI stays around $0.9$. The slow climb in reward (compared to the toy hitting time of $0$ for $(100, 1)$) is precisely because the joint chain has to escape the partial bias toward the random-shuffle bijection, which the toy model abstracts away.
 
 ## "Distance to ideal set" framing
 
@@ -125,7 +125,7 @@ The key qualitative feature: for $m > 0$, $d_t$ has positive probability of decr
 
 ## Q-learning — deferred
 
-Q-learning's joint chain is analyzed in stochastic-approximation language; deferred — see [TODO_WORKFLOW.md](../TODO_WORKFLOW.md) `todo.qlearning_proof_of_concept`.
+Q-learning's joint chain is analyzed in stochastic-approximation language; deferred — see [TODO_WORKFLOW.md](../../TODO_WORKFLOW.md) `todo.qlearning_proof_of_concept`.
 
 ## Practical takeaway for the proof of concept
 
@@ -137,7 +137,7 @@ For improving §2.3, the cleanest version of the proof of concept is:
 
 1. **Restrict to $m > 0$.** Then the chain is non-absorbing.
 2. **Adopt the toy single-state reduction** to show per-cell concentration toward the locally-optimal action. This is the formal sub-martingale convergence.
-3. **State the open problem** as: lift the per-cell convergence to the joint chain. Cite [Argiento et al., 2009](docs/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf) reference [1] for the analogous lifting in the cooperative-payoff Lewis-Skyrms case.
+3. **State the open problem** as: lift the per-cell convergence to the joint chain. Cite [Argiento et al., 2009](../../manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf) reference [1] for the analogous lifting in the cooperative-payoff Lewis-Skyrms case.
 
 The `[1, 0]` figure in §2.3 (Figure 1) should be **labeled as a control**: a configuration that *is* trivially convergent (it doesn't move), but reveals the absorbing-state geometry rather than the drift mechanism. The figure is informative *because* it is the limit case, not because it is a successful proof of concept.
 

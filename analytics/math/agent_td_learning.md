@@ -11,7 +11,7 @@
 - last_checked: 2026-05-08
 <!-- content -->
 
-The `TDLearningAgent` in [rl_signaling/agents.py:498-672](../rl_signaling/agents.py#L498-L672) is the only agent in the project that uses **bootstrapping** — its update at the signal phase reads the action-phase Q-values to compute a discounted future return. Unlike `QLearningAgent` it has a single Q-table shared across both phases, and a count-based learning rate $1/N(s,a)$ that satisfies the Robbins–Monro condition.
+The `TDLearningAgent` in [rl_signaling/agents.py:498-672](../../rl_signaling/agents.py#L498-L672) is the only agent in the project that uses **bootstrapping** — its update at the signal phase reads the action-phase Q-values to compute a discounted future return. Unlike `QLearningAgent` it has a single Q-table shared across both phases, and a count-based learning rate $1/N(s,a)$ that satisfies the Robbins–Monro condition.
 
 This file derives the bootstrap formula, walks through the two-phase update, derives the equivalence between the canonical and legacy update orderings, and connects the design to the classical RL convergence theory.
 
@@ -27,13 +27,13 @@ $$Q[\mathbf{o}] \in \mathbb{R}^{n_{\text{actions}}} \quad \text{for signal-phase
 
 $$Q[\tilde{\mathbf{o}}] \in \mathbb{R}^{n_{\text{actions}}} \quad \text{for action-phase rows}.$$
 
-Phase 1 [Axis 20](../DEBUGGING_PLAN.md#agent-learning-rules) confirms this is intentional. The two phases never collide because $\mathbf{o}$ and $\tilde{\mathbf{o}}$ have **different tuple lengths** — $\tilde{\mathbf{o}}$ appends 0..$|\mathcal{N}_i|$ extra tokens to $\mathbf{o}$ — so they hash to different dict slots.
+Phase 1 [Axis 20](../../DEBUGGING_PLAN.md#agent-learning-rules) confirms this is intentional. The two phases never collide because $\mathbf{o}$ and $\tilde{\mathbf{o}}$ have **different tuple lengths** — $\tilde{\mathbf{o}}$ appends 0..$|\mathcal{N}_i|$ extra tokens to $\mathbf{o}$ — so they hash to different dict slots.
 
 A parallel **count table** $N(s, a)$ counts how many times action $a$ has been selected from state $s$:
 
 $$N : \mathcal{S} \to \mathbb{N}^{n_{\text{actions}}}, \qquad N[s][a] := \#\{ t : (s_t, a_t) = (s, a) \}.$$
 
-Implementation: `self.q_table` and `self.action_counts` at [rl_signaling/agents.py:565-566](../rl_signaling/agents.py#L565-L566). Both are lazy-initialized on first access.
+Implementation: `self.q_table` and `self.action_counts` at [rl_signaling/agents.py:565-566](../../rl_signaling/agents.py#L565-L566). Both are lazy-initialized on first access.
 
 The **action subset** for the two phases is encoded by `n_signaling_actions` and `n_final_actions`:
 
@@ -69,7 +69,7 @@ td_error = td_target - self.q_table[state][action]
 self.q_table[state][action] += td_error / self.action_counts[state][action]
 ```
 
-at [rl_signaling/agents.py:624-634](../rl_signaling/agents.py#L624-L634).
+at [rl_signaling/agents.py:624-634](../../rl_signaling/agents.py#L624-L634).
 
 The denominator `self.action_counts[state][action]` is **at least 1** when the update is called, because `get_action` (which incremented the count) has already run and the count is read after that increment.
 
@@ -108,7 +108,7 @@ def update_episode(self, signal_state, signal, action_state, action, reward):
                 reward=reward, next_state=action_state, done=True)
 ```
 
-at [rl_signaling/agents.py:641-672](../rl_signaling/agents.py#L641-L672).
+at [rl_signaling/agents.py:641-672](../../rl_signaling/agents.py#L641-L672).
 
 Decomposing the two calls:
 
@@ -150,7 +150,7 @@ $$\big[-c_i \mathbb{1}[\sigma \neq \nu]\big] + \big[G_i(\mathbf{v}, \alpha)\big]
 
 Under $\gamma = 1$ TD(0) only the *total* return matters — the per-step decomposition is invariant to how the total is sliced. So $r_{\text{signal}} = 0$ + $r_{\text{action}} = r$ produces the same Q-values asymptotically as $r_{\text{signal}} = -c$ + $r_{\text{action}} = G$. The chosen split is the cleaner one: it matches the env's API (single per-episode reward) and avoids duplicating the cost-tracking logic.
 
-For $\gamma < 1$ the equivalence breaks. The current code uses $\gamma = 1$ default ([rl_signaling/agents.py:540](../rl_signaling/agents.py#L540)) so this is fine; the parameter optimization notebook explores $\gamma < 1$ and should be aware of the asymmetry it introduces.
+For $\gamma < 1$ the equivalence breaks. The current code uses $\gamma = 1$ default ([rl_signaling/agents.py:540](../../rl_signaling/agents.py#L540)) so this is fine; the parameter optimization notebook explores $\gamma < 1$ and should be aware of the asymmetry it introduces.
 
 ## Order of updates within an episode (canonical vs legacy)
 
@@ -166,13 +166,13 @@ get_signal → update_signal → get_action → update_action
 
 So the signal-phase update fires *before* `get_action` runs; that means `get_action` sees an exploration rate that has already been decayed once.
 
-The two orderings produce slightly different Q-trajectories. The README's [Status and known limitations](../README.md#status-and-known-limitations) section documents this: "the action-phase `get_action` sees a slightly higher `exploration_rate` in the new flow, which causes roughly 1 in 100 episodes to take a different explore/exploit branch." The Q-value math itself (the formulas above) is identical between the two flows; only the ε-decay sequencing differs.
+The two orderings produce slightly different Q-trajectories. The README's [Status and known limitations](../../README.md#status-and-known-limitations) section documents this: "the action-phase `get_action` sees a slightly higher `exploration_rate` in the new flow, which causes roughly 1 in 100 episodes to take a different explore/exploit branch." The Q-value math itself (the formulas above) is identical between the two flows; only the ε-decay sequencing differs.
 
-The golden-run baseline ([tests/golden/baseline.json](../tests/golden/baseline.json)) is captured against the canonical flow.
+The golden-run baseline ([tests/golden/baseline.json](../../tests/golden/baseline.json)) is captured against the canonical flow.
 
 ## Bootstrap with $\gamma = 1$, reward = 0, $\max Q(\text{next}) = 1$
 
-Test case [test_td_one_step_bootstrap_with_unit_count](../tests/test_numerical_sanity.py#L101-L121):
+Test case [test_td_one_step_bootstrap_with_unit_count](../../tests/test_numerical_sanity.py#L101-L121):
 
 Setup: $Q[(0,)][0] = 0$, $Q[(1,)] = (1, 0, 0, 0)$, $N[(0,)][0] = 1$, $\gamma = 1$. Call `update(state=(0,), action=0, reward=0, next_state=(1,), done=False)`.
 
@@ -188,7 +188,7 @@ So $Q[(0,)][0]$ jumps from 0 to 1 in a single step. This is the bootstrap propag
 
 ## Terminal update: $\gamma = 1$, reward = 1, done = True
 
-Test case [test_td_one_step_terminal_no_bootstrap](../tests/test_numerical_sanity.py#L124-L134):
+Test case [test_td_one_step_terminal_no_bootstrap](../../tests/test_numerical_sanity.py#L124-L134):
 
 Setup: $Q[(0,)][0] = 0$, $N[(0,)][0] = 1$. Call `update(state=(0,), action=0, reward=1, next_state=(0,), done=True)`.
 
@@ -206,7 +206,7 @@ Same numerical result as the bootstrap case, but for a different reason: the boo
 
 The action-phase update has `next_state=action_state` (same as `state`) — the next state field is unused because `done=True`, but the code still passes a value. Why?
 
-Because the lazy-init guard at [agents.py:620-622](../rl_signaling/agents.py#L620-L622) reads:
+Because the lazy-init guard at [agents.py:620-622](../../rl_signaling/agents.py#L620-L622) reads:
 
 ```python
 if next_state not in self.q_table:
@@ -234,21 +234,21 @@ For bootstrap updates the rate is the same in the limit (Watkins–Dayan), but t
 
 | Operation | Code | Effect |
 |---|---|---|
-| Construct | [agents.py:533-566](../rl_signaling/agents.py#L533-L566) | Initializes Q-table and counts (lazy); both legacy `n_actions` and canonical `n_signaling_actions / n_final_actions` constructor forms supported |
-| `get_signal(state)` | [agents.py:568-570](../rl_signaling/agents.py#L568-L570) | Calls `get_action(state, available_actions=range(n_signaling_actions))` |
-| `get_action(state, available_actions)` | [agents.py:572-603](../rl_signaling/agents.py#L572-L603) | Lazy-init; `_select_action` over the action mask; increment counts |
-| `update(state, action, reward, next_state, done)` | [agents.py:605-639](../rl_signaling/agents.py#L605-L639) | TD-bootstrap update with $1/N$ learning rate; decay exploration rate |
-| `update_episode(...)` | [agents.py:641-672](../rl_signaling/agents.py#L641-L672) | Two `update` calls: signal-phase bootstrap + action-phase terminal |
+| Construct | [agents.py:533-566](../../rl_signaling/agents.py#L533-L566) | Initializes Q-table and counts (lazy); both legacy `n_actions` and canonical `n_signaling_actions / n_final_actions` constructor forms supported |
+| `get_signal(state)` | [agents.py:568-570](../../rl_signaling/agents.py#L568-L570) | Calls `get_action(state, available_actions=range(n_signaling_actions))` |
+| `get_action(state, available_actions)` | [agents.py:572-603](../../rl_signaling/agents.py#L572-L603) | Lazy-init; `_select_action` over the action mask; increment counts |
+| `update(state, action, reward, next_state, done)` | [agents.py:605-639](../../rl_signaling/agents.py#L605-L639) | TD-bootstrap update with $1/N$ learning rate; decay exploration rate |
+| `update_episode(...)` | [agents.py:641-672](../../rl_signaling/agents.py#L641-L672) | Two `update` calls: signal-phase bootstrap + action-phase terminal |
 
 ## Cross-references
 
 | Concept | Code | Spec axis | Test |
 |---|---|---|---|
-| Single shared Q-table | [agents.py:565](../rl_signaling/agents.py#L565) | Axis 20 | (structural) |
-| Bootstrap from `next_state` | [agents.py:624-626](../rl_signaling/agents.py#L624-L626) | Axis 20 | [test_numerical_sanity.py::test_td_one_step_bootstrap_with_unit_count](../tests/test_numerical_sanity.py#L101-L121) |
-| Count-based $1/N(s,a)$ | [agents.py:634](../rl_signaling/agents.py#L634) | Axis 20 | (covered by both td tests) |
-| Terminal target | [agents.py:625](../rl_signaling/agents.py#L625) (the `if not done`) | Axis 20 | [test_numerical_sanity.py::test_td_one_step_terminal_no_bootstrap](../tests/test_numerical_sanity.py#L124-L134) |
-| Two updates per episode | [agents.py:641-672](../rl_signaling/agents.py#L641-L672) | Axis 20 | [test_agents.py::test_td_learning_update_episode_runs_two_updates](../tests/test_agents.py#L169-L183) |
+| Single shared Q-table | [agents.py:565](../../rl_signaling/agents.py#L565) | Axis 20 | (structural) |
+| Bootstrap from `next_state` | [agents.py:624-626](../../rl_signaling/agents.py#L624-L626) | Axis 20 | [test_numerical_sanity.py::test_td_one_step_bootstrap_with_unit_count](../../tests/test_numerical_sanity.py#L101-L121) |
+| Count-based $1/N(s,a)$ | [agents.py:634](../../rl_signaling/agents.py#L634) | Axis 20 | (covered by both td tests) |
+| Terminal target | [agents.py:625](../../rl_signaling/agents.py#L625) (the `if not done`) | Axis 20 | [test_numerical_sanity.py::test_td_one_step_terminal_no_bootstrap](../../tests/test_numerical_sanity.py#L124-L134) |
+| Two updates per episode | [agents.py:641-672](../../rl_signaling/agents.py#L641-L672) | Axis 20 | [test_agents.py::test_td_learning_update_episode_runs_two_updates](../../tests/test_agents.py#L169-L183) |
 
 ## Independent verification
 

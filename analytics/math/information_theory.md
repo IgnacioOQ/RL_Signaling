@@ -11,7 +11,7 @@
 - last_checked: 2026-05-08
 <!-- content -->
 
-This file develops the information-theoretic quantities the project uses to measure how much information a signal carries about an agent's observation. The metrics are computed by [rl_signaling/info_theory.py](../rl_signaling/info_theory.py) and consumed by every notebook that records "NMI" as a column in a results CSV.
+This file develops the information-theoretic quantities the project uses to measure how much information a signal carries about an agent's observation. The metrics are computed by [rl_signaling/info_theory.py](../../rl_signaling/info_theory.py) and consumed by every notebook that records "NMI" as a column in a results CSV.
 
 The intended interpretation throughout: $O$ is the agent's **observation** of the world state; $S$ is the **signal** the agent emits in response. NMI measures how much of the observation's entropy is explained by the signal — equivalently, "how informative is the signal about what the agent saw?".
 
@@ -62,7 +62,7 @@ $$\lim_{p \to 0^+} p \log p = 0.$$
 
 ### Implementation
 
-The package's helper [_compute_entropy](../rl_signaling/info_theory.py#L14-L16) implements the definition above:
+The package's helper [_compute_entropy](../../rl_signaling/info_theory.py#L14-L16) implements the definition above:
 
 ```python
 def _compute_entropy(probabilities):
@@ -81,7 +81,7 @@ For $X$ uniform on four values, $p = (1/4, 1/4, 1/4, 1/4)$:
 
 $$H(X) = -4 \cdot \tfrac{1}{4} \log_2 \tfrac{1}{4} = \log_2 4 = 2 \text{ bits.}$$
 
-These two equalities are the test cases in [tests/test_numerical_sanity.py::test_entropy_is_in_bits_log_base_2](../tests/test_numerical_sanity.py#L23-L33).
+These two equalities are the test cases in [tests/test_numerical_sanity.py::test_entropy_is_in_bits_log_base_2](../../tests/test_numerical_sanity.py#L23-L33).
 
 ## Joint entropy
 
@@ -155,7 +155,7 @@ $$I(X ; Y) = \sum_{x, y} p(x, y) \log_2 \frac{p(x, y)}{p_X(x) \, p_Y(y)}.$$
 
 ### Implementation
 
-The package implements [compute_mutual_information](../rl_signaling/info_theory.py#L19-L61) using the form $I(S; O) = H(S) - H(S \mid O)$:
+The package implements [compute_mutual_information](../../rl_signaling/info_theory.py#L19-L61) using the form $I(S; O) = H(S) - H(S \mid O)$:
 
 ```python
 H_S = _compute_entropy(P_S.values())
@@ -193,15 +193,15 @@ $$\mathrm{NMI}_{\text{arith}}(X; Y) := \frac{2 I(X; Y)}{H(X) + H(Y)}.$$
 
 Range: $[0, 1]$. Symmetric. Also called the "redundancy."
 
-The project's choice of asymmetric output-side normalization is locked in by [Axis 21](../DEBUGGING_PLAN.md#nmi-and-exploration-details) of the Phase 1 confirmed model specification.
+The project's choice of asymmetric output-side normalization is locked in by [Axis 21](../../DEBUGGING_PLAN.md#nmi-and-exploration-details) of the Phase 1 confirmed model specification.
 
 ### Edge case: zero-entropy denominator
 
-If $H(Y) = 0$ — meaning $Y$ is constant — the asymmetric NMI is undefined ($0/0$). The project's convention ([Axis 22](../DEBUGGING_PLAN.md#nmi-and-exploration-details)) is
+If $H(Y) = 0$ — meaning $Y$ is constant — the asymmetric NMI is undefined ($0/0$). The project's convention ([Axis 22](../../DEBUGGING_PLAN.md#nmi-and-exploration-details)) is
 
 $$\mathrm{NMI}(X; Y) := 0 \quad \text{when} \quad H(Y) = 0.$$
 
-Implementation: the line `NMI = I_S_O / H_O if H_O > 0 else 0` at [rl_signaling/info_theory.py:59](../rl_signaling/info_theory.py#L59).
+Implementation: the line `NMI = I_S_O / H_O if H_O > 0 else 0` at [rl_signaling/info_theory.py:59](../../rl_signaling/info_theory.py#L59).
 
 ### Empirical estimation
 
@@ -247,7 +247,7 @@ $$I(S ; O) = H(S) - H(S \mid O) = 1 - 0 = 1 \text{ bit.}$$
 
 $$\mathrm{NMI}(S; O) = \frac{I(S; O)}{H(O)} = \frac{1}{1} = 1.$$
 
-This is the test case in [tests/test_numerical_sanity.py::test_perfect_2x2_correlation_nmi_is_one_by_hand](../tests/test_numerical_sanity.py#L36-L51).
+This is the test case in [tests/test_numerical_sanity.py::test_perfect_2x2_correlation_nmi_is_one_by_hand](../../tests/test_numerical_sanity.py#L36-L51).
 
 ## Worked numerical example: NMI = 0 (independence)
 
@@ -261,16 +261,16 @@ $$H(S \mid O) = \tfrac{1}{2} \cdot 1 + \tfrac{1}{2} \cdot 1 = 1 \text{ bit} = H(
 
 $$I(S ; O) = H(S) - H(S \mid O) = 1 - 1 = 0.$$
 
-$\mathrm{NMI} = 0/1 = 0$. The signal carries no information about the observation. Test: [tests/test_info_theory.py::test_independence_gives_zero_nmi](../tests/test_info_theory.py#L22-L30).
+$\mathrm{NMI} = 0/1 = 0$. The signal carries no information about the observation. Test: [tests/test_info_theory.py::test_independence_gives_zero_nmi](../../tests/test_info_theory.py#L22-L30).
 
 ## Cross-references
 
 | Quantity | Definition | Code | Test |
 |---|---|---|---|
-| Shannon entropy $H$ | this file, "Shannon entropy" | [rl_signaling/info_theory.py:14-16](../rl_signaling/info_theory.py#L14-L16) | [test_numerical_sanity.py::test_entropy_is_in_bits_log_base_2](../tests/test_numerical_sanity.py#L23-L33) |
-| Mutual information $I$ | this file, "Mutual information" | [rl_signaling/info_theory.py:19-61](../rl_signaling/info_theory.py#L19-L61) | [test_info_theory.py](../tests/test_info_theory.py), [test_numerical_sanity.py::test_perfect_2x2_correlation_nmi_is_one_by_hand](../tests/test_numerical_sanity.py#L36-L51) |
-| NMI (asymmetric) | this file, "Normalized mutual information" | [rl_signaling/info_theory.py:59](../rl_signaling/info_theory.py#L59) | [test_info_theory.py](../tests/test_info_theory.py) |
-| $H(O) = 0$ → NMI := 0 | this file, "Edge case" | [rl_signaling/info_theory.py:59](../rl_signaling/info_theory.py#L59) | [test_info_theory.py::test_single_observation_gives_zero_nmi](../tests/test_info_theory.py#L33-L37) |
+| Shannon entropy $H$ | this file, "Shannon entropy" | [rl_signaling/info_theory.py:14-16](../../rl_signaling/info_theory.py#L14-L16) | [test_numerical_sanity.py::test_entropy_is_in_bits_log_base_2](../../tests/test_numerical_sanity.py#L23-L33) |
+| Mutual information $I$ | this file, "Mutual information" | [rl_signaling/info_theory.py:19-61](../../rl_signaling/info_theory.py#L19-L61) | [test_info_theory.py](../../tests/test_info_theory.py), [test_numerical_sanity.py::test_perfect_2x2_correlation_nmi_is_one_by_hand](../../tests/test_numerical_sanity.py#L36-L51) |
+| NMI (asymmetric) | this file, "Normalized mutual information" | [rl_signaling/info_theory.py:59](../../rl_signaling/info_theory.py#L59) | [test_info_theory.py](../../tests/test_info_theory.py) |
+| $H(O) = 0$ → NMI := 0 | this file, "Edge case" | [rl_signaling/info_theory.py:59](../../rl_signaling/info_theory.py#L59) | [test_info_theory.py::test_single_observation_gives_zero_nmi](../../tests/test_info_theory.py#L33-L37) |
 
 ## Independent verification
 

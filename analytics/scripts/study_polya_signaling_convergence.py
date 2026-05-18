@@ -1,7 +1,7 @@
 """Empirical validation of the Pure-Pólya signaling-urn convergence theorem.
 
-Companion to §3 of `analytics/docs/roth_erev_polya_mle.md` and §"Pure-Pólya
-signaling-urn convergence" of `analytics/proof_of_concept_markov.md`.
+Companion to §3 of `analytics/math/roth_erev_polya_mle.md` and §"Pure-Pólya
+signaling-urn convergence" of `analytics/math/proof_of_concept_markov.md`.
 
 The theorem (informal): fix the partner's full policy and agent i's action
 policy g^(i). Then for each observation x, the row f^(i)_t[x] of agent i's

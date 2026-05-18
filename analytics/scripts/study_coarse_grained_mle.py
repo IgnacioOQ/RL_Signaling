@@ -1,6 +1,6 @@
 """Coarse-grained MLE: empirical transition matrix on a discrete projection.
 
-Companion to §4–5 of `analytics/docs/roth_erev_polya_mle.md`. The full Markov
+Companion to §4–5 of `analytics/math/roth_erev_polya_mle.md`. The full Markov
 chain on policy space is non-recurrent on the integer lattice, so the naive
 counting MLE fails (every state is visited at most once). The right object is
 the chain *projected* through a discrete feature map, where plain counting

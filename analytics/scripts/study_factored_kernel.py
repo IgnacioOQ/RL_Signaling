@@ -1,6 +1,6 @@
 """Exact factored Markov-chain kernel for the 2-agent Roth-Erev signal-trading game.
 
-Modeler-perspective companion to §2 of `analytics/docs/roth_erev_polya_mle.md`.
+Modeler-perspective companion to §2 of `analytics/math/roth_erev_polya_mle.md`.
 The reference doc proves that the one-step kernel of the chain factorizes as a
 product of urn-fraction terms times deterministic indicators, so the kernel is
 *computed*, not estimated. This script ports the doc's `one_step_kernel_value`
@@ -21,7 +21,7 @@ against the simulator at three layers:
               actions; rewards and updates are deterministic given those),
               compute one_step_kernel_value for each, verify sum = 1.
 
-Notation matches `analytics/docs/roth_erev_polya_mle.md`. Q-learning analysis
+Notation matches `analytics/math/roth_erev_polya_mle.md`. Q-learning analysis
 is deferred — see `TODO_WORKFLOW.md::todo.qlearning_proof_of_concept`.
 
 Run:

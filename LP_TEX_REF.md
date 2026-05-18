@@ -2,7 +2,7 @@
 - status: active
 - type: reference
 - id: rl_signaling.lp_tex_ref
-- description: Local LaTeX conventions used by analytics/docs/main.tex (PHOS-17993, "Signaling Games with Distributed Rewards"). Authoring rules, citation patterns, label prefixes, cross-reference style, sectioning, and known gotchas. Companion to (and deliberate deviation from) content/how-to/LATEX_WRITING_SKILL.md in the KB.
+- description: Local LaTeX conventions used by manuscript/main.tex (PHOS-17993, "Signaling Games with Distributed Rewards"). Authoring rules, citation patterns, label prefixes, cross-reference style, sectioning, and known gotchas. Companion to (and deliberate deviation from) content/how-to/LATEX_WRITING_SKILL.md in the KB.
 - label: [reference, project]
 - injection: directive
 - volatility: evolving
@@ -10,14 +10,14 @@
 - last_checked: 2026-05-18
 <!-- content -->
 
-This file is the project-local source of truth for how the LaTeX paper at [analytics/docs/main.tex](analytics/docs/main.tex) is written. The KB's [content/how-to/LATEX_WRITING_SKILL.md](https://example/LATEX_WRITING_SKILL.md) prescribes more disciplined conventions (sentence-per-line, `\cref{}`, `authorlastname_year_keyword`); those are deliberately **not** adopted here, because the existing paper has its own established style and PHOS-17993 is a one-shot philosophy submission, not a long-lived multi-paper repo. The matching call lives in the memory file [`feedback_paper_work.md`](.claude/projects/.../memory/feedback_paper_work.md) Rule 8. If you find yourself wanting to refactor `main.tex` to "match the KB", stop — re-read Rule 8 first.
+This file is the project-local source of truth for how the LaTeX paper at [manuscript/main.tex](manuscript/main.tex) is written. The KB's [content/how-to/LATEX_WRITING_SKILL.md](https://example/LATEX_WRITING_SKILL.md) prescribes more disciplined conventions (sentence-per-line, `\cref{}`, `authorlastname_year_keyword`); those are deliberately **not** adopted here, because the existing paper has its own established style and PHOS-17993 is a one-shot philosophy submission, not a long-lived multi-paper repo. The matching call lives in the memory file [`feedback_paper_work.md`](.claude/projects/.../memory/feedback_paper_work.md) Rule 8. If you find yourself wanting to refactor `main.tex` to "match the KB", stop — re-read Rule 8 first.
 
 ## File layout
 
-- **`analytics/docs/main.tex`** — the canonical paper source. ~640 lines, 12pt article, single-file body (no `\input{}` includes used yet).
-- **`analytics/docs/main_v2.tex`** — a working copy of `main.tex` for in-progress edits. The "v2" is a versioning marker, not a fork; once a `_v2` revision is accepted, the older file is deleted and `_v2` renames to the canonical name (see the 2026-05-18 V1 → V2 transition of `Proof of Concept (Paper Draft).md` for the precedent).
-- **`analytics/docs/section_2_3.tex`** — drafted standalone LaTeX of §2.3 (Proof of Concept). Built originally as a drop-in `\input{}` fragment for the host paper. When porting into `main.tex` / `main_v2.tex`, translate any KB-style drift it carries (e.g. `\autoref{}` → `\ref{}`, lowercase `argiento2009` → `Argiento2009`) — see "Known drift in `section_2_3.tex`" below.
-- **`analytics/docs/References.bib`** — the BibTeX file wired up by `\bibliography{References}` (line 643 of `main.tex`). 257 entries (a large personal / cross-paper library); only ~28 of them are actually `\cite`d from `main.tex`. Before adding a new `\cite` key, grep this file first — odds are good the author you want is already in there under some existing key, possibly from an unrelated paper.
+- **`manuscript/main.tex`** — the canonical paper source. ~640 lines, 12pt article, single-file body (no `\input{}` includes used yet).
+- **`manuscript/main_v2.tex`** — a working copy of `main.tex` for in-progress edits. The "v2" is a versioning marker, not a fork; once a `_v2` revision is accepted, the older file is deleted and `_v2` renames to the canonical name (see the 2026-05-18 V1 → V2 transition of `Proof of Concept (Paper Draft).md` for the precedent).
+- **`manuscript/section_2_3.tex`** — drafted standalone LaTeX of §2.3 (Proof of Concept). Built originally as a drop-in `\input{}` fragment for the host paper. When porting into `main.tex` / `main_v2.tex`, translate any KB-style drift it carries (e.g. `\autoref{}` → `\ref{}`, lowercase `argiento2009` → `Argiento2009`) — see "Known drift in `section_2_3.tex`" below.
+- **`manuscript/References.bib`** — the BibTeX file wired up by `\bibliography{References}` (line 643 of `main.tex`). 257 entries (a large personal / cross-paper library); only ~28 of them are actually `\cite`d from `main.tex`. Before adding a new `\cite` key, grep this file first — odds are good the author you want is already in there under some existing key, possibly from an unrelated paper.
 
 ## Section structure of `main.tex`
 
@@ -148,13 +148,13 @@ Pemantle is **not** currently cited in `main.tex`, and `References.bib` has no s
 
 ```latex
 \graphicspath{%
-  {../../results/legacy/plots/}%
-  {../../results/proof_of_concept/}%
-  {../../results/new_code/plots/}%
+  {../results/legacy/plots/}%
+  {../results/proof_of_concept/}%
+  {../results/new_code/plots/}%
 }
 ```
 
-This lets every `\includegraphics{}` in the body use a **bare filename** — pdflatex looks the file up in each path in order, taking the first hit. Paths are relative to the `.tex` file's directory (`analytics/docs/`).
+This lets every `\includegraphics{}` in the body use a **bare filename** — pdflatex looks the file up in each path in order, taking the first hit. Paths are relative to the `.tex` file's directory (`manuscript/`).
 
 **Implication**: figures with name collisions across the three directories would resolve to `legacy/plots/` first. As of 2026-05-18 no collisions exist. If a future figure name collides, either rename one of the files or add a more specific path prefix in `\includegraphics{path/file.png}`.
 
@@ -201,9 +201,9 @@ When new figures are added: prefer the long descriptive name in `results/<subdir
 \includegraphics[width=\linewidth]{proof_of_concept_plot_RE.png}
 ```
 
-(`\graphicspath{}` resolves the bare filename via `../../results/proof_of_concept/`.) The figure label is `fig:proof-of-concept`. The four internal headings in §2.3 (*The figure*, *Three observations*, *Reading*, *What this is, and what this is not*) use `\paragraph{...}` run-in style rather than `\subsubsection{...}` to keep §2.3 visually unified — if you'd prefer the numbered hierarchy that §2.2 uses, swap all four.
+(`\graphicspath{}` resolves the bare filename via `../results/proof_of_concept/`.) The figure label is `fig:proof-of-concept`. The four internal headings in §2.3 (*The figure*, *Three observations*, *Reading*, *What this is, and what this is not*) use `\paragraph{...}` run-in style rather than `\subsubsection{...}` to keep §2.3 visually unified — if you'd prefer the numbered hierarchy that §2.2 uses, swap all four.
 
-`section_2_3.tex` (the original standalone fragment) is retained as a reference copy with its own absolute path `../../results/proof_of_concept/proof_of_concept_plot_RE.png`. The port into `main_v2.tex` drops the prefix, drops the `\citep{pemantle2007}` (no bib entry), normalizes `\citep{argiento2009}` → `\citep{Argiento2009}`, and replaces `\autoref{}` with `Figure \ref{}` per local style.
+`section_2_3.tex` (the original standalone fragment) is retained as a reference copy with its own absolute path `../results/proof_of_concept/proof_of_concept_plot_RE.png`. The port into `main_v2.tex` drops the prefix, drops the `\citep{pemantle2007}` (no bib entry), normalizes `\citep{argiento2009}` → `\citep{Argiento2009}`, and replaces `\autoref{}` with `Figure \ref{}` per local style.
 
 ### Appendix.tex figure mapping (2026-05-18)
 
@@ -256,11 +256,11 @@ The notation §2.3 must inherit from §1.3 (`main.tex` lines 188–280, especial
 - **Optimal action map**: use $a_i^\star$, not $\alpha_i^\star$.
 - **World state**: the pair $(x, y)$, not a separate symbol $\mathbf{v}$.
 
-§2.3's [section_2_3.tex](analytics/docs/section_2_3.tex) was rewritten on 2026-05-18 to use this notation throughout.
+§2.3's [section_2_3.tex](manuscript/section_2_3.tex) was rewritten on 2026-05-18 to use this notation throughout.
 
 ## Drift handling for `section_2_3.tex` (resolved 2026-05-18)
 
-[analytics/docs/section_2_3.tex](analytics/docs/section_2_3.tex) was drafted as a standalone fragment with four KB-style drifts from local convention. All four were translated when §2.3 was ported into `main_v2.tex` on 2026-05-18:
+[manuscript/section_2_3.tex](manuscript/section_2_3.tex) was drafted as a standalone fragment with four KB-style drifts from local convention. All four were translated when §2.3 was ported into `main_v2.tex` on 2026-05-18:
 
 1. **`\autoref{fig:proof-of-concept}`** → `Figure \ref{fig:proof-of-concept}` (literal noun + `\ref{}`).
 2. **`\citep{argiento2009}`** → `\citep{Argiento2009}` (capital A — matches the existing key in `main.tex`).
@@ -277,10 +277,10 @@ TeX Live is installed at `/Library/TeX/texbin/`. `pdflatex`, `bibtex`, `latexmk`
 
 ### One-shot compile
 
-From `analytics/docs/` (you must `cd` here first, because `\graphicspath{}` is relative to the `.tex` file's directory):
+From `manuscript/` (you must `cd` here first, because `\graphicspath{}` is relative to the `.tex` file's directory):
 
 ```bash
-cd analytics/docs/
+cd manuscript/
 latexmk -pdf main_v2.tex
 open main_v2.pdf
 ```
@@ -323,7 +323,7 @@ On macOS: `open main_v2.pdf` opens the default PDF viewer (Preview). The viewer 
 
 ## Build artifacts
 
-`pdflatex` + `bibtex` produce the following files in `analytics/docs/` alongside `main_v2.tex`:
+`pdflatex` + `bibtex` produce the following files in `manuscript/` alongside `main_v2.tex`:
 
 | File | Purpose | Track in git? |
 |---|---|---|
@@ -336,10 +336,10 @@ On macOS: `open main_v2.pdf` opens the default PDF viewer (Preview). The viewer 
 | `main_v2.fls` | File list (read by latexmk) | No |
 | `main_v2.fdb_latexmk` | latexmk build database | No |
 
-**`.gitignore` status (as of 2026-05-18)**: the repo's `.gitignore` has no LaTeX patterns. The 7 aux files above are currently untracked but unignored, which means `git status` will list them every time and they're easy to stage by accident with `git add -A`. Before committing any `.tex` work, add a LaTeX block to `.gitignore`:
+**`.gitignore` status (as of 2026-05-18)**: a LaTeX block was added to the repo's `.gitignore` when the paper sources moved to `manuscript/`. The aux files above are now ignored everywhere in the tree:
 
 ```gitignore
-# LaTeX build artifacts (keep .tex, .bib, and .pdf; ignore the rest)
+# LaTeX build artifacts (manuscript/ is the canonical source tree)
 *.aux
 *.bbl
 *.blg
@@ -348,9 +348,12 @@ On macOS: `open main_v2.pdf` opens the default PDF viewer (Preview). The viewer 
 *.log
 *.out
 *.synctex.gz
+*.toc
+*.lof
+*.lot
 ```
 
-(Don't add `*.pdf` — compiled PDFs alongside `main.tex` are intentionally tracked, per the KB skill's "Notes" section.)
+(`*.pdf` is **not** in `.gitignore` — compiled PDFs alongside `main.tex` / `main_v2.tex` / `Appendix.tex` are intentionally tracked, per the KB skill's "Notes" section.)
 
 ## Gotchas
 
@@ -360,6 +363,6 @@ On macOS: `open main_v2.pdf` opens the default PDF viewer (Preview). The viewer 
 - **`mathptmx` + `mathabx`.** Loaded together (lines 19, 74). Some symbols are redefined by the later import. If a math glyph renders strangely after an edit, suspect `mathabx` first.
 - **`numbers` natbib + `plainnat` style** is a slightly unusual combo (`plainnat` is the author-year default; with `[numbers]` it switches to numeric ordering). Don't "fix" this to `[authoryear]` or to a different `\bibliographystyle{}` without asking — the user may have set this up deliberately.
 - **No `\label{}` on sections** means `\cleardoublepage` / `\appendix` page-break behavior is the only navigation aid. If you start needing programmatic cross-references between sections, raise the topic; don't unilaterally add labels.
-- **Working directory matters for `\graphicspath{}`.** Always `cd analytics/docs/` before running `pdflatex` / `latexmk`. The relative paths in `\graphicspath{}` (`../../results/...`) resolve relative to the *current working directory of the compile process*, not the .tex file's directory. Running pdflatex from the repo root will look for figures in `../../results/...` from the repo root (which won't exist) and produce "file not found" for every figure.
+- **Working directory matters for `\graphicspath{}`.** Always `cd manuscript/` before running `pdflatex` / `latexmk`. The relative paths in `\graphicspath{}` (`../results/...`) resolve relative to the *current working directory of the compile process*, not the .tex file's directory. Running pdflatex from the repo root will look for figures in `../results/...` from the repo root (which won't exist) and produce "file not found" for every figure.
 - **`latexmk` exits non-zero on cold compiles.** See "First-pass gotcha" under Compile and display. Re-run; don't treat the first error as a real failure.
 - **`replace_all` is the safe default for figure-name updates.** `main_v2.tex` keeps commented-out backup blocks of each figure environment (around lines 529–541 and 572–584) that mirror the active block. When renaming a figure, use `Edit` with `replace_all=true` so the active and backup blocks stay in sync — a backup that drifts from the live version is worse than no backup at all.

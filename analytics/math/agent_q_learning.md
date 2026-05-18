@@ -11,7 +11,7 @@
 - last_checked: 2026-05-08
 <!-- content -->
 
-The `QLearningAgent` in [rl_signaling/agents.py:330-495](../rl_signaling/agents.py#L330-L495) implements a temporal-difference learner specialized to the project's single-step signaling game. This file walks through the data structures, the simplified Bellman update that arises from the terminal-episode assumption, the closed form for constant-reward learning, the exponential-smoothing variant, and the per-channel exploration-decay schedule.
+The `QLearningAgent` in [rl_signaling/agents.py:330-495](../../rl_signaling/agents.py#L330-L495) implements a temporal-difference learner specialized to the project's single-step signaling game. This file walks through the data structures, the simplified Bellman update that arises from the terminal-episode assumption, the closed form for constant-reward learning, the exponential-smoothing variant, and the per-channel exploration-decay schedule.
 
 The exploration kernel itself (ε-greedy / softmax / UCB) is shared with the TD agent and is documented separately in [exploration_strategies.md](exploration_strategies.md).
 
@@ -21,7 +21,7 @@ The exploration kernel itself (ε-greedy / softmax / UCB) is shared with the TD 
 
 $$Q_{\text{sig}} : \mathcal{V}_i \to \mathbb{R}^K, \qquad Q_{\text{act}} : (\mathcal{V}_i \times \mathcal{A}_{\text{sig}}^{\le |\mathcal{N}_i|}) \to \mathbb{R}^M.$$
 
-In code these are `q_table_signaling` and `q_table_action` ([rl_signaling/agents.py:394-408](../rl_signaling/agents.py#L394-L408)). The keys are tuples (the direct observation $\mathbf{o}$ for signaling, the post-signal observation $\tilde{\mathbf{o}}$ for actions). New keys are lazy-initialized to the all-zeros vector:
+In code these are `q_table_signaling` and `q_table_action` ([rl_signaling/agents.py:394-408](../../rl_signaling/agents.py#L394-L408)). The keys are tuples (the direct observation $\mathbf{o}$ for signaling, the post-signal observation $\tilde{\mathbf{o}}$ for actions). New keys are lazy-initialized to the all-zeros vector:
 
 $$Q_{\text{sig}}[\mathbf{o}] := \mathbf{0} \in \mathbb{R}^K \qquad \text{when } \mathbf{o} \text{ is first seen}.$$
 
@@ -33,7 +33,7 @@ The standard Q-learning update is
 
 $$Q(s, a) \;\leftarrow\; Q(s, a) + \alpha \big[\, r + \gamma \max_{a'} Q(s', a') \;-\; Q(s, a)\,\big].$$
 
-In the project's signaling game (Phase 1 [Axis 19](../DEBUGGING_PLAN.md#agent-learning-rules)), every episode is **terminal** — there is no next state $s'$ for the agent to bootstrap from. Mathematically, the bootstrap term $\gamma \max_{a'} Q(s', a')$ collapses to zero by the Bellman equation's terminal-state convention. So the update reduces to:
+In the project's signaling game (Phase 1 [Axis 19](../../DEBUGGING_PLAN.md#agent-learning-rules)), every episode is **terminal** — there is no next state $s'$ for the agent to bootstrap from. Mathematically, the bootstrap term $\gamma \max_{a'} Q(s', a')$ collapses to zero by the Bellman equation's terminal-state convention. So the update reduces to:
 
 $$\boxed{\; Q(s, a) \;\leftarrow\; Q(s, a) + \alpha \big[\, r \;-\; Q(s, a)\,\big]. \;}$$
 
@@ -45,7 +45,7 @@ The learning rate is hardcoded:
 
 $$\alpha = 0.1$$
 
-at [rl_signaling/agents.py:458](../rl_signaling/agents.py#L458) and [:476](../rl_signaling/agents.py#L476). The Phase 1 spec [Axis 19](../DEBUGGING_PLAN.md#agent-learning-rules) confirms this is intentional. A constant $\alpha$ keeps the update responsive to changes in the environment (in our case, changes in the *partner's* signaling policy) at the cost of asymptotic noise — Q never settles to a single value, it tracks a moving target with ~10% step size.
+at [rl_signaling/agents.py:458](../../rl_signaling/agents.py#L458) and [:476](../../rl_signaling/agents.py#L476). The Phase 1 spec [Axis 19](../../DEBUGGING_PLAN.md#agent-learning-rules) confirms this is intentional. A constant $\alpha$ keeps the update responsive to changes in the environment (in our case, changes in the *partner's* signaling policy) at the cost of asymptotic noise — Q never settles to a single value, it tracks a moving target with ~10% step size.
 
 The alternative, decaying learning rate $\alpha_n = 1/n$, would satisfy the Robbins–Monro convergence condition. The TD agent uses it. The Q-agent does not, and that is a deliberate design choice.
 
@@ -89,11 +89,11 @@ With $\alpha = 0.1$, $r = 1$, $Q_0 = 0$:
 
 These values are exact rational fractions of $0.9^n$. The asymptote $Q_n \to 1$ happens at rate $0.9^n = e^{n \ln 0.9} \approx e^{-0.1054 n}$, so the half-life is $\ln(2) / 0.1054 \approx 6.58$ episodes.
 
-The $n = 1$ and $n = 10$ values are tested in [tests/test_numerical_sanity.py::test_q_learning_single_update_is_exact_alpha_times_reward](../tests/test_numerical_sanity.py#L71-L78) and [::test_q_learning_ten_updates_match_geometric_closed_form](../tests/test_numerical_sanity.py#L81-L93).
+The $n = 1$ and $n = 10$ values are tested in [tests/test_numerical_sanity.py::test_q_learning_single_update_is_exact_alpha_times_reward](../../tests/test_numerical_sanity.py#L71-L78) and [::test_q_learning_ten_updates_match_geometric_closed_form](../../tests/test_numerical_sanity.py#L81-L93).
 
 ## Implementation
 
-The relevant block at [rl_signaling/agents.py:447-464](../rl_signaling/agents.py#L447-L464):
+The relevant block at [rl_signaling/agents.py:447-464](../../rl_signaling/agents.py#L447-L464):
 
 ```python
 def update_signals(self, state, signal, reward):
@@ -144,7 +144,7 @@ The signal- and action-channel rates are decayed only when their respective upda
 
 `get_signal(state)` reads the **current** `signal_exploration_rate` and dispatches to `_select_action(q_values, counts, exploration_rate, choice)`. The exploration kernel chooses an action under the named strategy (ε-greedy / softmax / UCB) using the rate as the strategy's free parameter. See [exploration_strategies.md](exploration_strategies.md) for the strategy formulas.
 
-After `get_signal` returns, the visit count for the chosen signal is incremented at [agents.py:429](../rl_signaling/agents.py#L429). The count is read by UCB to compute the exploration bonus.
+After `get_signal` returns, the visit count for the chosen signal is incremented at [agents.py:429](../../rl_signaling/agents.py#L429). The count is read by UCB to compute the exploration bonus.
 
 The decay schedule then fires at the **next** `update_signals` call. So the order is:
 
@@ -179,21 +179,21 @@ So the asymptotic standard deviation of $Q_n$ around $\mu$ is $\sqrt{0.0526} \si
 
 | Operation | Code | Effect |
 |---|---|---|
-| Construct | [agents.py:371-408](../rl_signaling/agents.py#L371-L408) | Initializes Q-tables, count tables, per-channel exploration rates |
-| `get_signal(state)` | [agents.py:417-430](../rl_signaling/agents.py#L417-L430) | Lazy-init; sample via `_select_action`; increment counts |
-| `get_action(state)` | [agents.py:432-445](../rl_signaling/agents.py#L432-L445) | Same shape as `get_signal` for $Q_{\text{act}}$ |
-| `update_signals(state, sig, r)` | [agents.py:447-464](../rl_signaling/agents.py#L447-L464) | $Q_{\text{sig}}[\text{state}][\sigma] \leftarrow Q_{\text{sig}}[\text{state}][\sigma] + 0.1 (r - Q_{\text{sig}}[\text{state}][\sigma])$; decay $\varepsilon_{\text{sig}}$ |
-| `update_actions(state, act, r)` | [agents.py:466-482](../rl_signaling/agents.py#L466-L482) | Same shape for $Q_{\text{act}}$, $\varepsilon_{\text{act}}$ |
-| `update_episode(...)` | [agents.py:484-495](../rl_signaling/agents.py#L484-L495) | Calls `update_signals` then `update_actions` (skipping signals if `signal is None`) |
+| Construct | [agents.py:371-408](../../rl_signaling/agents.py#L371-L408) | Initializes Q-tables, count tables, per-channel exploration rates |
+| `get_signal(state)` | [agents.py:417-430](../../rl_signaling/agents.py#L417-L430) | Lazy-init; sample via `_select_action`; increment counts |
+| `get_action(state)` | [agents.py:432-445](../../rl_signaling/agents.py#L432-L445) | Same shape as `get_signal` for $Q_{\text{act}}$ |
+| `update_signals(state, sig, r)` | [agents.py:447-464](../../rl_signaling/agents.py#L447-L464) | $Q_{\text{sig}}[\text{state}][\sigma] \leftarrow Q_{\text{sig}}[\text{state}][\sigma] + 0.1 (r - Q_{\text{sig}}[\text{state}][\sigma])$; decay $\varepsilon_{\text{sig}}$ |
+| `update_actions(state, act, r)` | [agents.py:466-482](../../rl_signaling/agents.py#L466-L482) | Same shape for $Q_{\text{act}}$, $\varepsilon_{\text{act}}$ |
+| `update_episode(...)` | [agents.py:484-495](../../rl_signaling/agents.py#L484-L495) | Calls `update_signals` then `update_actions` (skipping signals if `signal is None`) |
 
 ## Cross-references
 
 | Concept | Code | Spec axis | Test |
 |---|---|---|---|
-| Single-step terminal target | [agents.py:455](../rl_signaling/agents.py#L455) | Axis 19 (no bootstrap) | [test_numerical_sanity.py::test_q_learning_single_update_is_exact_alpha_times_reward](../tests/test_numerical_sanity.py#L71-L78) |
-| Constant $\alpha = 0.1$ | [agents.py:458, 476](../rl_signaling/agents.py#L458) | Axis 19 | (covered by both numerical_sanity tests) |
-| Closed form $Q_n = r(1 - (1-\alpha)^n)$ | this file, "Update: derivation" | (analytical) | [test_numerical_sanity.py::test_q_learning_ten_updates_match_geometric_closed_form](../tests/test_numerical_sanity.py#L81-L93) |
-| Per-channel decay | [agents.py:461-464, 479-482](../rl_signaling/agents.py#L461-L464) | Axis 19 | [test_agents.py::test_q_learning_exploration_decays_after_update](../tests/test_agents.py#L118-L129) |
+| Single-step terminal target | [agents.py:455](../../rl_signaling/agents.py#L455) | Axis 19 (no bootstrap) | [test_numerical_sanity.py::test_q_learning_single_update_is_exact_alpha_times_reward](../../tests/test_numerical_sanity.py#L71-L78) |
+| Constant $\alpha = 0.1$ | [agents.py:458, 476](../../rl_signaling/agents.py#L458) | Axis 19 | (covered by both numerical_sanity tests) |
+| Closed form $Q_n = r(1 - (1-\alpha)^n)$ | this file, "Update: derivation" | (analytical) | [test_numerical_sanity.py::test_q_learning_ten_updates_match_geometric_closed_form](../../tests/test_numerical_sanity.py#L81-L93) |
+| Per-channel decay | [agents.py:461-464, 479-482](../../rl_signaling/agents.py#L461-L464) | Axis 19 | [test_agents.py::test_q_learning_exploration_decays_after_update](../../tests/test_agents.py#L118-L129) |
 
 ## Independent verification
 
