@@ -16,7 +16,7 @@ This file is the project-local source of truth for how the LaTeX paper at [manus
 
 - **`manuscript/main.tex`** — the canonical paper source. ~640 lines, 12pt article, single-file body (no `\input{}` includes used yet).
 - **`manuscript/main_v2.tex`** — a working copy of `main.tex` for in-progress edits. The "v2" is a versioning marker, not a fork; once a `_v2` revision is accepted, the older file is deleted and `_v2` renames to the canonical name (see the 2026-05-18 V1 → V2 transition of `Proof of Concept (Paper Draft).md` for the precedent).
-- **`manuscript/section_2_3.tex`** — drafted standalone LaTeX of §2.3 (Proof of Concept). Built originally as a drop-in `\input{}` fragment for the host paper. When porting into `main.tex` / `main_v2.tex`, translate any KB-style drift it carries (e.g. `\autoref{}` → `\ref{}`, lowercase `argiento2009` → `Argiento2009`) — see "Known drift in `section_2_3.tex`" below.
+- **`manuscript/section_2_3.tex`** — *(deleted 2026-05-19)*. Was a standalone fragment of §2.3 drafted as a drop-in `\input{}`. Its content was ported into `main_v2.tex` on 2026-05-18, the fragment was retained as a reference copy through 2026-05-19, then deleted when the user confirmed `main_v2.tex` is the single source of truth for §2.3. The "Known drift in `section_2_3.tex`" section below documents what the drift was; it is historical now.
 - **`manuscript/References.bib`** — the BibTeX file wired up by `\bibliography{References}` (line 643 of `main.tex`). 257 entries (a large personal / cross-paper library); only ~28 of them are actually `\cite`d from `main.tex`. Before adding a new `\cite` key, grep this file first — odds are good the author you want is already in there under some existing key, possibly from an unrelated paper.
 
 ## Section structure of `main.tex`
@@ -203,7 +203,7 @@ When new figures are added: prefer the long descriptive name in `results/<subdir
 
 (`\graphicspath{}` resolves the bare filename via `../results/proof_of_concept/`.) The figure label is `fig:proof-of-concept`. The four internal headings in §2.3 (*The figure*, *Three observations*, *Reading*, *What this is, and what this is not*) use `\paragraph{...}` run-in style rather than `\subsubsection{...}` to keep §2.3 visually unified — if you'd prefer the numbered hierarchy that §2.2 uses, swap all four.
 
-`section_2_3.tex` (the original standalone fragment) is retained as a reference copy with its own absolute path `../results/proof_of_concept/proof_of_concept_plot_RE.png`. The port into `main_v2.tex` drops the prefix, drops the `\citep{pemantle2007}` (no bib entry), normalizes `\citep{argiento2009}` → `\citep{Argiento2009}`, and replaces `\autoref{}` with `Figure \ref{}` per local style.
+`section_2_3.tex` was the original standalone fragment with its own absolute path `../results/proof_of_concept/proof_of_concept_plot_RE.png`. The port into `main_v2.tex` (2026-05-18) dropped the prefix, dropped the `\citep{pemantle2007}` (no bib entry), normalized `\citep{argiento2009}` → `\citep{Argiento2009}`, and replaced `\autoref{}` with `Figure \ref{}` per local style. The fragment itself was deleted on 2026-05-19; `main_v2.tex` is the single source of truth for §2.3 going forward.
 
 ### Appendix.tex figure mapping (2026-05-18)
 
@@ -256,18 +256,22 @@ The notation §2.3 must inherit from §1.3 (`main.tex` lines 188–280, especial
 - **Optimal action map**: use $a_i^\star$, not $\alpha_i^\star$.
 - **World state**: the pair $(x, y)$, not a separate symbol $\mathbf{v}$.
 
-§2.3's [section_2_3.tex](manuscript/section_2_3.tex) was rewritten on 2026-05-18 to use this notation throughout.
+§2.3 was rewritten on 2026-05-18 to use this notation throughout `main_v2.tex`.
 
-## Drift handling for `section_2_3.tex` (resolved 2026-05-18)
+## Drift handling for `section_2_3.tex` (resolved 2026-05-18, fragment deleted 2026-05-19)
 
-[manuscript/section_2_3.tex](manuscript/section_2_3.tex) was drafted as a standalone fragment with four KB-style drifts from local convention. All four were translated when §2.3 was ported into `main_v2.tex` on 2026-05-18:
+`section_2_3.tex` was drafted as a standalone fragment with four KB-style drifts from local convention. All four were translated when §2.3 was ported into `main_v2.tex` on 2026-05-18:
 
 1. **`\autoref{fig:proof-of-concept}`** → `Figure \ref{fig:proof-of-concept}` (literal noun + `\ref{}`).
 2. **`\citep{argiento2009}`** → `\citep{Argiento2009}` (capital A — matches the existing key in `main.tex`).
 3. **`\citep{pemantle2007}`** → dropped entirely. `References.bib` has no Pemantle entry; Pemantle's stable-manifold theorem is now attributed in prose only, with the upstream `Argiento2009` citation carrying the formal reference.
 4. **`\subsubsection*{...}`** (four of them) → `\paragraph{...}` run-in style, keeping §2.3 visually unified. (`\subsubsection{...}` numbered was the alternative; flagged for swap if you want sub-numbering.)
 
-`section_2_3.tex` itself was left in place untouched as a reference fragment. If you ever re-port §2.3 from the markdown draft, apply the same four translations.
+Historical note kept here in case §2.3 is ever re-drafted from scratch. The fragment file itself was deleted on 2026-05-19; `main_v2.tex` is the single source of truth.
+
+## Argiento footnote drop (2026-05-19)
+
+Earlier drafts of §2.3 carried a footnote at the "What this is not" paragraph reading *"The precise step that breaks down, and the routes that might recover a global convergence statement, are documented in a companion technical note."* (The companion note exists at `analytics/math/argiento_obstruction.md` and remains in the repo as scaffolding.) The footnote was **dropped** from `main_v2.tex` on 2026-05-19 because the paper's `.tex` sources should not reference external markdowns; the surrounding prose already says "Whether some other route to a global convergence statement is available is genuinely open," which stands on its own. If you ever want the paper to refer to the obstruction analysis directly, draft it as an Appendix subsection rather than re-introducing the footnote.
 
 ## Compile and display
 

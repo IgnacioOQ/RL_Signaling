@@ -157,14 +157,14 @@ last_checked: '2026-05-15'
 
 ---
 
-## Editorial review of §2.3 in main_v2.pdf, then port main_v2.tex → main.tex
+## Editorial review of main_v2.pdf (port step deferred — main.tex preserved as original)
 
 ```yaml
 status: todo
 type: task
-id: todo.editorial_review_and_port_main_v2
-description: Work through the remaining open/partial reviewer checklist items in main_v2.tex, then do a holistic editorial pass on main_v2.pdf, and finally port main_v2.tex to main.tex. Folds in the closed todo.continue_reviewer_revisions task.
-owner: user + agent (review is user; mechanical port is agent)
+id: todo.editorial_review_main_v2
+description: Work through the remaining open/partial reviewer checklist items in main_v2.tex and do a holistic editorial pass on main_v2.pdf. The port step (main_v2.tex → main.tex) is intentionally NOT in scope — main.tex must remain untouched as the original-for-sanity-check baseline. Folds in the closed todo.continue_reviewer_revisions task.
+owner: user + agent (review is user; mechanical edits are agent)
 blocked_by: []
 last_checked: '2026-05-19'
 ```
@@ -182,15 +182,8 @@ Reviewer checklist state as of 2026-05-18: R2·C2 + R3·C3 fully `[x]`; R2·C1, 
 3. **Address remaining flagged items in [LP_TEX_REF.md](LP_TEX_REF.md):**
    - The Argiento footnote on §2.3 (line 517 of `main_v2.tex`) currently reads "documented in a companion technical note" — generic phrasing. Replace with a forward reference to an appendix subsection, or drop entirely if the prose stands on its own.
    - The `manuscript/section_2_3.tex` standalone fragment — delete if you no longer want it as a reference copy, since its content is now in `main_v2.tex`.
-4. **Port `main_v2.tex` → `main.tex`** (agent task, mechanical):
-   ```bash
-   rm "manuscript/main.tex"
-   mv "manuscript/main_v2.tex" "manuscript/main.tex"
-   cd manuscript/ && latexmk -pdf main.tex
-   rm manuscript/main_v2.pdf  # if not already gone
-   ```
-   Verify the PDF rebuilds cleanly with the new filename.
-5. **Optional follow-ups (independent of the port):**
+4. **Port step intentionally omitted.** `main.tex` is preserved untouched as the original-for-sanity-check baseline. `main_v2.tex` remains the working revision. Do NOT delete, overwrite, or rename `main.tex`. (If a future session wants to retire `main.tex`, rename it to `original.tex` first — never `rm` it.)
+5. **Optional follow-ups:**
    - **Bare-name aliases for canonical TD figures.** Add `td_canonical_reward.png`, `td_canonical_nmi.png`, `td_canonical_regression.png` to `results/legacy/plots/` (copies or symlinks of the existing `TD-learning_canonical_*` files), then revert the three long-name `\includegraphics{}` calls in `Appendix.tex` Section B to bare names. Removes the bare-vs-long inconsistency documented in `LP_TEX_REF.md`.
    - **`.gitignore` LaTeX block.** Add the block below to `.gitignore` so build artifacts don't show in `git status`. Template is in `LP_TEX_REF.md` "Build artifacts" section.
      ```gitignore
@@ -206,10 +199,87 @@ Reviewer checklist state as of 2026-05-18: R2·C2 + R3·C3 fully `[x]`; R2·C1, 
      ```
 
 **Verification:**
-- After the rename, `latexmk -pdf main.tex` produces `main.pdf` with no errors (font warnings OK). 22 pages, all 16 body figures + figure references resolve.
-- All §2.3-related references to "main_v2" elsewhere in the repo (memory files, `LP_TEX_REF.md`, `WORKLOG.md`) are either updated to reflect the new filename or kept as historical markers.
+- `latexmk -pdf main_v2.tex` produces `main_v2.pdf` with no errors (font warnings OK). Current state as of 2026-05-19: 30 pages, all reviewer checklist items at `[x]`, R2·C1–R3·C7 all done.
+- `main.tex` is left untouched (no port performed); the file remains identical to its state at session start and can be used as the original-for-sanity-check baseline.
 
-**On completion:** Delete this entire task block. Append a one-line `WORKLOG.md` entry recording the rename and any editorial decisions made along the way.
+**On completion:** Delete this entire task block. Append a `WORKLOG.md` entry recording the editorial decisions made along the way and noting that the port step was deferred at user request.
+
+---
+
+## Word-count reduction pass on main_v2.tex
+
+```yaml
+status: todo
+type: task
+id: todo.word_count_reduction
+description: Reduce main_v2.tex word count to meet the journal's word limit. The current revision is over the limit; identify candidate sections for trimming and execute trims under user direction. The journal word limit is TBD — user to fill in before starting.
+owner: user + agent
+blocked_by: []
+last_checked: '2026-05-19'
+```
+
+**Context.** The 2026-05-19 R3·C4–C7 round expanded several sections (R3·C4 alignment paragraph at §1.1, R3·C5 four-paragraph §2.1 rewrite, R3·C6 (a)/(b)/(c) opener at §4, R3·C7 terminology parentheticals + structured roadmap), and current state is 30 pages, ~2.9 MB. The journal's word limit is exceeded. **Insert the actual word limit here before starting the pass** — currently TBD pending user input.
+
+Likely highest-value trim candidates, in rough priority (flagged during the 2026-05-19 holistic editorial pass):
+- §2.3 "Reading" paragraph at [main_v2.tex:514](manuscript/main_v2.tex#L514): the second half compares the current framing to a previous draft using the `init_weights=(1,0)` corner case; a reader unfamiliar with the previous draft does not need this. Trim or move to a footnote.
+- §2.3 "The figure" paragraph at [main_v2.tex:502](manuscript/main_v2.tex#L502): some duplication with the figure caption. Could be tightened.
+- §1.2 multi-paragraph Gilbert / Huttegger / shared-goal block at [main_v2.tex:188–197](manuscript/main_v2.tex#L188): three long paragraphs; some compression possible.
+- §1.1 line 184 alignment paragraph: long after the R3·C4 expansion. Could split or compress the complete-conflict mechanism explanation.
+- §4 meta-openers at [main_v2.tex:637, 641](manuscript/main_v2.tex#L637): two consecutive epistemic-status paragraphs (R2·C1 + R3·C6). Could merge or shorten.
+
+**Preconditions:**
+- All reviewer-checklist items at `[x]` (already true as of 2026-05-19).
+- Journal word limit confirmed with user before starting.
+
+**Steps:**
+1. Record current word count (`texcount manuscript/main_v2.tex` or equivalent) and target limit; compute the gap.
+2. With the user, prioritize the candidate sites above and any others they identify.
+3. For each chosen site: propose 2–3 trim options per REVISION_WORKFLOW Phase 3, apply, recompile, re-verify that response-narrative quotations still align (especially R2·C2's verbatim §2.3 quotations — see [Reviewers Responses Checklist.md](manuscript/reviewers/Reviewers%20Responses%20Checklist.md) §"§2.3-dependent response entries" for the verbatim/paraphrase/pointer ledger).
+4. Re-run `texcount` after each round; stop when below the limit with reasonable margin.
+5. Update the response narrative entries that quote §2.3 verbatim if those passages are trimmed.
+
+**Verification:**
+- `texcount manuscript/main_v2.tex` reports a word count at or below the journal's stated limit.
+- `latexmk -pdf main_v2.tex` still produces a clean build (currently 30 pages).
+- All `verbatim` and `paraphrase` ledger entries in [Reviewers Responses Checklist.md](manuscript/reviewers/Reviewers%20Responses%20Checklist.md) §"§2.3-dependent response entries" still cite content that exists in §2.3.
+
+**On completion:** Delete this entire task block. Append a `WORKLOG.md` entry recording the pre/post word counts and the sites that were trimmed.
+
+---
+
+## Authenticity / voice-revision pass on main_v2.tex and reviewer responses
+
+```yaml
+status: todo
+type: task
+id: todo.authenticity_voice_pass
+description: Iterative pass(es) where the user reads main_v2.tex and the reviewer responses, identifies sentences that read as LLM-generated or off-voice, and works with the agent to rewrite them in the user's philosophical-essay voice. Spans multiple sessions; not a single-sitting task. Goal is to assert authenticity and style across the manuscript and the reviewer-facing prose.
+owner: user + agent (user identifies sites; agent rewrites under user direction)
+blocked_by: []
+last_checked: '2026-05-19'
+```
+
+**Context.** The reviewer-response edits (R2·C1–C5, R3·C1–C7, completed 2026-05-19) were drafted with substantial agent assistance and, while accurate, may read in places as more uniform and structured than the user's natural philosophical-essay voice. The user wants iterative passes to (a) restore authorial voice, (b) reduce the "generated" feel, and (c) assert authenticity. Same applies to the reviewer-facing prose in [manuscript/reviewers/Generated Responses to Reviewers.md](manuscript/reviewers/Generated%20Responses%20to%20Reviewers.md). The standing feedback memory `feedback_paper_work.md` already records "didactic + philosophical voice" and "iterate slowly" as principles; this task is the operational vehicle for applying them across the revised paper.
+
+LLM-isms to watch for during rewrites: frequent emphasis markers (`\emph{}` overload), parenthetical lists of three, formulaic "First, … Second, … Third, …" sequences, hedging stacks ("this suggests … which may indicate … such that it appears"), redundant "in other words" rephrasings, abstract-Latinate diction where Anglo-Saxon would do, and `---`-as-rhythm (already partly tracked by `todo.dash_sweep`).
+
+**Preconditions:**
+- All reviewer-checklist items at `[x]` (already true as of 2026-05-19).
+- Coordinated with `todo.word_count_reduction` so revoicing isn't undone by later trims (and vice versa). Recommended ordering: voice pass first on the sites you most care about, then word-count reduction, then a quick re-voice on anything the trim flattened — but the order can be inverted if the word-count gap is urgent.
+
+**Steps:**
+1. Per session, the user picks a section or paragraph to revoice (often by reading the PDF and flagging sites that feel off).
+2. Agent loads the affected `.tex` passage (or `.md` response passage), re-paste the surrounding prose, and proposes 2–3 rewrite options that keep the substance and trim the LLM-isms listed above.
+3. User selects an option or supplies their own; agent applies.
+4. Recompile (`latexmk -pdf main_v2.tex`) after each session's edits.
+5. Repeat across sessions until the user is satisfied. Track sites already revoiced in a session-end `WORKLOG.md` entry so the next session can pick up without re-treading covered ground.
+
+**Verification:**
+- User satisfied with voice across the manuscript and the responses (subjective — no objective stopping criterion).
+- `latexmk -pdf main_v2.tex` still produces a clean build.
+- Reviewer-response checklist quotations still align with what's in the manuscript ([Reviewers Responses Checklist.md](manuscript/reviewers/Reviewers%20Responses%20Checklist.md) §"§2.3-dependent response entries" re-verified per round).
+
+**On completion:** Delete this entire task block at user discretion (there is no objective stopping criterion beyond user satisfaction). Append a `WORKLOG.md` entry summarizing the revoicing work done across sessions.
 
 ---
 
