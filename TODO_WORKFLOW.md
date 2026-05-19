@@ -1,15 +1,18 @@
+---
+status: active
+type: plan
+id: rl_signaling.todo_workflow
+description: Cross-session task backlog; each task is self-contained and can be picked up by a coding agent with kb_mcp MCP tool access.
+label: [planning, agent]
+injection: excluded
+volatility: evolving
+scope: project-specific
+owner: agent
+last_checked: '2026-05-19'
+---
+
 # TODO Workflow
-- status: active
-- type: plan
-- id: rl_signaling.todo_workflow
-- description: Cross-session task backlog; each task is self-contained and can be picked up by a coding agent with kb_mcp MCP tool access.
-- label: [planning, agent]
-- injection: excluded
-- volatility: evolving
-- scope: project-specific
-- owner: agent
-- last_checked: 2026-05-09
-<!-- content -->
+
 Cross-session task backlog. Tasks are added here when work started in a session cannot be completed immediately. Each task must be fully self-contained — a fresh agent should be able to pick it up using only the task body and the kb_mcp tools, with no additional context required.
 
 This file is the per-repository instance of the `TODO_WORKFLOW_TEMPLATE.md` pattern. It lives at the root of the working repository alongside `WORKLOG.md` and is intentionally **not registered with kb_mcp** — agents access it via the regular filesystem `Read`/`Edit` tools, not via `knowledge_base_*` calls.
@@ -21,20 +24,23 @@ This file is the per-repository instance of the `TODO_WORKFLOW_TEMPLATE.md` patt
 4. Confirm a task is still valid before executing; conditions may have changed since it was written.
 
 **Adding tasks (session authors):**
-- Copy the template at the bottom of this file (without fences), fill in all fields, and insert it as a new `##` block above the Template section, preceded and followed by `---`.
+- Copy the template at the bottom of this file (without the outer fences), fill in all fields, and insert it as a new `##` block above the Template section, preceded and followed by `---`.
 - Be precise: include target file paths, specific tool calls, expected outcomes, and a verification step.
 
 ---
 
 ## Verify Experiment Reproducibility End-to-End
-- status: todo
-- type: task
-- id: todo.verify_reproducibility
-- description: Re-run every experiment notebook on a clean kernel and confirm every CSV in results/ regenerates and every PNG in results/ is reproducible from the regenerated CSVs. Document the actual reproducibility status.
-- owner: agent
-- blocked_by: []
-- last_checked: 2026-05-09
-<!-- content -->
+
+```yaml
+status: todo
+type: task
+id: todo.verify_reproducibility
+description: Re-run every experiment notebook on a clean kernel and confirm every CSV in results/ regenerates and every PNG in results/ is reproducible from the regenerated CSVs. Document the actual reproducibility status.
+owner: agent
+blocked_by: []
+last_checked: '2026-05-09'
+```
+
 **Context:** `LEGACY_ERRORS_LOG.md` catalogues the saved-figure status (CLEAN, BIASED-METRIC, MISLABELED, UNREPRODUCIBLE, WRONG, RETIRED) for every artifact in `results/`. As of the 2026-05-09 fix session, the Phase 5 fixes for Bugs 4, 5, 6, 7, 8 have all landed, the Roth-Erev costly experiment was retired, and `notebooks/Initializations_test.ipynb` was re-run end-to-end with its 4 figures regenerated. The remaining reproducibility work is to verify the **larger experiment notebooks** end-to-end on a fresh checkout + clean venv:
 
 - `notebooks/Run_Simulations.ipynb` — Bug 6 fix renamed `*_complex.csv` → `*_complex_randomized.csv` and randomized action sizes per iteration. Producer / consumer chain is consistent by code review; full re-run is gated on (a) flipping `simulate=True` in the UrnAgent block (cell 15, currently gated for compute reasons) and (b) replacing cell 4's Colab `dump_path = '/content/drive/My Drive/...'` with `dump_path = '../results/'` for local execution.
@@ -93,14 +99,17 @@ This task verifies that:
 ---
 
 ## Execute the notebook refactor plan (Phases 0–3 + Phase 5)
-- status: todo
-- type: task
-- id: todo.notebook_refactor
-- description: Execute Phases 0–3 and Phase 5 of [NOTEBOOK_REFACTOR_PLAN.md](docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md) — migrate the six notebooks under `notebooks/` from the legacy `NetMultiAgentEnv` / `simulation_function` surface to the canonical `MultiAgentEnv` + `run_simulation` API, with the metadata, kernel, and dual local/Colab scaffolding required by the project's notebook conventions. Phase 4 (re-running the experiments to refresh `results/`) is deferred and tracked separately.
-- owner: agent
-- blocked_by: []
-- last_checked: 2026-05-15
-<!-- content -->
+
+```yaml
+status: todo
+type: task
+id: todo.notebook_refactor
+description: Execute Phases 0–3 and Phase 5 of NOTEBOOK_REFACTOR_PLAN.md, migrating the six notebooks under notebooks/ from the legacy NetMultiAgentEnv / simulation_function surface to the canonical MultiAgentEnv + run_simulation API, with the metadata, kernel, and dual local/Colab scaffolding required by the project's notebook conventions. Phase 4 (re-running the experiments to refresh results/) is deferred and tracked separately.
+owner: agent
+blocked_by: []
+last_checked: '2026-05-15'
+```
+
 **Context.** The six notebooks under [notebooks/](notebooks/) were authored before the seven-phase code refactor and still call the legacy API surface (`NetMultiAgentEnv`, `TempNetMultiAgentEnv`, `simulation_function`, `temp_simulation_function`), which now emits `DeprecationWarning`. Two of the six ([basic_unit_test.ipynb](notebooks/basic_unit_test.ipynb), [Initializations_test.ipynb](notebooks/Initializations_test.ipynb)) were partly updated during the original refactor; the remaining four still target the legacy surface plus a Colab-only setup section.
 
 [NOTEBOOK_REFACTOR_PLAN.md](docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md) is the authoritative plan. It includes:
@@ -149,14 +158,17 @@ This task verifies that:
 ---
 
 ## Editorial review of §2.3 in main_v2.pdf, then port main_v2.tex → main.tex
-- status: todo
-- type: task
-- id: todo.editorial_review_and_port_main_v2
-- description: Work through the remaining open/partial reviewer checklist items in main_v2.tex, then do a holistic editorial pass on main_v2.pdf, and finally port main_v2.tex → main.tex. Folds in the closed todo.continue_reviewer_revisions task.
-- owner: user + agent (review is user; mechanical port is agent)
-- blocked_by: []
-- last_checked: 2026-05-18
-<!-- content -->
+
+```yaml
+status: todo
+type: task
+id: todo.editorial_review_and_port_main_v2
+description: Work through the remaining open/partial reviewer checklist items in main_v2.tex, then do a holistic editorial pass on main_v2.pdf, and finally port main_v2.tex to main.tex. Folds in the closed todo.continue_reviewer_revisions task.
+owner: user + agent (review is user; mechanical port is agent)
+blocked_by: []
+last_checked: '2026-05-19'
+```
+
 **Context.** On 2026-05-18 the V2 §2.3 prose was ported from [manuscript/section_2_3.tex](manuscript/section_2_3.tex) into [manuscript/main_v2.tex](manuscript/main_v2.tex) §2.3 (line 482). The PDF compiles cleanly (22 pages, ~2.9 MB). Companion [manuscript/Appendix.tex](manuscript/Appendix.tex) compiles standalone (7 pages, ~1 MB). See [LP_TEX_REF.md](LP_TEX_REF.md) at the repo root for the LaTeX conventions reference, figure mapping tables, and compile commands. See the 2026-05-18 entry in [WORKLOG.md](WORKLOG.md) for the full session record.
 
 The §2.3 prose addresses Reviewer 2's R2·C1 and R2·C2 (existence/reliability triplet; attractor-vs-basin-reach distinction in main text) and Reviewer 3's R3·C2 (proof-of-concept labeled as conceptual + simulation, not a convergence theorem). The Argiento obstruction is in the main text. The §3 intro was tightened to two scenarios (matching + random) with costly signaling deferred to the Appendix.
@@ -201,20 +213,58 @@ Reviewer checklist state as of 2026-05-18: R2·C2 + R3·C3 fully `[x]`; R2·C1, 
 
 ---
 
+## Sweep main_v2.tex and reviewer responses for excessive em-dashes
+
+```yaml
+status: todo
+type: task
+id: todo.dash_sweep
+description: Reduce overuse of em-dashes ("---" in LaTeX source / "—" in markdown) in main_v2.tex and manuscript/reviewers/*.md; rewrite parenthetical-dash constructions with parentheses, commas, or sentence splits where the dashed clause is non-load-bearing.
+owner: agent
+blocked_by: []
+last_checked: '2026-05-19'
+```
+
+**Context:** User feedback (2026-05-19) during the R2·C5 round flagged excessive em-dash use in newly-added prose (e.g. an earlier draft of the §1.2 minimal-rationality continuation used dashes around a parenthetical: "the minimal-rationality framing of the RL agents --- as cognitively shallow utility-maximizers rather than fully rational deliberators --- is inherited..."). The dash convention in main_v2.tex is `---` (LaTeX em-dash); current count as of 2026-05-19 is 38 occurrences in main_v2.tex (up from 33 pre-revision). Em-dashes should be reserved for genuinely abrupt breaks or strong parentheticals; routine parentheticals work better with commas or parentheses.
+
+**Preconditions:** None.
+
+**Steps:**
+
+1. Grep main_v2.tex for `---` and inspect each occurrence with its surrounding context. Note: literal Unicode em-dashes (`—`) also exist (~3 occurrences); include those.
+2. For each occurrence, decide: keep (genuinely abrupt break, or load-bearing rhetorical pause) or rewrite (replace with parentheses, commas, or split into two sentences). Lean rewrite.
+3. Apply edits, preferring the lightest substitution that preserves meaning.
+4. Repeat the survey on the reviewer-facing prose in manuscript/reviewers/Generated Responses to Reviewers.md (uses Unicode `—` in markdown, not LaTeX `---`). Apply the same review.
+5. Recompile main_v2.tex; confirm no rendering issues.
+
+**Verification:**
+
+- `grep -c -- '---' manuscript/main_v2.tex` returns a meaningfully smaller number than 38 (the pre-sweep count noted in this task's Context).
+- Each retained em-dash is reviewable and defensible against the "abrupt break or strong parenthetical only" criterion.
+- `latexmk -pdf` rebuilds cleanly; no new errors.
+- Response document prose flows naturally without leaning on dashes for cadence.
+
+**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a WORKLOG entry noting the new em-dash count and the criteria applied.
+
+---
+
 ## Task Template
 
 Copy the block below (without the outer fences), fill in all fields, and insert it as a new `## [Task Title]` task block.
 
 ````markdown
 ## [Task Title]
-- status: todo
-- type: task
-- id: todo.[short_id]
-- description: One-sentence description of what this task accomplishes.
-- owner: agent
-- blocked_by: []
-- last_checked: {{YYYY-MM-DD}}
-<!-- content -->
+
+```yaml
+status: todo
+type: task
+id: todo.[short_id]
+description: One-sentence description of what this task accomplishes.
+owner: agent
+blocked_by: []
+last_checked: 'YYYY-MM-DD'
+```
+
 **Context:** Why this task exists and what triggered it. Include the KB path or repo file path it operates on.
 
 **Preconditions:** Any state that must be true before starting (prior tasks complete, files present, etc.). Write `none` if there are none.
