@@ -157,55 +157,6 @@ last_checked: '2026-05-15'
 
 ---
 
-## Editorial review of main_v2.pdf (port step deferred — main.tex preserved as original)
-
-```yaml
-status: todo
-type: task
-id: todo.editorial_review_main_v2
-description: Work through the remaining open/partial reviewer checklist items in main_v2.tex and do a holistic editorial pass on main_v2.pdf. The port step (main_v2.tex → main.tex) is intentionally NOT in scope — main.tex must remain untouched as the original-for-sanity-check baseline. Folds in the closed todo.continue_reviewer_revisions task.
-owner: user + agent (review is user; mechanical edits are agent)
-blocked_by: []
-last_checked: '2026-05-19'
-```
-
-**Context.** On 2026-05-18 the V2 §2.3 prose was ported from [manuscript/section_2_3.tex](manuscript/section_2_3.tex) into [manuscript/main_v2.tex](manuscript/main_v2.tex) §2.3 (line 482). The PDF compiles cleanly (22 pages, ~2.9 MB). Companion [manuscript/Appendix.tex](manuscript/Appendix.tex) compiles standalone (7 pages, ~1 MB). See [LP_TEX_REF.md](LP_TEX_REF.md) at the repo root for the LaTeX conventions reference, figure mapping tables, and compile commands. See the 2026-05-18 entry in [WORKLOG.md](WORKLOG.md) for the full session record.
-
-The §2.3 prose addresses Reviewer 2's R2·C1 and R2·C2 (existence/reliability triplet; attractor-vs-basin-reach distinction in main text) and Reviewer 3's R3·C2 (proof-of-concept labeled as conceptual + simulation, not a convergence theorem). The Argiento obstruction is in the main text. The §3 intro was tightened to two scenarios (matching + random) with costly signaling deferred to the Appendix.
-
-Reviewer checklist state as of 2026-05-18: R2·C2 + R3·C3 fully `[x]`; R2·C1, R2·C3, R3·C2 `[~]` partial; R2·C4, R2·C5, R3·C1, R3·C4, R3·C5, R3·C6, R3·C7 `[ ]` open. Checklist at [manuscript/reviewers/Reviewers Responses Checklist.md](manuscript/reviewers/Reviewers%20Responses%20Checklist.md). Formal response narrative at [manuscript/reviewers/Generated Responses to Reviewers.md](manuscript/reviewers/Generated%20Responses%20to%20Reviewers.md).
-
-**Steps:**
-
-1. **Reviewer checklist pass.** Load `content/workflows/REVISION_WORKFLOW.md` for the per-item sub-loop. Work through the partial (`[~]`) items first (R2·C1, R2·C3, R3·C2), then the open (`[ ]`) items (R2·C4, R2·C5, R3·C1, R3·C4, R3·C5, R3·C6, R3·C7). For each: read the affected `.tex` passage; propose 2–3 edit options to the user; on selection, apply via `Edit`; compile (`cd manuscript/ && latexmk -pdf main_v2.tex`); verify no new errors beyond the pre-existing baseline (the ~1.3mm body-text micro-overflow in §2.3 is pre-existing); update the checkbox to `[x]` with the date; sync the formal response narrative for substantive edits.
-2. **Holistic editorial pass on `main_v2.pdf`.** Open the PDF, re-read §2.3 (pages 13–14 area). Note wording changes or substantive concerns. Re-check that the four `\paragraph{...}` blocks (*The figure*, *Three observations*, *Reading*, *What this is, and what this is not*) read cleanly; if you'd prefer numbered §2.3.1–§2.3.4 instead, swap to `\subsubsection{...}` for all four.
-3. **Address remaining flagged items in [LP_TEX_REF.md](LP_TEX_REF.md):**
-   - The Argiento footnote on §2.3 (line 517 of `main_v2.tex`) currently reads "documented in a companion technical note" — generic phrasing. Replace with a forward reference to an appendix subsection, or drop entirely if the prose stands on its own.
-   - The `manuscript/section_2_3.tex` standalone fragment — delete if you no longer want it as a reference copy, since its content is now in `main_v2.tex`.
-4. **Port step intentionally omitted.** `main.tex` is preserved untouched as the original-for-sanity-check baseline. `main_v2.tex` remains the working revision. Do NOT delete, overwrite, or rename `main.tex`. (If a future session wants to retire `main.tex`, rename it to `original.tex` first — never `rm` it.)
-5. **Optional follow-ups:**
-   - **Bare-name aliases for canonical TD figures.** Add `td_canonical_reward.png`, `td_canonical_nmi.png`, `td_canonical_regression.png` to `results/legacy/plots/` (copies or symlinks of the existing `TD-learning_canonical_*` files), then revert the three long-name `\includegraphics{}` calls in `Appendix.tex` Section B to bare names. Removes the bare-vs-long inconsistency documented in `LP_TEX_REF.md`.
-   - **`.gitignore` LaTeX block.** Add the block below to `.gitignore` so build artifacts don't show in `git status`. Template is in `LP_TEX_REF.md` "Build artifacts" section.
-     ```gitignore
-     # LaTeX build artifacts (keep .tex, .bib, and .pdf; ignore the rest)
-     *.aux
-     *.bbl
-     *.blg
-     *.fdb_latexmk
-     *.fls
-     *.log
-     *.out
-     *.synctex.gz
-     ```
-
-**Verification:**
-- `latexmk -pdf main_v2.tex` produces `main_v2.pdf` with no errors (font warnings OK). Current state as of 2026-05-19: 30 pages, all reviewer checklist items at `[x]`, R2·C1–R3·C7 all done.
-- `main.tex` is left untouched (no port performed); the file remains identical to its state at session start and can be used as the original-for-sanity-check baseline.
-
-**On completion:** Delete this entire task block. Append a `WORKLOG.md` entry recording the editorial decisions made along the way and noting that the port step was deferred at user request.
-
----
-
 ## Word-count reduction pass on main_v2.tex
 
 ```yaml
@@ -330,7 +281,14 @@ blocked_by: []
 last_checked: '2026-05-19'
 ```
 
-**Context.** The 2026-05-19 PHOS-17993 revision exposed five recurring operational frictions that a small toolkit could remove for any future paper revision: (a) drift between checklist `[x]` items, the response-narrative, and the actual `.tex` source; (b) word-count tracking against a journal limit without an easy per-section breakdown; (c) em-dash auditing across the manuscript and reviewer-facing prose; (d) bibliography hygiene before submission; (e) a clean starting point for the two parallel revision artifacts (operational checklist + formal response document). This task builds all five.
+**Context.** The 2026-05-19 PHOS-17993 revision exposed five recurring operational frictions that a small toolkit could remove for any future paper revision: (a) drift between checklist `[x]` items, the response-narrative, and the actual `.tex` source; (b) word-count tracking against a journal limit without an easy per-section breakdown; (c) em-dash auditing across the manuscript and reviewer-facing prose; (d) bibliography hygiene before submission; (e) a clean starting point for the three parallel revision artifacts (operational checklist + formal response document + project-local LaTeX-conventions reference). This task builds all five.
+
+**Required reading before starting.** Two agent-memory files capture session lessons that directly inform this work and should be loaded at the start of any session that picks up this task:
+
+- **[reference_revision_artifacts_format.md](.claude/projects/-Users-ignacio-Documents-VS-Code-GitHub-Repositories-RL-Signaling/memory/reference_revision_artifacts_format.md)** — structural conventions of all three revision artifacts (checkbox flavors, comment-marker formats `### [R<n>·C<m>]` and `--- Comment <n>: <title> ---`, the `*"verbatim"*` italic-quote signal for the drift checker, citation-key heterogeneity rules `Argiento2009` / `Huttegger_2007` / `noukhovitch2021emergentcommunicationcompetition`, em-dash patterns including the `---`-vs-`--` distinction for ranges vs em-dashes, the `\paragraph{}`-vs-`\subsubsection{}` choice in §2.3, and the repo layout that the templates skeleton must mirror). This is the parsing-spec for `response_align.py`, `dash_audit.py`, and `bib_unused.py`, and the structural-spec for `templates/revision/`.
+- **[feedback_kb_mcp_quirks.md](.claude/projects/-Users-ignacio-Documents-VS-Code-GitHub-Repositories-RL-Signaling/memory/feedback_kb_mcp_quirks.md)** — the `mcp__kb_mcp__knowledge_base_update` quirks: interrupted calls still apply server-side (so retries create duplicates), hash bookkeeping needs a fresh read before every retry, and the 10-writes-per-session quota is tight. Relevant for Step 9 (the workflow-skill update at the end of this task) and any other KB-write work the agent does.
+
+The full [REVISION_WORKFLOW.md](file://content/workflows/REVISION_WORKFLOW.md) workflow doc (in the KB) is also load-bearing — Phase 3's per-item sub-loop is the operational pattern the scripts support.
 
 **Naming, location, design constraints:**
 - **Location**: scripts at `scripts/` at the repo root (top-level), templates at `templates/revision/`. The repo already has `analytics/scripts/` for paper analytics — that directory is for this paper's analytics only. The `scripts/` directory at top-level is for *cross-paper* tooling that operates on the manuscript/response orbit. Confirm this split with the user at the start of the task before creating the directories.
