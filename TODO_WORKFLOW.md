@@ -318,6 +318,231 @@ last_checked: '2026-05-19'
 
 ---
 
+## Build the revision-tooling toolkit (scripts + templates)
+
+```yaml
+status: todo
+type: task
+id: todo.revision_tooling
+description: Implement the cross-paper revision-tooling toolkit identified in the 2026-05-19 meta-knowledge session — five items (four small Python scripts + one templates directory) that give future paper revisions short-loop drift checks, word-count tracking, dash auditing, bib hygiene, and drop-in starter files. The KB-skill component (item 1 in the original five-item list) is out of scope here; it lives at `content/how-to/REVISION_RESPONSE_SKILL.md` in the knowledge base and is captured separately by KB updates as session lessons accumulate.
+owner: agent (under user direction)
+blocked_by: []
+last_checked: '2026-05-19'
+```
+
+**Context.** The 2026-05-19 PHOS-17993 revision exposed five recurring operational frictions that a small toolkit could remove for any future paper revision: (a) drift between checklist `[x]` items, the response-narrative, and the actual `.tex` source; (b) word-count tracking against a journal limit without an easy per-section breakdown; (c) em-dash auditing across the manuscript and reviewer-facing prose; (d) bibliography hygiene before submission; (e) a clean starting point for the two parallel revision artifacts (operational checklist + formal response document). This task builds all five.
+
+**Naming, location, design constraints:**
+- **Location**: scripts at `scripts/` at the repo root (top-level), templates at `templates/revision/`. The repo already has `analytics/scripts/` for paper analytics — that directory is for this paper's analytics only. The `scripts/` directory at top-level is for *cross-paper* tooling that operates on the manuscript/response orbit. Confirm this split with the user at the start of the task before creating the directories.
+- **Language**: Python 3.10+. No third-party dependencies beyond what's already in `pyproject.toml` `[dev]` extras (currently `pytest`, `scikit-optimize`). The four scripts should be standalone — no shared internal module — so they can be copied into another paper's repo individually.
+- **CLI style**: all scripts use `argparse`, accept `--help`, return non-zero exit code on validation failure (so they can be wired into CI later), and support `--json` for machine-readable output.
+- **No coupling to PHOS-17993**: the scripts must work on any paper structured around `main_v2.tex` + `Appendix.tex` + `References.bib` + `manuscript/reviewers/*.md`. File paths are arguments, not hardcoded.
+- **Testing**: include a `tests/test_revision_tooling.py` file with smoke tests per script. Use `pytest` matching the project style.
+
+**Preconditions:**
+- `todo.editorial_review_main_v2` is complete (PHOS-17993 R2/R3 work landed) — done as of 2026-05-19.
+- User has confirmed the top-level `scripts/` location vs the existing `analytics/scripts/` (asked at task start).
+- Python 3.10 venv + project dev dependencies installed (`pip install -e ".[dev]"`).
+
+---
+
+### Tool 2 — `scripts/response_align.py`
+
+**Purpose.** Catch drift between the three coupled revision artifacts: the operational checklist, the formal response document, and the manuscript source.
+
+**Inputs:**
+- `--checklist <path>` — path to a markdown file with reviewer-checklist structure (the convention used in this repo: `### [R<n>·C<m>]` headings, `[x]`/`[ ]`/`[~]` checkboxes, optional sub-bullets).
+- `--responses <path>` — path to the formal response document (markdown with `--- Comment <n>: ... ---` section markers, optionally containing italicized verbatim quotations as `*"..."*`).
+- `--manuscript <path>` (one or more) — `.tex` source file(s). Multiple paths allowed (e.g., `main_v2.tex` + `Appendix.tex`).
+- `--json` (optional) — emit machine-readable JSON instead of human-readable text.
+
+**Outputs.** A drift report with four sections:
+1. **Checklist items marked `[x]` without a corresponding response-narrative entry.** Lists `[R<n>·C<m>]` IDs.
+2. **Response-narrative entries without a corresponding checklist item.** Inverse direction.
+3. **Verbatim quotes in the response narrative that do not appear in the manuscript.** Extracts `*"..."*` strings from the response document, normalizes whitespace, greps the `.tex` source(s). Reports each missing quote with the response-document line number.
+4. **Sub-bullet checklist items marked `[x]` whose notes reference line numbers (e.g., `[main_v2.tex:184]`) that no longer point at the documented content.** Reads the line, applies fuzzy match against the bullet's "now reads" / "has been replaced with" quoted strings.
+
+**Exit code**: 0 if no drift, non-zero if any of the four checks fails.
+
+**Sketch of CLI usage:**
+```bash
+python scripts/response_align.py \
+  --checklist "manuscript/reviewers/Reviewers Responses Checklist.md" \
+  --responses "manuscript/reviewers/Generated Responses to Reviewers.md" \
+  --manuscript manuscript/main_v2.tex manuscript/Appendix.tex
+```
+
+**Implementation notes:**
+- Parse the checklist with a small regex pass — `### \[R\d+·C\d+\]` for top-level items, `^- \[x\]` for sub-bullets.
+- Parse the response document by splitting on `--- Comment \d+:` and `--- Overall comment ---` markers; extract italicized double-quoted strings via `\*"([^"]+)"\*`.
+- For the manuscript grep, strip LaTeX commands (`\emph{}`, `\cite{}`, etc.) before substring matching; whitespace-normalize both sides. A simple regex pass is fine — `(\\\w+\{[^}]*\}|\s+)` collapsed to a single space.
+- Surface false positives clearly (e.g., quotes that span multiple `\paragraph{}` blocks may fail to match if the source uses macros the script didn't strip). Report the original quote and the closest match.
+
+---
+
+### Tool 3 — `scripts/word_count.py`
+
+**Purpose.** Thin wrapper around `texcount` that reports overall + per-section word counts, abstract / body / footnotes breakdown, and comparison to a target limit. Useful for `todo.word_count_reduction` and for ongoing tracking during a revision.
+
+**Inputs:**
+- `<tex_file>` (positional) — path to the `.tex` to count.
+- `--target <int>` (optional) — journal word limit; reports overage/underage.
+- `--include <body|footnotes|abstract|appendix|all>` (optional, default `body`) — what to count. Multiple allowed.
+- `--per-section` (flag) — emit per-section breakdown (one row per `\section`/`\subsection`).
+- `--json` (optional) — machine-readable output for diffing across revisions.
+
+**Outputs.** Human-readable table with:
+- Total word count (body, abstract, footnotes, appendix, sum).
+- Per-section breakdown (if `--per-section`).
+- Target comparison if `--target` set (e.g., "9,103 words — 103 over target").
+
+**Implementation notes:**
+- Wrap `texcount -sec -nosub` (or equivalent flags) via subprocess. Parse texcount's output.
+- For the per-section breakdown, use `texcount -inc -sec`.
+- Footnotes count via `texcount -relax`. Abstract via parsing `\begin{abstract}...\end{abstract}` explicitly (texcount can miscount inside abstract environments depending on flags).
+- Exit 0 if under target, exit 1 if over.
+
+**Sketch of CLI usage:**
+```bash
+python scripts/word_count.py manuscript/main_v2.tex --target 9000 --per-section
+```
+
+**Optional follow-on**: integrate into a pre-commit hook that warns when the body word count rises by more than 5% in a single commit (defer to a separate task if you want this).
+
+---
+
+### Tool 4 — `scripts/dash_audit.py`
+
+**Purpose.** Print all `---` (LaTeX em-dash) and `—` (Unicode em-dash) occurrences in `.tex` and `.md` files with surrounding context. Used by `todo.dash_sweep` and during the authenticity-voice pass.
+
+**Inputs:**
+- File paths or globs (positional, one or more).
+- `--exclude-pattern <regex>` (optional, repeatable) — skip occurrences matching this regex in their context (e.g., to skip dashes inside `\citep{...--...}` bibkeys).
+- `--context <int>` (optional, default 50) — characters of surrounding context to display.
+- `--count-only` (flag) — emit only per-file counts, no individual occurrences.
+- `--json` (optional) — machine-readable output.
+
+**Outputs.** For each file:
+- Total dash count, split by type (`---` vs `—`).
+- Each occurrence as `path:line:col` with ±context chars surrounding.
+
+**Implementation notes:**
+- Use Python's `re` for the scanner; iterate files via `pathlib.Path.glob` if globs are passed as positional args.
+- For `.tex` files, optionally strip comments (`% ...\n`) before scanning, to avoid dashes in commented-out prose.
+- Sort output by file then by line number.
+- Provide a useful default exclude pattern for bibkeys like `^.{0,80}--.{0,80}$` matching inside `\citep{}` — but accept overrides.
+
+**Sketch of CLI usage:**
+```bash
+python scripts/dash_audit.py manuscript/main_v2.tex "manuscript/reviewers/*.md"
+python scripts/dash_audit.py manuscript/main_v2.tex --count-only
+python scripts/dash_audit.py manuscript/main_v2.tex --exclude-pattern '\\citep\{[^}]*--[^}]*\}'
+```
+
+---
+
+### Tool 5 — `templates/revision/` directory with skeleton files
+
+**Purpose.** A drop-in skeleton set for a new paper revision. Copying `templates/revision/*` into a fresh paper's `manuscript/reviewers/` directory should give a structurally complete starting point that can be filled in.
+
+**Contents:**
+1. **`Reviewers_Responses_Checklist_TEMPLATE.md`** — skeleton for the operational tracker. Carries the structural conventions from PHOS-17993's checklist:
+   - YAML frontmatter (TBD placeholders for description, repository).
+   - "Status legend" block (`[x]` / `[~]` / `[ ]`).
+   - "Top-line progress" table with one row per `R<n>·C<m>` comment (placeholder rows).
+   - "Section-dependent response entries" subsection (the verbatim/paraphrase/pointer ledger pattern).
+   - Per-comment template: heading + "Reviewer's concern" pull-quote + "Actions" subsection with sub-bullet checkboxes.
+   - "Notation drift introduced during the revision" subsection (initially empty, filled in as the revision progresses).
+   - "Build / verification" subsection with `latexmk -pdf -interaction=nonstopmode` recipe.
+
+2. **`Generated_Responses_to_Reviewers_TEMPLATE.md`** — skeleton for the formal response document. Carries the structural conventions from PHOS-17993's response narrative:
+   - Top-line "Response to Reviewers" header + manuscript ID placeholder.
+   - Per-reviewer section markers (`===== Reviewer #<n> =====`).
+   - Per-comment sub-section markers (`--- Comment <n>: <title> ---`).
+   - "Reviewer:" / "Response:" / "Concretely, ... (before/after quotations)" three-paragraph pattern. Each paragraph includes a TBD placeholder explaining the intent.
+   - Final "Paper Changes Checklist" section that mirrors the operational checklist's structure for easy cross-reference.
+
+3. **`paper_TEX_REF_TEMPLATE.md`** — skeleton for a project-local LaTeX-conventions reference. Carries the structural conventions from this repo's `LP_TEX_REF.md`:
+   - "File layout" section (placeholders for the per-paper file set).
+   - "Section structure" table (placeholder; instructions to populate via the grep command).
+   - "Authoring conventions" section (citation style, line discipline, figure paths — sub-headers as placeholders).
+   - "Citations and bibliography" subsection.
+   - "Figures" subsection.
+   - "Math notation" subsection.
+   - "Compile and display" subsection.
+   - "Build artifacts" subsection (the `.gitignore` block recipe).
+   - "Gotchas" subsection (initially empty, filled as paper-specific traps surface).
+
+Each template should be self-contained (no `\input{}` to other templates) and carry a brief `<!-- TEMPLATE-INSTRUCTIONS: ... -->` HTML-comment block at the top explaining what to fill in and the order of operations.
+
+**Implementation notes:**
+- Strip everything paper-specific from the PHOS-17993 originals: no R2·C1 / R3·C4 etc. identifiers, no `main_v2.tex` references, no Argiento / Skyrms / Lewis content. Leave the *structure* and *normative shape* but replace prose with `[TBD: ...]` placeholders that describe what should go there.
+- Include a short `README.md` in `templates/revision/` explaining the order of operations: (1) copy templates into the new paper's `manuscript/reviewers/`, (2) populate the YAML frontmatter, (3) write the formal narrative first (Phase 1 of REVISION_WORKFLOW), (4) extract the checklist from the narrative (Phase 2), (5) run the Phase 3 sub-loop, (6) use the response_align/word_count/dash_audit/bib_unused scripts as auditors throughout.
+
+---
+
+### Tool 6 — `scripts/bib_unused.py`
+
+**Purpose.** Report bib entries in a `.bib` file that aren't `\cite`'d anywhere in the manuscript sources. Also report the reverse — `\cite` keys used in the manuscript that have no bib entry. Helps trim the bib before submission and catches typos in cite keys.
+
+**Inputs:**
+- `<bib_file>` (positional) — path to `.bib`.
+- `<tex_files>` (positional, one or more) — `.tex` files to scan for cite keys.
+- `--reverse` (flag) — also report unmatched cite keys (default: only unused bib entries).
+- `--strict` (flag) — fail with non-zero exit if any drift exists in either direction.
+- `--json` (optional).
+
+**Outputs.**
+- Section A: bib entries defined but never `\cite`'d. One per line.
+- Section B (if `--reverse` or `--strict`): cite keys used but not defined in the bib. One per line.
+
+**Implementation notes:**
+- Parse the `.bib` file with a simple regex for `@\w+\{(\w+),` to extract keys. Don't try to do a full BibTeX parse; this is good-enough for the common case.
+- Parse `\tex` files for `\cite[p]?\{...\}` and `\citet?\{...\}` calls; split on commas inside the braces; collect all keys.
+- Case-sensitive matching (bibkeys are case-sensitive).
+- Exit 0 unless `--strict` and either drift direction has hits.
+
+**Sketch of CLI usage:**
+```bash
+python scripts/bib_unused.py manuscript/References.bib manuscript/main_v2.tex manuscript/Appendix.tex
+python scripts/bib_unused.py manuscript/References.bib manuscript/main_v2.tex --reverse --strict
+```
+
+---
+
+### Steps:
+
+1. **Confirm directory layout with user** at task start: `scripts/` at the repo root for these cross-paper tools, vs the existing `analytics/scripts/` for this paper's analytics. Confirm `templates/revision/` for the template skeletons.
+2. **Implement `response_align.py`** (Tool 2). Highest priority — catches the most insidious bug class (silent drift between the three docs).
+3. **Implement `word_count.py`** (Tool 3). Wires into `todo.word_count_reduction` immediately.
+4. **Implement `dash_audit.py`** (Tool 4). Wires into `todo.dash_sweep` immediately.
+5. **Implement `bib_unused.py`** (Tool 6). Useful as a final-pre-submission check.
+6. **Build the `templates/revision/` skeletons** (Tool 5). Most labor-intensive; lowest urgency since no second paper is in flight. Do this last unless a second paper appears.
+7. **Write smoke tests for each script** in `tests/test_revision_tooling.py`. Each script: at least one positive test (clean input, no drift / under target / no dashes / no unused bib) and at least one negative test (one drift case, returns expected non-zero).
+8. **Add a top-level `scripts/README.md`** documenting each tool's purpose, CLI, exit codes, and the recommended invocation order during a revision (response_align after every round; word_count and dash_audit on demand; bib_unused as a pre-submission check).
+9. **Update [content/workflows/REVISION_WORKFLOW.md](file://content/workflows/REVISION_WORKFLOW.md)** in the KB to mention the tools — a one-paragraph section pointing at `scripts/` and noting which script supports which phase. Use `mcp__kb_mcp__knowledge_base_update` per the KB write protocol.
+10. **Update [feedback_paper_work.md](.claude/projects/-Users-ignacio-Documents-VS-Code-GitHub-Repositories-RL-Signaling/memory/feedback_paper_work.md)** with a brief reference to the toolkit so future sessions invoke the scripts proactively.
+
+**Verification:**
+- `pytest tests/test_revision_tooling.py` reports all passing.
+- Each script's `--help` renders cleanly.
+- Running `python scripts/response_align.py` with the PHOS-17993 artifacts reports zero drift (current state of the manuscript and response narrative is the validation set).
+- `python scripts/word_count.py manuscript/main_v2.tex` reports a sensible body word count (cross-check by hand on the abstract).
+- `python scripts/dash_audit.py manuscript/main_v2.tex --count-only` reports the current dash count (≈38 as of 2026-05-19, may have changed by the time this task runs).
+- `python scripts/bib_unused.py manuscript/References.bib manuscript/main_v2.tex manuscript/Appendix.tex` reports the current unused-bib-entries list.
+- `templates/revision/` contains three template files + a README; opening any of them in an editor shows a clear structural skeleton with `[TBD: ...]` placeholders for paper-specific content.
+
+**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a WORKLOG entry recording the toolkit's launch and noting the validation results from running the scripts against the PHOS-17993 artifacts as the first regression set.
+
+**Design questions to surface to the user before starting:**
+- Confirm `scripts/` location at repo root vs alternative (e.g., `tools/`, `revision_tools/`, `manuscript/scripts/`).
+- Confirm Python 3.10+ as the minimum version (or specify a different floor).
+- Confirm the `--json` output format is desired (vs YAML, vs plain text only).
+- Confirm whether the scripts should warn or fail by default when drift is detected (i.e., default to exit-0 with a printed report, or exit non-zero — affects how easy it is to wire into CI later).
+- Confirm whether `bib_unused.py` should integrate with the bib hygiene already done by `latex` build (some venues' bibstyles strip unused entries automatically, in which case the script is for the author's pre-submission sanity rather than a build-time check).
+
+---
+
 ## Task Template
 
 Copy the block below (without the outer fences), fill in all fields, and insert it as a new `## [Task Title]` task block.

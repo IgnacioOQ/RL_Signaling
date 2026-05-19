@@ -19,26 +19,28 @@ This file is the project-local source of truth for how the LaTeX paper at [manus
 - **`manuscript/section_2_3.tex`** — *(deleted 2026-05-19)*. Was a standalone fragment of §2.3 drafted as a drop-in `\input{}`. Its content was ported into `main_v2.tex` on 2026-05-18, the fragment was retained as a reference copy through 2026-05-19, then deleted when the user confirmed `main_v2.tex` is the single source of truth for §2.3. The "Known drift in `section_2_3.tex`" section below documents what the drift was; it is historical now.
 - **`manuscript/References.bib`** — the BibTeX file wired up by `\bibliography{References}` (line 643 of `main.tex`). 257 entries (a large personal / cross-paper library); only ~28 of them are actually `\cite`d from `main.tex`. Before adding a new `\cite` key, grep this file first — odds are good the author you want is already in there under some existing key, possibly from an unrelated paper.
 
-## Section structure of `main.tex`
+## Section structure of `main_v2.tex` (current as of 2026-05-19)
 
 | Line | Header | Notes |
 |---|---|---|
-| 101 | `\section{Introduction: Signal-Trading Games}` | §1 |
-| 103 | `\subsection{Signaling Games}` | §1.1 |
-| 177 | `\subsection{Goal-Sharing}` | §1.2 |
-| 188 | `\subsection{Signal-Trading Games}` | §1.3 — establishes the agent / signal / action / game tuple notation that §2.3 must inherit |
-| 280 | `\section{Formal Setup and Proof of Concept}` | §2 |
-| 282 | `\subsection{Informal Proof of Concept}` | §2.1 |
-| 291 | `\subsection{Formal Setup}` | §2.2 |
-| 293 | `\subsubsection{The Problem Space}` | §2.2.1 |
-| 322 | `\subsubsection{The Agents}` | §2.2.2 |
-| 429 | `\subsubsection{(Normalized) Mutual Information}` | §2.2.3 |
-| 476 | `\subsection{Proof of Concept}` | **§2.3 — the active rewrite target** |
-| 505 | `\section{Simulation Results}` | §3 |
-| 525 | `\subsection{Simulations with Matching Games}` | §3.1 |
-| 568 | `\subsection{Simulations with Random Games}` | §3.2 |
-| 618 | `\section{Discussion and Conclusion}` | §4 |
-| 642–643 | `\bibliographystyle{plainnat}` / `\bibliography{References}` | bibliography lives in `References.bib` (not in repo) |
+| 107 | `\section{Introduction: Signal-Trading Games}` | §1 — opens with the R2·C3 existence/reliability/explanatory-role triplet paragraph at line 109 |
+| 111 | `\subsection{Signaling Games}` | §1.1 — contains the R3·C4 three-regime alignment paragraph at line 184 |
+| 186 | `\subsection{Goal-Sharing}` | §1.2 — contains the R3·C2 rationality/convergence/emergence distinction at line 195 |
+| 199 | `\subsection{Signal-Trading Games}` | §1.3 — establishes the agent / signal / action / game tuple notation; closes with the R3·C7 structured roadmap at line 285 |
+| 287 | `\section{Formal Setup and Proof of Concept}` | §2 |
+| 289 | `\subsection{Informal Proof of Concept}` | §2.1 — four-paragraph version after the R3·C5 strategy-space + dual-ambitions + plausibility rewrite |
+| 300 | `\subsection{Formal Setup}` | §2.2 |
+| 302 | `\subsubsection{The Problem Space}` | §2.2.1 |
+| 331 | `\subsubsection{The Agents}` | §2.2.2 |
+| 438 | `\subsubsection{(Normalized) Mutual Information}` | §2.2.3 |
+| 485 | `\subsection{Proof of Concept}` | **§2.3** — carries the R2·C1/C2 "What this is, and what this is not" paragraph at line 519 (Argiento footnote dropped 2026-05-19) |
+| 522 | `\section{Simulation Results}` | §3 — opens with the R3·C2 simulation-findings-vs-conjectures framing paragraph at line 540 |
+| 544 | `\subsection{Simulations with Matching Games}` | §3.1 |
+| 587 | `\subsection{Simulations with Random Games}` | §3.2 |
+| 637 | `\section{Discussion and Conclusion}` | §4 — opens with the R2·C1 existence/reliability/explanatory-role paragraph at line 637, followed by the R3·C6 (a)/(b)/(c) layer-of-claim paragraph at line 641 |
+| ~664 | `\bibliographystyle{plainnat}` / `\bibliography{References}` | bibliography lives in `References.bib` |
+
+Line numbers drift with every body edit — re-run `grep -nE "^\\\\section\{|^\\\\subsection\{|^\\\\subsubsection\{" main_v2.tex` after a substantive revision to refresh.
 
 All subsections and subsubsections are **numbered** (no starred `\section*` / `\subsection*` / `\subsubsection*`). Match this style when adding new internal headers under §2.3.
 
@@ -247,8 +249,8 @@ The notation §2.3 must inherit from §1.3 (`main.tex` lines 188–280, especial
 | Action sets | $Ac_1$, $Ac_2$ |
 | Actions | $a_1$, $a_2$ |
 | Action functions | $g_1(x, s_2)$, $g_2(y, s_1)$ |
-| Games | $G_1$, $G_2$ |
-| Rewards | $r_1$, $r_2$; $G_i(a_i, x, y) = r_i$ |
+| Payoff functions | $u_1$, $u_2$ (per-agent payoff functions; replaces $G_i$ post-R3·C3) |
+| Rewards | $r_1$, $r_2$; $u_i(x, y, a_i) = r_i$ |
 
 - **Subscripts** for agent index ($f_1$, not $f^{(1)}$).
 - **Parentheses** for function application ($f_1(x)$, not $f_1[x]$).
@@ -257,6 +259,16 @@ The notation §2.3 must inherit from §1.3 (`main.tex` lines 188–280, especial
 - **World state**: the pair $(x, y)$, not a separate symbol $\mathbf{v}$.
 
 §2.3 was rewritten on 2026-05-18 to use this notation throughout `main_v2.tex`.
+
+### Notation drift introduced during the 2026-05-18 R3·C3 tuple rewrite
+
+The R3·C3 revision rewrote §1.1 and §1.3 to use a standard tuple formulation. Three drifts from the pre-revision notation follow. Keep these consistent in any future edits, and if any current section still uses the old conventions, edits to that section should bring it in line.
+
+- **Per-agent payoff labels**: `G_i` → `u_i` everywhere in §1.3 and Diagram 2. §2.3 does not reference `G_i` directly. If §3 / §4 still use `G_i` for the per-agent matching game, that is a deferred touchup.
+- **State alphabets vs. random variables**: `X, Y` are now state alphabets (sets), not random variables. The episode description draws `(x, y) ∼ P` rather than from "independent binary random variables X, Y". Statistics are unchanged (P uniform on {0,1}² recovers the original).
+- **Argument order for payoff functions**: `u_i(x, y, a_i)` — states first, own action last. Matches `u_S(x, a)` in §1.1.
+
+Mirrored from [manuscript/reviewers/Reviewers Responses Checklist.md](manuscript/reviewers/Reviewers%20Responses%20Checklist.md) for durability — the checklist is operational and may be archived once the revision lands; the durable record of notation drift belongs here.
 
 ## Drift handling for `section_2_3.tex` (resolved 2026-05-18, fragment deleted 2026-05-19)
 
