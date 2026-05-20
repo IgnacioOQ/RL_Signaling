@@ -166,7 +166,7 @@ id: todo.word_count_reduction
 description: Reduce main_v2.tex word count to meet the journal's 9,000-word all-inclusive limit (see docs/JOURNAL_WORD_LIMIT.md). The current revision is substantially over; identify candidate sections for trimming and execute trims under user direction.
 owner: user + agent
 blocked_by: []
-last_checked: '2026-05-19'
+last_checked: '2026-05-20'
 ```
 
 **Context.** The 2026-05-19 R3·C4–C7 round expanded several sections (R3·C4 alignment paragraph at §1.1, R3·C5 four-paragraph §2.1 rewrite, R3·C6 (a)/(b)/(c) opener at §4, R3·C7 terminology parentheticals + structured roadmap), and current state is 30 pages, ~2.9 MB.
@@ -181,10 +181,18 @@ The journal's limit is **9,000 words, all-inclusive** — confirmed 2026-05-20 f
 
 Reviewer responses re-synced for R2·C2, R3·C5, R2·C1, R2·C4, R3·C6.
 
-**Still over.** Journal-style total ≈ `texcount` 8,336 + ~1,500 figures/tables + the Word-vs-`texcount` math gap ≈ ~10,200 — roughly 1,000–1,200 over 9,000. Remaining candidates:
-- Figure 2 (the Q-learning example-run figure): cutting it removes a 167-word figure charge plus its caption — the largest single remaining win.
-- §3 opener "A note on the kind of claim made in this section" — reviewer-reply-flavored meta paragraph; trim or cut (touches R3·C2).
-- Global em-dash sweep; the defensive opening paragraph at §1 ([main_v2.tex:111](manuscript/main_v2.tex#L111)).
+**Progress (2026-05-20, session 39).** A second pass cut `texcount` sum 8,336 → 7,871 (body 7,831 → 7,675) and removed one figure (−167 journal charge), over four sites:
+- §3 opener — the "A note on the kind of claim made in this section" meta-paragraph deleted, its substance folded into the §3 opening paragraph as a single closing sentence (R3·C2).
+- §4 opener — the "should keep three kinds of claim apart" reading-instruction dropped; the three labels parallelized to "What the model shows / What may generalize / What is speculative" (R2·C1, R3·C6).
+- §1 opener — the ~140-word "three distinct questions" signpost rewritten to ~96 words; a pre-existing grammar error fixed (R2·C3, R3·C7).
+- Figure 2 (the Q-learning `example_process` example run) cut; the exploitation observation kept and folded into the §3-intro paragraph at [main_v2.tex:513](manuscript/main_v2.tex#L513).
+
+Reviewer responses re-synced for R3·C2, R2·C1, R2·C3 (verbatim quotes), plus the §3/§4-opener entries in `responses_checklist.md`.
+
+**Still over.** Journal-style total ≈ `texcount` 7,871 + ~1,300 figures/tables (one figure cut since session 38) + the Word-vs-`texcount` math gap ≈ ~9,570 — roughly 550–600 over 9,000. Remaining candidates:
+- Global em-dash sweep (`dash_audit.py` in the revision toolkit).
+- §1.1 introductory prose — the "pragmatic approach / large language models free ride" opening paragraphs.
+- The §3.1 / §3.2 results prose ("Some observations. First … Fourth …") and the §4 limitations paragraphs.
 - If still over after these, consider a deeper structural cut or an author-comment note to the editor.
 
 **Deferred:** a consolidated `[main_v2.tex:XXX]` anchor refresh across `responses_to_reviewers.md` and `responses_checklist.md` — the §2.3/§2.1/§1.2/§4 trims shifted line numbers, so anchors in both reviewer docs are knowingly stale until the pass ends.
@@ -202,7 +210,7 @@ Reviewer responses re-synced for R2·C2, R3·C5, R2·C1, R2·C4, R3·C6.
 
 **Verification:**
 - The journal-style count (body + abstract + footnotes + captions + figures/tables per [docs/JOURNAL_WORD_LIMIT.md](docs/JOURNAL_WORD_LIMIT.md)) is at or below 9,000 with margin; note `texcount` alone understates this (no math, no per-figure charge).
-- `latexmk -pdf main_v2.tex` still produces a clean build (currently 30 pages).
+- `latexmk -pdf main_v2.tex` still produces a clean build (currently 26 pages).
 - All `verbatim` and `paraphrase` ledger entries in [responses_checklist.md](manuscript/reviewers/responses_checklist.md) §"§2.3-dependent response entries" still cite content that exists in §2.3.
 
 **On completion:** Delete this entire task block. Append a `worklog.jsonl` entry recording the pre/post word counts and the sites that were trimmed.
