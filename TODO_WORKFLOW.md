@@ -163,24 +163,35 @@ last_checked: '2026-05-15'
 status: todo
 type: task
 id: todo.word_count_reduction
-description: Reduce main_v2.tex word count to meet the journal's word limit. The current revision is over the limit; identify candidate sections for trimming and execute trims under user direction. The journal word limit is TBD — user to fill in before starting.
+description: Reduce main_v2.tex word count to meet the journal's 9,000-word all-inclusive limit (see docs/JOURNAL_WORD_LIMIT.md). The current revision is substantially over; identify candidate sections for trimming and execute trims under user direction.
 owner: user + agent
 blocked_by: []
 last_checked: '2026-05-19'
 ```
 
-**Context.** The 2026-05-19 R3·C4–C7 round expanded several sections (R3·C4 alignment paragraph at §1.1, R3·C5 four-paragraph §2.1 rewrite, R3·C6 (a)/(b)/(c) opener at §4, R3·C7 terminology parentheticals + structured roadmap), and current state is 30 pages, ~2.9 MB. The journal's word limit is exceeded. **Insert the actual word limit here before starting the pass** — currently TBD pending user input.
+**Context.** The 2026-05-19 R3·C4–C7 round expanded several sections (R3·C4 alignment paragraph at §1.1, R3·C5 four-paragraph §2.1 rewrite, R3·C6 (a)/(b)/(c) opener at §4, R3·C7 terminology parentheticals + structured roadmap), and current state is 30 pages, ~2.9 MB.
 
-Likely highest-value trim candidates, in rough priority (flagged during the 2026-05-19 holistic editorial pass):
-- §2.3 "Reading" paragraph at [main_v2.tex:514](manuscript/main_v2.tex#L514): the second half compares the current framing to a previous draft using the `init_weights=(1,0)` corner case; a reader unfamiliar with the previous draft does not need this. Trim or move to a footnote.
-- §2.3 "The figure" paragraph at [main_v2.tex:502](manuscript/main_v2.tex#L502): some duplication with the figure caption. Could be tightened.
-- §1.2 multi-paragraph Gilbert / Huttegger / shared-goal block at [main_v2.tex:188–197](manuscript/main_v2.tex#L188): three long paragraphs; some compression possible.
-- §1.1 line 184 alignment paragraph: long after the R3·C4 expansion. Could split or compress the complete-conflict mechanism explanation.
-- §4 meta-openers at [main_v2.tex:637, 641](manuscript/main_v2.tex#L637): two consecutive epistemic-status paragraphs (R2·C1 + R3·C6). Could merge or shorten.
+The journal's limit is **9,000 words, all-inclusive** — confirmed 2026-05-20 from the editor emails archived in [docs/](docs/) and distilled in [docs/JOURNAL_WORD_LIMIT.md](docs/JOURNAL_WORD_LIMIT.md). The count includes body, abstract, footnotes, in-text citations, captions, and figures/tables (table = 167 words; normal figure = 167; side-by-side pair = 1 normal figure; extra-large figure = 334). References and online-only appendices are excluded, and the costly-signals/TD-learning appendix is filed **online-only** (decided 2026-05-20) so it does not count. The journal counts in Microsoft Word — which counts mathematics and so exceeds local `texcount`. At the start of the 2026-05-20 reduction pass `main_v2.tex` was ~10,239 by `texcount` sum plus ~1,500 in figure/table charges, a journal-style total well over 11,500.
+
+**Progress (2026-05-20, session 38).** A first reduction pass cut `texcount` sum 10,239 → 8,336 (−1,903):
+- §2.3 restructured — caption trimmed, the two figure-setup paragraphs merged, the three observations stripped of per-parameter numbers, the Reading/honest-version/What-this-is meta-paragraphs folded into one "What the proof of concept shows" closing paragraph (−909).
+- §2.1 gutted and retitled "Aims and Learning Rules" — redundant intuition/Gricean paragraphs removed, dual-ambitions + learning-rule paragraphs kept (−232).
+- §1.2 Goal-Sharing reduced — Gilbert paragraph compressed (footnote cut), the two RL-positioning paragraphs merged, thesis paragraph light-trimmed (−317).
+- §4 Discussion pass, all 9 paragraphs — the two meta-openers merged into one lean taxonomy, the "I apologize" limitation de-fanged, philosophical/Q-vs-RE/future-work paragraphs trimmed (−445).
+
+Reviewer responses re-synced for R2·C2, R3·C5, R2·C1, R2·C4, R3·C6.
+
+**Still over.** Journal-style total ≈ `texcount` 8,336 + ~1,500 figures/tables + the Word-vs-`texcount` math gap ≈ ~10,200 — roughly 1,000–1,200 over 9,000. Remaining candidates:
+- Figure 2 (the Q-learning example-run figure): cutting it removes a 167-word figure charge plus its caption — the largest single remaining win.
+- §3 opener "A note on the kind of claim made in this section" — reviewer-reply-flavored meta paragraph; trim or cut (touches R3·C2).
+- Global em-dash sweep; the defensive opening paragraph at §1 ([main_v2.tex:111](manuscript/main_v2.tex#L111)).
+- If still over after these, consider a deeper structural cut or an author-comment note to the editor.
+
+**Deferred:** a consolidated `[main_v2.tex:XXX]` anchor refresh across `responses_to_reviewers.md` and `responses_checklist.md` — the §2.3/§2.1/§1.2/§4 trims shifted line numbers, so anchors in both reviewer docs are knowingly stale until the pass ends.
 
 **Preconditions:**
 - All reviewer-checklist items at `[x]` (already true as of 2026-05-19).
-- Journal word limit confirmed with user before starting.
+- Journal word limit confirmed: **9,000 words all-inclusive** (see [docs/JOURNAL_WORD_LIMIT.md](docs/JOURNAL_WORD_LIMIT.md)); costly-signals/TD appendix filed online-only so excluded.
 
 **Steps:**
 1. Record current word count (`texcount manuscript/main_v2.tex` or equivalent) and target limit; compute the gap.
@@ -190,7 +201,7 @@ Likely highest-value trim candidates, in rough priority (flagged during the 2026
 5. Update the response narrative entries that quote §2.3 verbatim if those passages are trimmed.
 
 **Verification:**
-- `texcount manuscript/main_v2.tex` reports a word count at or below the journal's stated limit.
+- The journal-style count (body + abstract + footnotes + captions + figures/tables per [docs/JOURNAL_WORD_LIMIT.md](docs/JOURNAL_WORD_LIMIT.md)) is at or below 9,000 with margin; note `texcount` alone understates this (no math, no per-figure charge).
 - `latexmk -pdf main_v2.tex` still produces a clean build (currently 30 pages).
 - All `verbatim` and `paraphrase` ledger entries in [responses_checklist.md](manuscript/reviewers/responses_checklist.md) §"§2.3-dependent response entries" still cite content that exists in §2.3.
 
