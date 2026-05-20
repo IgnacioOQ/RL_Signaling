@@ -8,19 +8,19 @@ injection: excluded
 volatility: evolving
 scope: project-specific
 owner: agent
-last_checked: '2026-05-19'
+last_checked: '2026-05-20'
 ---
 
 # TODO Workflow
 
 Cross-session task backlog. Tasks are added here when work started in a session cannot be completed immediately. Each task must be fully self-contained — a fresh agent should be able to pick it up using only the task body and the kb_mcp tools, with no additional context required.
 
-This file is the per-repository instance of the `TODO_WORKFLOW_TEMPLATE.md` pattern. It lives at the root of the working repository alongside `WORKLOG.md` and is intentionally **not registered with kb_mcp** — agents access it via the regular filesystem `Read`/`Edit` tools, not via `knowledge_base_*` calls.
+This file is the per-repository instance of the `TODO_WORKFLOW_TEMPLATE.md` pattern. It lives at the root of the working repository alongside `worklog.jsonl` and is intentionally **not registered with kb_mcp** — agents access it via the regular filesystem `Read`/`Edit` tools, not via `knowledge_base_*` calls.
 
 **Agent rules (picking up tasks):**
 1. Read each task in full before starting. If its preconditions are unmet, skip it and note the blocker.
 2. After completing a task, delete its entire block from this file (from the `---` divider above the `##` header through the `---` divider below the last line of the task body).
-3. After completing one or more tasks, assess whether a `WORKLOG.md` entry is warranted — see Phase 5 of `content/workflows/CODING_AGENT_MAIN_WORKFLOW.md`.
+3. After completing one or more tasks, assess whether a `worklog.jsonl` entry is warranted (schema and append protocol in the "Worklog" section below) — see Phase 6 of `content/workflows/CODING_AGENT_MAIN_WORKFLOW.md`.
 4. Confirm a task is still valid before executing; conditions may have changed since it was written.
 
 **Adding tasks (session authors):**
@@ -82,19 +82,19 @@ This task verifies that:
 5. Run `notebooks/plotting_results.ipynb` on a fresh kernel via Restart-and-Run-All. Confirm every read succeeds without `FileNotFoundError`, and every PNG under `results/` has a fresh timestamp.
 6. Compute and record the diff statistics: for each saved CSV, compare pre-fix and post-fix means / standard deviations of every numeric column. For each PNG, optionally use `scikit-image` SSIM or eyeball-compare against the pre-fix archive.
 7. Write up the reproducibility audit as either:
-   - A new `## YYYY-MM-DD — Reproducibility audit` entry in `WORKLOG.md`, or
+   - A new entry in `worklog.jsonl`, or
    - A standalone `REPRODUCIBILITY.md` at the repo root if the audit is large enough to warrant its own document.
 8. Update the README's "Reproducing the figures" section if any step requires extra manual setup that the current text does not document.
 9. **Optional but recommended:** migrate the multiprocessing seeding pattern to `numpy.random.SeedSequence().spawn()` so individual rows of the saved CSVs are row-reproducible from `iteration` alone. See `content/how-to/NOTEBOOK_WRITING_SKILL.md` Section 8 ("Parallel processing — Seeds across workers") for the recommended pattern. If deferred, file a separate task.
 
 **Verification:**
 - `git status` after a fresh end-to-end run shows clean modifications only to expected files (CSVs in `results/`, PNGs in `results/`, optionally notebook output cells).
-- A diff between pre-fix and post-fix figures is documented in `WORKLOG.md` or `REPRODUCIBILITY.md`.
+- A diff between pre-fix and post-fix figures is documented in `worklog.jsonl` or `REPRODUCIBILITY.md`.
 - `pytest tests/` still passes.
 - The README "Reproducing the figures" section reflects the current procedure with no inaccuracies.
 - `LEGACY_ERRORS_LOG.md` is updated: every `UNREPRODUCIBLE` verdict is replaced with either `CLEAN` (if the post-fix re-run resolved it) or kept with a note explaining why reproducibility is still partial (e.g. multiprocessing-seed row-level non-reproducibility).
 
-**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a WORKLOG entry recording the audit results.
+**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a `worklog.jsonl` entry recording the audit results.
 
 ---
 
@@ -143,7 +143,7 @@ last_checked: '2026-05-15'
    nbstripout --install
    nbstripout --install --attributes .gitattributes
    ```
-   Add `nbstripout` to the `[dev]` extras in [pyproject.toml](pyproject.toml). Update [README.md](README.md) to mention the `nbstripout --install` step in the Setup section. Update [notebooks/NOTEBOOKS_README.md](notebooks/NOTEBOOKS_README.md) to note the strip-on-commit convention. Append a `WORKLOG.md` entry summarizing the refactor.
+   Add `nbstripout` to the `[dev]` extras in [pyproject.toml](pyproject.toml). Update [README.md](README.md) to mention the `nbstripout --install` step in the Setup section. Update [notebooks/NOTEBOOKS_README.md](notebooks/NOTEBOOKS_README.md) to note the strip-on-commit convention. Append a `worklog.jsonl` entry summarizing the refactor.
 8. **Phase 4 is out of scope for this task.** The plan file already records that decision. The separate `todo.verify_notebook_drive_paths` task (which depends on this one) covers the Drive-path verification needed before any Colab re-run.
 
 **Verification:**
@@ -153,7 +153,7 @@ last_checked: '2026-05-15'
 - [README.md](README.md) **Notebooks** and **Reproducing the figures** sections reference the renamed files.
 - [.gitattributes](.gitattributes) contains the `nbstripout` filter line and [pyproject.toml](pyproject.toml) `[dev]` extras include `nbstripout`.
 
-**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a WORKLOG entry summarizing what changed and noting that `todo.verify_notebook_drive_paths` is now unblocked. Delete [NOTEBOOK_REFACTOR_PLAN.md](docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md) from `docs/code-audit/` once Phase 5 is done (the plan was an in-flight document; the WORKLOG entry preserves the historical record).
+**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a `worklog.jsonl` entry summarizing what changed and noting that `todo.verify_notebook_drive_paths` is now unblocked. Delete [NOTEBOOK_REFACTOR_PLAN.md](docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md) from `docs/code-audit/` once Phase 5 is done (the plan was an in-flight document; the `worklog.jsonl` entry preserves the historical record).
 
 ---
 
@@ -185,16 +185,16 @@ Likely highest-value trim candidates, in rough priority (flagged during the 2026
 **Steps:**
 1. Record current word count (`texcount manuscript/main_v2.tex` or equivalent) and target limit; compute the gap.
 2. With the user, prioritize the candidate sites above and any others they identify.
-3. For each chosen site: propose 2–3 trim options per REVISION_WORKFLOW Phase 3, apply, recompile, re-verify that response-narrative quotations still align (especially R2·C2's verbatim §2.3 quotations — see [Reviewers Responses Checklist.md](manuscript/reviewers/Reviewers%20Responses%20Checklist.md) §"§2.3-dependent response entries" for the verbatim/paraphrase/pointer ledger).
+3. For each chosen site: propose 2–3 trim options per REVISION_WORKFLOW Phase 3, apply, recompile, re-verify that response-narrative quotations still align (especially R2·C2's verbatim §2.3 quotations — see [responses_checklist.md](manuscript/reviewers/responses_checklist.md) §"§2.3-dependent response entries" for the verbatim/paraphrase/pointer ledger).
 4. Re-run `texcount` after each round; stop when below the limit with reasonable margin.
 5. Update the response narrative entries that quote §2.3 verbatim if those passages are trimmed.
 
 **Verification:**
 - `texcount manuscript/main_v2.tex` reports a word count at or below the journal's stated limit.
 - `latexmk -pdf main_v2.tex` still produces a clean build (currently 30 pages).
-- All `verbatim` and `paraphrase` ledger entries in [Reviewers Responses Checklist.md](manuscript/reviewers/Reviewers%20Responses%20Checklist.md) §"§2.3-dependent response entries" still cite content that exists in §2.3.
+- All `verbatim` and `paraphrase` ledger entries in [responses_checklist.md](manuscript/reviewers/responses_checklist.md) §"§2.3-dependent response entries" still cite content that exists in §2.3.
 
-**On completion:** Delete this entire task block. Append a `WORKLOG.md` entry recording the pre/post word counts and the sites that were trimmed.
+**On completion:** Delete this entire task block. Append a `worklog.jsonl` entry recording the pre/post word counts and the sites that were trimmed.
 
 ---
 
@@ -210,7 +210,7 @@ blocked_by: []
 last_checked: '2026-05-19'
 ```
 
-**Context.** The reviewer-response edits (R2·C1–C5, R3·C1–C7, completed 2026-05-19) were drafted with substantial agent assistance and, while accurate, may read in places as more uniform and structured than the user's natural philosophical-essay voice. The user wants iterative passes to (a) restore authorial voice, (b) reduce the "generated" feel, and (c) assert authenticity. Same applies to the reviewer-facing prose in [manuscript/reviewers/Generated Responses to Reviewers.md](manuscript/reviewers/Generated%20Responses%20to%20Reviewers.md). The standing feedback memory `feedback_paper_work.md` already records "didactic + philosophical voice" and "iterate slowly" as principles; this task is the operational vehicle for applying them across the revised paper.
+**Context.** The reviewer-response edits (R2·C1–C5, R3·C1–C7, completed 2026-05-19) were drafted with substantial agent assistance and, while accurate, may read in places as more uniform and structured than the user's natural philosophical-essay voice. The user wants iterative passes to (a) restore authorial voice, (b) reduce the "generated" feel, and (c) assert authenticity. Same applies to the reviewer-facing prose in [manuscript/reviewers/responses_to_reviewers.md](manuscript/reviewers/responses_to_reviewers.md). The standing feedback memory `feedback_paper_work.md` already records "didactic + philosophical voice" and "iterate slowly" as principles; this task is the operational vehicle for applying them across the revised paper.
 
 LLM-isms to watch for during rewrites: frequent emphasis markers (`\emph{}` overload), parenthetical lists of three, formulaic "First, … Second, … Third, …" sequences, hedging stacks ("this suggests … which may indicate … such that it appears"), redundant "in other words" rephrasings, abstract-Latinate diction where Anglo-Saxon would do, and `---`-as-rhythm (already partly tracked by `todo.dash_sweep`).
 
@@ -223,14 +223,14 @@ LLM-isms to watch for during rewrites: frequent emphasis markers (`\emph{}` over
 2. Agent loads the affected `.tex` passage (or `.md` response passage), re-paste the surrounding prose, and proposes 2–3 rewrite options that keep the substance and trim the LLM-isms listed above.
 3. User selects an option or supplies their own; agent applies.
 4. Recompile (`latexmk -pdf main_v2.tex`) after each session's edits.
-5. Repeat across sessions until the user is satisfied. Track sites already revoiced in a session-end `WORKLOG.md` entry so the next session can pick up without re-treading covered ground.
+5. Repeat across sessions until the user is satisfied. Track sites already revoiced in a session-end `worklog.jsonl` entry so the next session can pick up without re-treading covered ground.
 
 **Verification:**
 - User satisfied with voice across the manuscript and the responses (subjective — no objective stopping criterion).
 - `latexmk -pdf main_v2.tex` still produces a clean build.
-- Reviewer-response checklist quotations still align with what's in the manuscript ([Reviewers Responses Checklist.md](manuscript/reviewers/Reviewers%20Responses%20Checklist.md) §"§2.3-dependent response entries" re-verified per round).
+- Reviewer-response checklist quotations still align with what's in the manuscript ([responses_checklist.md](manuscript/reviewers/responses_checklist.md) §"§2.3-dependent response entries" re-verified per round).
 
-**On completion:** Delete this entire task block at user discretion (there is no objective stopping criterion beyond user satisfaction). Append a `WORKLOG.md` entry summarizing the revoicing work done across sessions.
+**On completion:** Delete this entire task block at user discretion (there is no objective stopping criterion beyond user satisfaction). Append a `worklog.jsonl` entry summarizing the revoicing work done across sessions.
 
 ---
 
@@ -255,7 +255,7 @@ last_checked: '2026-05-19'
 1. Grep main_v2.tex for `---` and inspect each occurrence with its surrounding context. Note: literal Unicode em-dashes (`—`) also exist (~3 occurrences); include those.
 2. For each occurrence, decide: keep (genuinely abrupt break, or load-bearing rhetorical pause) or rewrite (replace with parentheses, commas, or split into two sentences). Lean rewrite.
 3. Apply edits, preferring the lightest substitution that preserves meaning.
-4. Repeat the survey on the reviewer-facing prose in manuscript/reviewers/Generated Responses to Reviewers.md (uses Unicode `—` in markdown, not LaTeX `---`). Apply the same review.
+4. Repeat the survey on the reviewer-facing prose in manuscript/reviewers/responses_to_reviewers.md (uses Unicode `—` in markdown, not LaTeX `---`). Apply the same review.
 5. Recompile main_v2.tex; confirm no rendering issues.
 
 **Verification:**
@@ -265,7 +265,7 @@ last_checked: '2026-05-19'
 - `latexmk -pdf` rebuilds cleanly; no new errors.
 - Response document prose flows naturally without leaning on dashes for cadence.
 
-**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a WORKLOG entry noting the new em-dash count and the criteria applied.
+**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a `worklog.jsonl` entry noting the new em-dash count and the criteria applied.
 
 ---
 
@@ -283,7 +283,7 @@ last_checked: '2026-05-19'
 
 **Context.** The 2026-05-19 toolkit-build session ran `scripts/response_align.py` against the post-revision PHOS-17993 artifacts and got `Total drift items: 1` — zero in checks A (checklist→narrative), B (narrative→checklist), D (anchor staleness), and a single hit in check C (verbatim quotes in narrative not found in manuscript):
 
-- **Comment R3·C3** at [Generated Responses to Reviewers.md](manuscript/reviewers/Generated%20Responses%20to%20Reviewers.md): the narrative italic-quotes the four-step signaling-game episode as
+- **Comment R3·C3** at [responses_to_reviewers.md](manuscript/reviewers/responses_to_reviewers.md): the narrative italic-quotes the four-step signaling-game episode as
 
   > *"Nature samples a state $x \in X$ according to $P$ and reveals it to Sender; Sender chooses a signal $s \in Sig$ as a function of $x$, $f(x) = s$, and sends it to Receiver (who does not observe $x$); Receiver chooses an action $a \in Ac$ as a function of the received signal, $g(s) = a$; the payoff functions assign rewards $u_S(x, a)$ and $u_R(x, a)$ to sender and receiver."*
 
@@ -305,8 +305,8 @@ last_checked: '2026-05-19'
 
    ```bash
    python scripts/response_align.py \
-     --checklist "manuscript/reviewers/Reviewers Responses Checklist.md" \
-     --responses "manuscript/reviewers/Generated Responses to Reviewers.md" \
+     --checklist "manuscript/reviewers/responses_checklist.md" \
+     --responses "manuscript/reviewers/responses_to_reviewers.md" \
      --manuscript manuscript/main_v2.tex manuscript/Appendix.tex
    ```
 
@@ -316,14 +316,93 @@ last_checked: '2026-05-19'
    - **Option A — exact verbatim quote.** Replace the narrative italic-quote with the manuscript's "First, Nature... Sender \textbf{S}. Second, \textbf{S} chooses..." wording verbatim, periods and all. Passes `response_align.py` check C cleanly; reads less smoothly as a sentence in the narrative.
    - **Option B — drop italic-quote markers; rephrase as paraphrase.** Reframe the narrative prose as "The text spells out the four-step episode using the tuple notation: Nature samples $x \sim P$ and reveals it to Sender, Sender maps $f(x) = s$, Receiver maps $g(s) = a$, and the payoff functions assign $u_S(x, a)$ and $u_R(x, a)$." No `*"..."*` markers. Keeps the smooth reading; loses the "this is verbatim from the new manuscript" signal.
    - **Option C — verbatim quote of a tighter manuscript fragment.** Quote the parts that ARE word-for-word identical between narrative and manuscript (the closing payoff sentence, or a math-only fragment) inside `*"..."*`, and let the rest be ordinary narrative prose.
-4. User picks an option (or supplies their own); agent applies the edit to [Generated Responses to Reviewers.md](manuscript/reviewers/Generated%20Responses%20to%20Reviewers.md).
+4. User picks an option (or supplies their own); agent applies the edit to [responses_to_reviewers.md](manuscript/reviewers/responses_to_reviewers.md).
 5. Re-run `scripts/response_align.py`; confirm `Total drift items: 0`.
 
 **Verification:**
 - `python scripts/response_align.py [...]` exits with `Total drift items: 0`.
 - The R3·C3 narrative either italic-quotes manuscript text verbatim, or makes no verbatim-quote claim about the four-step episode.
 
-**On completion:** Delete this entire task block. Append a one-paragraph note to `WORKLOG.md` recording which option was chosen and confirming check C is clean.
+**On completion:** Delete this entire task block. Append a one-paragraph note to `worklog.jsonl` recording which option was chosen and confirming check C is clean.
+
+---
+
+## Worklog (`worklog.jsonl`) — Schema & Append Protocol
+
+Each session that does non-trivial work appends one JSON object as a new line to `worklog.jsonl` at this repository's root. The file is plain JSONL — one JSON object per line, **oldest first** (chronological append order). It lives at the repo root, outside any docs-discovery surface (kb_mcp, search indexers). There is no helper script; agents construct and append the JSON directly.
+
+`worklog.jsonl` already exists in this repo: 32 entries were migrated from the former markdown `WORKLOG.md` on 2026-05-20, oldest first (`session_id` 1–32). The next session's `session_id` is one past the last line's — currently `33`.
+
+### Schema (`schema_version: 1`)
+
+```json
+{
+  "schema_version": 1,
+  "entry_id":      "YYYY-MM-DD-s1",
+  "date":          "YYYY-MM-DD",
+  "session_id":    1,
+  "summary":       "One-line task summary",
+  "body_markdown": "- **Task:** ...\n- **Outcome:** ...\n- **Key decisions:** ...\n- **KB changes:** ...\n- **Follow-up:** ..."
+}
+```
+
+| Field | Type | Notes |
+|:--|:--|:--|
+| `schema_version` | int | Currently `1`. Bump on breaking changes. |
+| `entry_id` | string | Unique across the file. `YYYY-MM-DD-s{N}` when `session_id` is set; plain `YYYY-MM-DD` otherwise. Same-key collisions get `-b` / `-c` / `-d` suffixes. |
+| `date` | string | ISO `YYYY-MM-DD`. |
+| `session_id` | int \| null | Sequential session counter — last entry's `session_id` + 1. Use `null` if the repo does not track sessions. |
+| `summary` | string | One-line heading — what the session accomplished. |
+| `body_markdown` | string | Full narrative (Task / Outcome / Key decisions / KB changes / Follow-up) as one opaque markdown blob. The inner bullet structure is convention, not schema. Newlines inside the string must be JSON-escaped as `\n` — `json.dumps` does this automatically. |
+
+### Append protocol
+
+1. **Find the next `session_id`** — read the last line of `worklog.jsonl` (returns `1` if the file is empty):
+
+   ```bash
+   if [[ -s worklog.jsonl ]]; then
+     tail -1 worklog.jsonl | python3 -c "import sys,json; d=json.loads(sys.stdin.read()); print((d.get('session_id') or 0)+1)"
+   else
+     echo 1
+   fi
+   ```
+
+2. **Construct the entry as a single-line JSON object.** `json.dumps(entry, ensure_ascii=False)` handles all escaping. Verify `entry_id` is unique against existing entries — if it collides, append `-b` / `-c` / `-d`.
+3. **Append the line** with Python (constructs, escapes, and appends in one shot):
+
+   ```bash
+   python3 - <<'PY'
+   import json
+   entry = {
+       "schema_version": 1,
+       "entry_id":      "YYYY-MM-DD-sN",   # N = the integer from step 1
+       "date":          "YYYY-MM-DD",
+       "session_id":    None,              # set to that same integer
+       "summary":       "...",
+       "body_markdown": "- **Task:** ...\n- **Outcome:** ...",
+   }
+   with open("worklog.jsonl", "a", encoding="utf-8") as f:
+       f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+   PY
+   ```
+
+   A filesystem `Edit` append works too — add the new single-line JSON object after the last existing line.
+
+4. **Skip the worklog append** for trivial one-line changes or purely exploratory sessions with no concrete output.
+
+### Reading back
+
+Render the latest N entries for context loading:
+
+```bash
+tail -3 worklog.jsonl | python3 -c "import sys,json; [print(json.dumps(json.loads(l), indent=2)) for l in sys.stdin]"
+```
+
+Or list entry headlines with `jq`:
+
+```bash
+jq -r '"\(.entry_id): \(.summary)"' worklog.jsonl | tail -10
+```
 
 ---
 

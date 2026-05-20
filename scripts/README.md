@@ -46,8 +46,8 @@ All four scripts share:
 ```bash
 # Drift check — run after every Phase 3 round.
 python scripts/response_align.py \
-  --checklist  "manuscript/reviewers/Reviewers Responses Checklist.md" \
-  --responses  "manuscript/reviewers/Generated Responses to Reviewers.md" \
+  --checklist  "manuscript/reviewers/responses_checklist.md" \
+  --responses  "manuscript/reviewers/responses_to_reviewers.md" \
   --manuscript manuscript/main_v2.tex manuscript/Appendix.tex
 
 # Strict verbatim-quote check (includes pre-revision quotes by default skipped).

@@ -507,7 +507,7 @@ The refactor branch now contains a clean, lint-clean, test-passing rl_signaling/
 - 50 pytest tests passing in ~5 s.
 - Zero ruff findings across `rl_signaling/` and `tests/`.
 - Golden-run regression in place against `tests/golden/baseline.json`.
-- Five governance files at the repo root (`README.md`, `WORKLOG.md`, `TODO_WORKFLOW.md`, `HOUSEKEEPING.md`, `REFACTOR_PLAN.md`).
+- Five governance files at the repo root (`README.md`, `worklog.jsonl`, `TODO_WORKFLOW.md`, `HOUSEKEEPING.md`, `REFACTOR_PLAN.md`).
 
 ---
 

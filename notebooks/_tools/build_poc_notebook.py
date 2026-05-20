@@ -1326,7 +1326,7 @@ limit.
   constant `τ ≈ -1 / log(0.9) ≈ 9.5` episodes per state-action visit.
   Whatever the magnitude of the initial bias, it falls below the reward
   scale within ~50-100 episodes (empirically verified — see the session
-  WORKLOG entry for the decay table).
+  `worklog.jsonl` entry for the decay table).
 
 So Roth–Erev's initial bias survives for thousands of episodes; Q-learning's
 survives for ~100. If we look at *both* agents at horizon 10,000, Q-learning

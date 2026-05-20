@@ -17,7 +17,7 @@ The workflow covers four concerns regardless of stack: (1) static quality of the
 
 **Prerequisites:**
 - Python 3.10+ available; project dependencies installed via `pip install -e ".[dev]"` (the `dev` extras pull in `ruff` and `pytest`).
-- A working `WORKLOG.md` and `TODO_WORKFLOW.md` at the repo root.
+- A working `worklog.jsonl` and `TODO_WORKFLOW.md` at the repo root.
 
 ---
 
@@ -133,7 +133,7 @@ n/a — research codebase.
 
 - Does `README.md` still describe the actual entrypoints and module names? (Especially after Phase 3 of `REFACTOR_PLAN.md` migrates modules into `rl_signaling/`.)
 - Is `REFACTOR_PLAN.md`'s "Phase status" table accurate?
-- Are there `WORKLOG.md` / `TODO_WORKFLOW.md` entries that reference resolved work and should now be cleaned up?
+- Are there `worklog.jsonl` / `TODO_WORKFLOW.md` entries that reference resolved work and should now be cleaned up?
 
 **Exit criterion:** No surprising drift. Anything actionable that is out of scope for this run is filed in `TODO_WORKFLOW.md` with a reproduction step.
 

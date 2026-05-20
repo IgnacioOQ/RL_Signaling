@@ -268,7 +268,7 @@ The R3·C3 revision rewrote §1.1 and §1.3 to use a standard tuple formulation.
 - **State alphabets vs. random variables**: `X, Y` are now state alphabets (sets), not random variables. The episode description draws `(x, y) ∼ P` rather than from "independent binary random variables X, Y". Statistics are unchanged (P uniform on {0,1}² recovers the original).
 - **Argument order for payoff functions**: `u_i(x, y, a_i)` — states first, own action last. Matches `u_S(x, a)` in §1.1.
 
-Mirrored from [manuscript/reviewers/Reviewers Responses Checklist.md](manuscript/reviewers/Reviewers%20Responses%20Checklist.md) for durability — the checklist is operational and may be archived once the revision lands; the durable record of notation drift belongs here.
+Mirrored from [manuscript/reviewers/responses_checklist.md](manuscript/reviewers/responses_checklist.md) for durability — the checklist is operational and may be archived once the revision lands; the durable record of notation drift belongs here.
 
 ## Drift handling for `section_2_3.tex` (resolved 2026-05-18, fragment deleted 2026-05-19)
 

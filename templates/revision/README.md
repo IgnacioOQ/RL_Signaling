@@ -12,8 +12,8 @@ Designed to pair with the cross-paper revision-tooling scripts at
 
 | Template | Copy to | Purpose |
 |---|---|---|
-| `Reviewers_Responses_Checklist_TEMPLATE.md` | `manuscript/reviewers/Reviewers Responses Checklist.md` | Operational `.tex`-tracking checklist (atomic edits, top-line progress, sub-action checkboxes). |
-| `Generated_Responses_to_Reviewers_TEMPLATE.md` | `manuscript/reviewers/Generated Responses to Reviewers.md` | Formal response narrative sent to reviewers (per-comment Reviewer/Response/Concretely structure). |
+| `responses_checklist_TEMPLATE.md` | `manuscript/reviewers/responses_checklist.md` | Operational `.tex`-tracking checklist (atomic edits, top-line progress, sub-action checkboxes). |
+| `responses_to_reviewers_TEMPLATE.md` | `manuscript/reviewers/responses_to_reviewers.md` | Formal response narrative sent to reviewers (per-comment Reviewer/Response/Concretely structure). |
 | `paper_TEX_REF_TEMPLATE.md` | `<repo_root>/LP_TEX_REF.md` (or similar) | Project-local LaTeX conventions reference — section structure, citation style, em-dash policy, notation drift across rounds. |
 
 ## Order of operations

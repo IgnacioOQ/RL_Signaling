@@ -3,12 +3,12 @@ TEMPLATE-INSTRUCTIONS
 
 This is the formal response document — the prose sent back to reviewers
 alongside the resubmitted manuscript. Pair it with
-`Reviewers_Responses_Checklist_TEMPLATE.md` (operational tracker) and
+`responses_checklist_TEMPLATE.md` (operational tracker) and
 `paper_TEX_REF_TEMPLATE.md` (project-local LaTeX conventions). Recommended
 order of operations:
 
   1. Copy this file into `manuscript/reviewers/` (or your project's equivalent)
-     as `Generated Responses to Reviewers.md`.
+     as `responses_to_reviewers.md`.
   2. Fill placeholders with reviewer-text + your draft framings (Phase 1 of
      REVISION_WORKFLOW).
   3. As items close in Phase 3, expand each "Concretely, …" paragraph with
@@ -88,7 +88,7 @@ Concretely, [TBD].
 
 \===== Paper Changes Checklist \=====
 
-[TBD: mirror the operational checklist's structure for easy cross-reference. One bullet per `R<n>·C<m>` with its operational sub-actions. Keep in sync with `Reviewers Responses Checklist.md`. Example pattern:]
+[TBD: mirror the operational checklist's structure for easy cross-reference. One bullet per `R<n>·C<m>` with its operational sub-actions. Keep in sync with `responses_checklist.md`. Example pattern:]
 
 \[R1 · C1\] [TBD: short title]
 • [TBD: atomic sub-action 1]

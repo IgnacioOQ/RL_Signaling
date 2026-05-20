@@ -4,8 +4,8 @@ response_align.py — drift checker for paper-revision artifacts.
 
 Catches drift between the three coupled documents of a revision arc:
 
-  1. Operational checklist  (e.g. "Reviewers Responses Checklist.md")
-  2. Formal response document  (e.g. "Generated Responses to Reviewers.md")
+  1. Operational checklist  (e.g. "responses_checklist.md")
+  2. Formal response document  (e.g. "responses_to_reviewers.md")
   3. Manuscript LaTeX source  (one or more .tex files)
 
 Four checks:
@@ -22,8 +22,8 @@ Exit 0 if no drift; exit 1 otherwise.  Use --soft to force exit 0.
 
 CLI:
     python scripts/response_align.py \\
-        --checklist  "manuscript/reviewers/Reviewers Responses Checklist.md" \\
-        --responses  "manuscript/reviewers/Generated Responses to Reviewers.md" \\
+        --checklist  "manuscript/reviewers/responses_checklist.md" \\
+        --responses  "manuscript/reviewers/responses_to_reviewers.md" \\
         --manuscript manuscript/main_v2.tex manuscript/Appendix.tex
 """
 

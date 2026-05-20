@@ -2,11 +2,11 @@
 TEMPLATE-INSTRUCTIONS
 
 This is the operational checklist that tracks atomic edits to the manuscript
-source. Pair it with `Generated_Responses_to_Reviewers_TEMPLATE.md` and
+source. Pair it with `responses_to_reviewers_TEMPLATE.md` and
 `paper_TEX_REF_TEMPLATE.md`. Recommended order of operations:
 
   1. Copy this file into `manuscript/reviewers/` (or your project's equivalent)
-     as `Reviewers Responses Checklist.md`.
+     as `responses_checklist.md`.
   2. Fill the YAML frontmatter (description, repository).
   3. Replace `[TBD: ...]` placeholders with project content.
   4. Add one `### [R<n> · C<m>]` block per reviewer comment.
@@ -37,11 +37,11 @@ owner: agent
 last_checked: 'YYYY-MM-DD'
 ---
 
-# Reviewers Responses Checklist — [TBD: Manuscript ID]
+# Responses Checklist — [TBD: Manuscript ID]
 
 Operational tracker for the revision pass on [main.tex](../main.tex). Companion to:
 
-- [Generated Responses to Reviewers.md](Generated%20Responses%20to%20Reviewers.md) — formal response document (the prose sent to reviewers).
+- [responses_to_reviewers.md](responses_to_reviewers.md) — formal response document (the prose sent to reviewers).
 - [TBD: prior-submission response doc, if any].
 
 Every reviewer comment is listed below with its sub-actions. Items already landed in `main.tex` are marked `[x]` with the date; items still open are `[ ]`; items partially landed are `[~]` with a note on what remains.
