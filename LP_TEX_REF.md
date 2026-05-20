@@ -337,6 +337,16 @@ This still writes the `.aux` / `.log` but skips PDF generation. Missing figures 
 
 On macOS: `open main_v2.pdf` opens the default PDF viewer (Preview). The viewer reloads automatically when the PDF is rebuilt — no need to close and reopen between compiles.
 
+### VS Code (LaTeX Workshop)
+
+The repo is wired for in-editor compiles via the LaTeX Workshop extension. [.vscode/settings.json](.vscode/settings.json) carries:
+
+- `"latex-workshop.latex.autoBuild.run": "onSave"` — every `Cmd+S` on a `.tex` file triggers a `latexmk` build; the PDF tab refreshes on its own.
+- `"latex-workshop.view.pdf.viewer": "tab"` — the PDF opens in a VS Code tab (`Cmd+Click` jumps source↔PDF via SyncTeX).
+- `"[latex]": { "editor.wordWrap": "on" }` — soft-wraps long lines in the editor. **Display-only — it does not alter the file.** Never hard-rewrap a paragraph to kill horizontal scrolling: that breaks the one-paragraph-per-line rule (§ Line discipline above) for ~600 lines of diff noise. `Option+Z` toggles wrap per-file.
+
+`manuscript/` has three files with `\documentclass` (`main.tex`, `main_v2.tex`, `Appendix.tex`). To stop LaTeX Workshop building the wrong root on save, `main_v2.tex` line 1 carries the magic comment `% !TEX root = main_v2.tex`. `Appendix.tex` self-roots (it is its own document). When `main_v2.tex` is eventually renamed to the canonical name, update the magic comment's target to match.
+
 ## Build artifacts
 
 `pdflatex` + `bibtex` produce the following files in `manuscript/` alongside `main_v2.tex`:

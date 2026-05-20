@@ -3,6 +3,10 @@
     "python-envs.defaultPackageManager": "ms-python.python:conda",
     "python-envs.pythonProjects": [],
 
-    "latex-workshop.latex.autoBuild.run": "never",
-    "latex-workshop.view.pdf.viewer": "tab"
+    "latex-workshop.latex.autoBuild.run": "onSave",
+    "latex-workshop.view.pdf.viewer": "tab",
+
+    "[latex]": {
+        "editor.wordWrap": "on"
+    }
 }
