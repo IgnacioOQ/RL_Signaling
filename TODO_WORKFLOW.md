@@ -234,41 +234,6 @@ LLM-isms to watch for during rewrites: frequent emphasis markers (`\emph{}` over
 
 ---
 
-## Sweep main_v2.tex and reviewer responses for excessive em-dashes
-
-```yaml
-status: todo
-type: task
-id: todo.dash_sweep
-description: Reduce overuse of em-dashes ("---" in LaTeX source / "—" in markdown) in main_v2.tex and manuscript/reviewers/*.md; rewrite parenthetical-dash constructions with parentheses, commas, or sentence splits where the dashed clause is non-load-bearing.
-owner: agent
-blocked_by: []
-last_checked: '2026-05-19'
-```
-
-**Context:** User feedback (2026-05-19) during the R2·C5 round flagged excessive em-dash use in newly-added prose (e.g. an earlier draft of the §1.2 minimal-rationality continuation used dashes around a parenthetical: "the minimal-rationality framing of the RL agents --- as cognitively shallow utility-maximizers rather than fully rational deliberators --- is inherited..."). The dash convention in main_v2.tex is `---` (LaTeX em-dash); current count as of 2026-05-19 is 38 occurrences in main_v2.tex (up from 33 pre-revision). Em-dashes should be reserved for genuinely abrupt breaks or strong parentheticals; routine parentheticals work better with commas or parentheses.
-
-**Preconditions:** None.
-
-**Steps:**
-
-1. Grep main_v2.tex for `---` and inspect each occurrence with its surrounding context. Note: literal Unicode em-dashes (`—`) also exist (~3 occurrences); include those.
-2. For each occurrence, decide: keep (genuinely abrupt break, or load-bearing rhetorical pause) or rewrite (replace with parentheses, commas, or split into two sentences). Lean rewrite.
-3. Apply edits, preferring the lightest substitution that preserves meaning.
-4. Repeat the survey on the reviewer-facing prose in manuscript/reviewers/responses_to_reviewers.md (uses Unicode `—` in markdown, not LaTeX `---`). Apply the same review.
-5. Recompile main_v2.tex; confirm no rendering issues.
-
-**Verification:**
-
-- `grep -c -- '---' manuscript/main_v2.tex` returns a meaningfully smaller number than 38 (the pre-sweep count noted in this task's Context).
-- Each retained em-dash is reviewable and defensible against the "abrupt break or strong parenthetical only" criterion.
-- `latexmk -pdf` rebuilds cleanly; no new errors.
-- Response document prose flows naturally without leaning on dashes for cadence.
-
-**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a `worklog.jsonl` entry noting the new em-dash count and the criteria applied.
-
----
-
 ## Worklog (`worklog.jsonl`) — Schema & Append Protocol
 
 Each session that does non-trivial work appends one JSON object as a new line to `worklog.jsonl` at this repository's root. The file is plain JSONL — one JSON object per line, **oldest first** (chronological append order). It lives at the repo root, outside any docs-discovery surface (kb_mcp, search indexers). There is no helper script; agents construct and append the JSON directly.
