@@ -157,63 +157,33 @@ last_checked: '2026-05-15'
 
 ---
 
-## Word-count reduction pass on main_v2.tex
+## Reconcile the reviewer docs with the §2 renumbering and shifted line anchors
 
 ```yaml
 status: todo
 type: task
-id: todo.word_count_reduction
-description: Reduce main_v2.tex word count to meet the journal's 9,000-word all-inclusive limit (see docs/JOURNAL_WORD_LIMIT.md). The current revision is substantially over; identify candidate sections for trimming and execute trims under user direction.
-owner: user + agent
+id: todo.reviewer_doc_anchor_sweep
+description: Sweep manuscript/reviewers/responses_to_reviewers.md and responses_checklist.md to fix stale section references after §2.1 was dissolved (Proof of Concept §2.3→§2.2, Formal Setup §2.2→§2.1) and to refresh the [main_v2.tex:XXX] line anchors that the 2026-05-20/22 trims shifted.
+owner: agent
 blocked_by: []
-last_checked: '2026-05-20'
+last_checked: '2026-05-22'
 ```
 
-**Context.** The 2026-05-19 R3·C4–C7 round expanded several sections (R3·C4 alignment paragraph at §1.1, R3·C5 four-paragraph §2.1 rewrite, R3·C6 (a)/(b)/(c) opener at §4, R3·C7 terminology parentheticals + structured roadmap), and current state is 30 pages, ~2.9 MB.
-
-The journal's limit is **9,000 words, all-inclusive** — confirmed 2026-05-20 from the editor emails archived in [docs/](docs/) and distilled in [docs/JOURNAL_WORD_LIMIT.md](docs/JOURNAL_WORD_LIMIT.md). The count includes body, abstract, footnotes, in-text citations, captions, and figures/tables (table = 167 words; normal figure = 167; side-by-side pair = 1 normal figure; extra-large figure = 334). References and online-only appendices are excluded, and the costly-signals/TD-learning appendix is filed **online-only** (decided 2026-05-20) so it does not count. The journal counts in Microsoft Word — which counts mathematics and so exceeds local `texcount`. At the start of the 2026-05-20 reduction pass `main_v2.tex` was ~10,239 by `texcount` sum plus ~1,500 in figure/table charges, a journal-style total well over 11,500.
-
-**Progress (2026-05-20, session 38).** A first reduction pass cut `texcount` sum 10,239 → 8,336 (−1,903):
-- §2.3 restructured — caption trimmed, the two figure-setup paragraphs merged, the three observations stripped of per-parameter numbers, the Reading/honest-version/What-this-is meta-paragraphs folded into one "What the proof of concept shows" closing paragraph (−909).
-- §2.1 gutted and retitled "Aims and Learning Rules" — redundant intuition/Gricean paragraphs removed, dual-ambitions + learning-rule paragraphs kept (−232).
-- §1.2 Goal-Sharing reduced — Gilbert paragraph compressed (footnote cut), the two RL-positioning paragraphs merged, thesis paragraph light-trimmed (−317).
-- §4 Discussion pass, all 9 paragraphs — the two meta-openers merged into one lean taxonomy, the "I apologize" limitation de-fanged, philosophical/Q-vs-RE/future-work paragraphs trimmed (−445).
-
-Reviewer responses re-synced for R2·C2, R3·C5, R2·C1, R2·C4, R3·C6.
-
-**Progress (2026-05-20, session 39).** A second pass cut `texcount` sum 8,336 → 7,871 (body 7,831 → 7,675) and removed one figure (−167 journal charge), over four sites:
-- §3 opener — the "A note on the kind of claim made in this section" meta-paragraph deleted, its substance folded into the §3 opening paragraph as a single closing sentence (R3·C2).
-- §4 opener — the "should keep three kinds of claim apart" reading-instruction dropped; the three labels parallelized to "What the model shows / What may generalize / What is speculative" (R2·C1, R3·C6).
-- §1 opener — the ~140-word "three distinct questions" signpost rewritten to ~96 words; a pre-existing grammar error fixed (R2·C3, R3·C7).
-- Figure 2 (the Q-learning `example_process` example run) cut; the exploitation observation kept and folded into the §3-intro paragraph at [main_v2.tex:513](manuscript/main_v2.tex#L513).
-
-Reviewer responses re-synced for R3·C2, R2·C1, R2·C3 (verbatim quotes), plus the §3/§4-opener entries in `responses_checklist.md`.
-
-**Still over.** Journal-style total ≈ `texcount` 7,871 + ~1,300 figures/tables (one figure cut since session 38) + the Word-vs-`texcount` math gap ≈ ~9,570 — roughly 550–600 over 9,000. Remaining candidates:
-- Global em-dash sweep (`dash_audit.py` in the revision toolkit).
-- §1.1 introductory prose — the "pragmatic approach / large language models free ride" opening paragraphs.
-- The §3.1 / §3.2 results prose ("Some observations. First … Fourth …") and the §4 limitations paragraphs.
-- If still over after these, consider a deeper structural cut or an author-comment note to the editor.
-
-**Deferred:** a consolidated `[main_v2.tex:XXX]` anchor refresh across `responses_to_reviewers.md` and `responses_checklist.md` — the §2.3/§2.1/§1.2/§4 trims shifted line numbers, so anchors in both reviewer docs are knowingly stale until the pass ends.
+**Context.** Session 40 (2026-05-22) dissolved §2.1 "Aims and Learning Rules", which renumbered "Formal Setup" §2.2→§2.1 and "Proof of Concept" §2.3→§2.2. Sessions 38–41 also trimmed ~570 `texcount` words across many sites, shifting every line number in `main_v2.tex`. The R3·C5 entry in `responses_to_reviewers.md` was re-synced in session 40, but the rest of both reviewer docs still carries stale "§2.3" references (R2·C1, R2·C2, R3·C2, and the checklist's "§2.3-dependent response entries" section) and stale `[main_v2.tex:XXX]` line anchors. This consolidation was knowingly deferred until the word-count pass ended; that pass closed at session 41 (`todo.word_count_reduction` — journal-style ≈ 8,861, done; full detail in `worklog.jsonl` entries `2026-05-22-s40` / `-s41`).
 
 **Preconditions:**
-- All reviewer-checklist items at `[x]` (already true as of 2026-05-19).
-- Journal word limit confirmed: **9,000 words all-inclusive** (see [docs/JOURNAL_WORD_LIMIT.md](docs/JOURNAL_WORD_LIMIT.md)); costly-signals/TD appendix filed online-only so excluded.
+- The word-count reduction pass is complete (true as of session 41).
+- `main_v2.tex` builds cleanly (true — 24 pages).
 
 **Steps:**
-1. Record current word count (`texcount manuscript/main_v2.tex` or equivalent) and target limit; compute the gap.
-2. With the user, prioritize the candidate sites above and any others they identify.
-3. For each chosen site: propose 2–3 trim options per REVISION_WORKFLOW Phase 3, apply, recompile, re-verify that response-narrative quotations still align (especially R2·C2's verbatim §2.3 quotations — see [responses_checklist.md](manuscript/reviewers/responses_checklist.md) §"§2.3-dependent response entries" for the verbatim/paraphrase/pointer ledger).
-4. Re-run `texcount` after each round; stop when below the limit with reasonable margin.
-5. Update the response narrative entries that quote §2.3 verbatim if those passages are trimmed.
+1. In `manuscript/reviewers/responses_to_reviewers.md`, check every "§2.3" in context: where it refers to the proof of concept, change it to "§2.2"; where a "§2.2" refers to the formal setup, change it to "§2.1". Do not blind-replace — some "§2.x" mentions sit inside verbatim quotes that must track the manuscript's own wording.
+2. Repeat for `manuscript/reviewers/responses_checklist.md`, including renaming its "§2.3-dependent response entries" section heading to "§2.2-dependent response entries".
+3. Refresh every `[main_v2.tex:XXX]` line anchor in both docs: grep the quoted phrase in `main_v2.tex`, read the current line number, update the anchor.
+4. Re-verify that every `verbatim` / `paraphrase` ledger entry in `responses_checklist.md` still cites text that exists verbatim in `main_v2.tex`.
 
-**Verification:**
-- The journal-style count (body + abstract + footnotes + captions + figures/tables per [docs/JOURNAL_WORD_LIMIT.md](docs/JOURNAL_WORD_LIMIT.md)) is at or below 9,000 with margin; note `texcount` alone understates this (no math, no per-figure charge).
-- `latexmk -pdf main_v2.tex` still produces a clean build (currently 26 pages).
-- All `verbatim` and `paraphrase` ledger entries in [responses_checklist.md](manuscript/reviewers/responses_checklist.md) §"§2.3-dependent response entries" still cite content that exists in §2.3.
+**Verification:** `grep -n "§2.3" manuscript/reviewers/*.md` returns no reference that means the proof of concept. Every `[main_v2.tex:NNN]` anchor points at the line that actually holds the quoted text.
 
-**On completion:** Delete this entire task block. Append a `worklog.jsonl` entry recording the pre/post word counts and the sites that were trimmed.
+**On completion:** Delete this entire task block from TODO_WORKFLOW.md. Append a `worklog.jsonl` entry.
 
 ---
 
