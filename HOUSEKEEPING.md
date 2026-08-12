@@ -85,7 +85,7 @@ n/a — no type gate in this repository (see Phase 1). Record `n/a` in the repor
 
 ## Phase 3 — Tests
 
-**Goal:** Verify behavior is unbroken and the test suite has not silently shrunk.
+**Goal:** Verify the published model still behaves as the paper reports, and that the suite has not silently shrunk.
 
 ### Step 1 — Unit tests
 
@@ -93,15 +93,38 @@ n/a — no type gate in this repository (see Phase 1). Record `n/a` in the repor
 pytest tests/ -v
 ```
 
+### What the suite actually covers
+
+This is not a generic smoke suite — it tests the **model the paper reports**, so a regression here is a threat to a published claim, not just a code defect. Treat any failure as blocking.
+
+| File | Covers | Why it matters to the paper |
+|---|---|---|
+| `test_agents.py` | The three learning rules — `UrnAgent` (Roth–Erev), `QLearningAgent`, `TDLearningAgent` — plus `ε-greedy` / `softmax` / `UCB` selection, urn clamping at zero, and initialization seeding | These are the agents §3 compares; the initialization-seeding tests pin the `init_weights` behaviour the proof-of-concept section turns on |
+| `test_env.py` | `MultiAgentEnv` lifecycle: graph validation, observation construction, the signal step, full- vs partial-information regimes, and the costly-signaling null-signal append | The three information regimes are the paper's independent variable |
+| `test_info_theory.py` | NMI identities on hand-built tables: perfect correlation → 1, independence → 0, degenerate cases, and the unit interval | NMI is the paper's measure of informative signaling |
+| `test_numerical_sanity.py` | Hand-derived analytical answers checked against the implementation — entropy in bits (log base 2), the Q-learning single-update and ten-update closed forms, TD one-step bootstrap with and without a terminal, costly-signal cost arithmetic, and urn convergence under full information | The strongest tests in the repo: each states the analytical answer first, so a silent change in the learning math cannot pass |
+| `test_golden.py` | Deterministic regression against `tests/golden/baseline.json` (seed 12345) | Catches any change that perturbs a published run |
+| `test_smoke.py` | End-to-end, 100 episodes per agent, with and without signals | Integration across env + agent + simulation |
+
+**Known coverage gap:** the suite exercises the mechanism, not the paper's *findings*. No test asserts that signalling raises reward or NMI in the partial-information regime — that is a statistical claim over 10,000-run distributions, and the evidence for it is the committed datasets plus the figures traced in `results/MANIFEST.md`, not pytest.
+
 ### Step 2 — Integration / end-to-end tests
 
-n/a — this repo's only integration surface is the notebooks. Spot-check by running the first 5 cells of `notebooks/basic_unit_test.ipynb` after any change to `rl_signaling/agents.py`, `env.py`, or `simulation.py`.
+`test_smoke.py` covers the package end-to-end. Beyond that, the notebooks are the integration surface; the honest equivalent of "integration tests pass" is a Restart-and-Run-All. After any change to `rl_signaling/agents.py`, `env.py`, or `simulation.py`, spot-check `notebooks/basic_unit_test.ipynb`; after a structural change, sweep the notebooks:
+
+```bash
+for nb in notebooks/*.ipynb; do
+  jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=600 "$nb"
+done
+```
+
+`notebooks/Parameter_Optimization_wchoices.ipynb` is excluded from that sweep in practice — it writes to a Google Drive path and was run on Colab (see `results/MANIFEST.md`, Gap 4).
 
 ### Step 3 — Test count comparison
 
-Compare pass / fail / skipped counts against the prior "Latest Report." Any regression is a finding to investigate before closing the run.
+Compare pass / fail / skipped counts against the prior "Latest Report." Any regression is a finding to investigate before closing the run. A count that *drops* is only acceptable when tests were deliberately removed with the code they covered — record the reason in the report, as with the 80 → 63 drop when the LaTeX revision toolkit left the repository.
 
-**Exit criterion:** All tests pass. Test count is steady or higher than the prior report.
+**Exit criterion:** All tests pass. Test count is steady or higher than the prior report, or a drop is explained in the report.
 
 ---
 
@@ -219,7 +242,7 @@ Copy the block below and fill it in for each housekeeping run. The most recent b
 
 ---
 
-## Latest Report
+## Previous Report
 
 **Date:** 2026-08-12
 **Trigger:** Publication preparation — the article was accepted at *Philosophy of Science*, and the repository was reduced to code-only and made paper-ready. This is the first report; it establishes the baseline.
@@ -262,3 +285,46 @@ Copy the block below and fill it in for each housekeeping run. The most recent b
 - Set the real author name in `pyproject.toml` (currently `Anonymous`).
 - Move `~/Desktop/RL_Signaling_backups/` to durable storage — it is now the only copy of the pre-scrub history.
 - Add the article DOI and citation to `README.md`; check the journal's code-deposit policy before going public.
+
+---
+
+## Latest Report
+
+**Date:** 2026-08-12
+**Trigger:** Post-publication-prep verification run, requested after the repository was reduced to code-only. First run under the revised Phase 3, which now documents what the test suite covers relative to the paper's model.
+
+### Artifact counts
+- Tracked files: 135
+- Source files (tracked `.py`): 35 — of which 7 are the `rl_signaling/` package
+- Lines of code: 3,019 in the package; 9,664 across all tracked Python
+- Registered tests: 63
+
+### Static quality
+- Format: 23 of 29 files would be reformatted — pre-existing, notebook-derived code. Deliberately not addressed (Phase 2 Step 4).
+- Lint (`rl_signaling/`): **pass — all checks passed**
+- Lint (repo-wide): 205 findings, informational. Top rules: E402 import-not-at-top (55), D103 undocumented-public-function (40), E501 line-too-long (24), F821 undefined-name (23), I001 unsorted-imports (17). All in `analytics/scripts/` and notebook-derived code.
+- Type check: n/a — no type gate in this repository.
+
+### Tests
+- Unit: **63 passed / 0 failed / 0 skipped** (~17 s)
+- Comparison vs. previous report: **steady at 63.**
+
+### Repository health
+- Dependencies: 33 packages behind latest. Of the 8 declared runtime dependencies, **none** are outdated; the drift is entirely in transitive/dev packages (`matplotlib-inline`, `tqdm`). No EOL pins, no advisories. Not actioned — the committed datasets were produced under the current pins, and bumping them risks perturbing the golden-run baseline for no scientific gain.
+- Dead code: 12 findings (F401/F841), **none in the package** — `ruff check rl_signaling/ --select=F401,F841` passes.
+- Docs: current. All markdown links across the 24 tracked documents resolve (**0 broken**). README's module list and notebook table match the package and `notebooks/` exactly.
+- Publication boundary: **intact.** `git ls-files | grep -Ei 'manuscript|slides|reviewer|writing_comments|LP_TEX|PAPER_WRITING'` returns nothing.
+
+### Notable events
+- Phase 3 was rewritten this run. It previously described the suite only as `pytest tests/ -v`; it now documents, per file, which part of the paper's model each test covers — the three learning rules, the three information regimes, the NMI identities, the hand-derived analytical cases, and the golden-run regression — and states that a failure there threatens a published claim rather than merely a code path.
+- A coverage gap is now recorded explicitly: the suite exercises the **mechanism**, not the paper's **findings**. Nothing asserts that signalling raises reward or NMI in the partial-information regime — that is a statistical claim over 10,000-run distributions, evidenced by the committed datasets and the figures traced in `results/MANIFEST.md`, not by pytest. This is a deliberate boundary, not a defect, but it should stay visible.
+- Static-quality counts fell (format 41→23 files, lint 321→205) purely because the LaTeX revision toolkit and templates left the repository; no code was fixed.
+- Local `.git` is 265 MB while a full clone from GitHub is 109 MB. The difference is pre-scrub objects held alive by reflog entries from verification fetches — local-only, no effect on the published repository. `git gc --prune=now --expire=now` would reclaim it, at the cost of destroying an incidental local copy of the pre-scrub history.
+
+### Files modified this run
+- `HOUSEKEEPING.md`: Phase 3 rewritten (suite-coverage table, integration/Restart-and-Run-All guidance, test-count-drop policy); prior report demoted; this report appended.
+
+### Follow-ups recorded in the planner store
+- `results/MANIFEST.md` names 32 of the 54 tracked figures literally; the other 22 are covered by grouped family rows in the exploratory table. All 27 **paper** figures are named individually, so traceability is complete — but a reader grepping for an exploratory filename will not find it. Low priority.
+- Move `~/Desktop/RL_Signaling_backups/` to durable storage — still the only reliable copy of the pre-scrub history.
+- Add the article DOI and citation to `README.md`; check the *Philosophy of Science* code-deposit policy before going public.
