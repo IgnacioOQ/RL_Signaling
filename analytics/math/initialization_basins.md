@@ -46,7 +46,7 @@ There are $|\Sigma_{\text{abs}}| = 2304$ joint absorbing states. The shuffles ar
 
 > **Observation.** Under `[1, 0]` the chain is *trivially convergent* — it never moves — but this is not the convergence the §2.3 proof of concept is hoping for. The chain converges to whatever absorbing state the random initialization picked; that absorbing state is rarely ideal.
 
-The reward distribution over $\Sigma_{\text{abs}}$ is computed in [scripts/enumerate_absorbing_states.py](scripts/enumerate_absorbing_states.py). The per-agent marginal is:
+The reward distribution over $\Sigma_{\text{abs}}$ is computed in [scripts/enumerate_absorbing_states.py](../scripts/enumerate_absorbing_states.py). The per-agent marginal is:
 
 $$\mathbb{P}_\sigma\bigl[\bar{r}_i(\sigma) = r\bigr] \;=\; \begin{cases} \tfrac{96}{2304} = 4.17\% & r = 1 \\ \tfrac{576}{2304} = 25.00\% & r = 0.5 \\ \tfrac{768}{2304} = 33.33\% & r = 0.25 \\ \tfrac{864}{2304} = 37.50\% & r = 0 \end{cases}$$
 
@@ -88,7 +88,7 @@ These are intermediate. The starting policy is *biased* toward whatever bijectio
 | $(5, 1)$ | $5/6 \approx 0.833$ | $\approx 0.42$ |
 | $(100, 1)$ | $100/101 \approx 0.990$ | $\approx 0.92$ |
 
-The toy single-state model in [scripts/study_toy_markov_chain.py](scripts/study_toy_markov_chain.py) lets us quantify the drift rate per cell:
+The toy single-state model in [scripts/study_toy_markov_chain.py](../scripts/study_toy_markov_chain.py) lets us quantify the drift rate per cell:
 
 | $(n, m)$ | $\mathbb{E}[\rho_{10}]$ | $\mathbb{E}[\rho_{50}]$ | median $t$ for $\rho_t > 0.99$ |
 |---|---:|---:|---:|
@@ -147,6 +147,6 @@ The `[1, 0]` figure in §2.3 (Figure 1) should be **labeled as a control**: a co
 |---|---|
 | `(n, m)` initial sampling probability $n / (n + m)$ | [analytics/agent_urn.md](agent_urn.md), §"Eager (one-hot) initialization" |
 | `[1, 0]` is an absorbing state | [proof_of_concept_markov.md](proof_of_concept_markov.md), Proposition 1 |
-| 4 ideal / 2304 absorbing states | [scripts/enumerate_absorbing_states.py](scripts/enumerate_absorbing_states.py) §4 |
-| `[1, 0]` reward histogram (200 seeds) | [scripts/study_urn_basin_drift.py](scripts/study_urn_basin_drift.py) §2 |
-| Per-cell drift rates for $m > 0$ | [scripts/study_toy_markov_chain.py](scripts/study_toy_markov_chain.py) §5 |
+| 4 ideal / 2304 absorbing states | [scripts/enumerate_absorbing_states.py](../scripts/enumerate_absorbing_states.py) §4 |
+| `[1, 0]` reward histogram (200 seeds) | [scripts/study_urn_basin_drift.py](../scripts/study_urn_basin_drift.py) §2 |
+| Per-cell drift rates for $m > 0$ | [scripts/study_toy_markov_chain.py](../scripts/study_toy_markov_chain.py) §5 |

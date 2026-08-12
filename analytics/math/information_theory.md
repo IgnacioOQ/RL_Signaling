@@ -274,7 +274,7 @@ $\mathrm{NMI} = 0/1 = 0$. The signal carries no information about the observatio
 
 ## Independent verification
 
-The script [scripts/verify_information_theory.py](scripts/verify_information_theory.py) re-derives every identity in this file using `scipy.stats.entropy` (a fully independent implementation) and asserts agreement with `rl_signaling.info_theory` to machine precision. Run with:
+The script [scripts/verify_information_theory.py](../scripts/verify_information_theory.py) re-derives every identity in this file using `scipy.stats.entropy` (a fully independent implementation) and asserts agreement with `rl_signaling.info_theory` to machine precision. Run with:
 
 ```bash
 .venv/bin/python -m analytics.scripts.verify_information_theory

@@ -206,4 +206,4 @@ This is monotone non-increasing in $|r|$ for negative $r$, hits zero precisely w
 
 ## Independent verification
 
-The script [scripts/verify_urn_convergence.py](scripts/verify_urn_convergence.py) constructs a single-state UrnAgent, runs $n = 1000$ updates with reward 1 on a fixed action, and compares the empirical sampling probability of that action against the closed-form $(1 + n r / u_0) / (K + n r / u_0)$.
+The script [scripts/verify_urn_convergence.py](../scripts/verify_urn_convergence.py) constructs a single-state UrnAgent, runs $n = 1000$ updates with reward 1 on a fixed action, and compares the empirical sampling probability of that action against the closed-form $(1 + n r / u_0) / (K + n r / u_0)$.

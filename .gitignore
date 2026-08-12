@@ -61,9 +61,19 @@ slides/
 
 # Submission-process and internal-audit notes.
 writing_comments.md
-docs/JOURNAL_WORD_LIMIT.md
-docs/code-audit/
-docs/Gmail*.pdf
+docs/
+
+# Manuscript-support tooling: the LaTeX revision toolkit, its revision-artifact
+# skeletons, and the test file that exercises them. Reusable for a future paper,
+# but unrelated to the simulation code this repository publishes.
+scripts/
+templates/
+tests/test_revision_tooling.py
+LP_TEX_REF.md
+PAPER_WRITING_SKILL.md
+
+# Editor config (conda + latex-workshop build-on-save; personal tooling).
+.vscode/
 
 # Agent tooling config (local absolute paths, personal workflow record).
 .claude/

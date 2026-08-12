@@ -197,4 +197,4 @@ So the asymptotic standard deviation of $Q_n$ around $\mu$ is $\sqrt{0.0526} \si
 
 ## Independent verification
 
-The script [scripts/verify_q_learning.py](scripts/verify_q_learning.py) drives a `QLearningAgent` through 100 identical-reward updates, computes $Q_n$ from the closed form for each $n$, and asserts agreement at every step. It also computes the asymptotic variance from the formula above and compares it to the empirical variance over a long run.
+The script [scripts/verify_q_learning.py](../scripts/verify_q_learning.py) drives a `QLearningAgent` through 100 identical-reward updates, computes $Q_n$ from the closed form for each $n$, and asserts agreement at every step. It also computes the asymptotic variance from the formula above and compares it to the empirical variance over a long run.

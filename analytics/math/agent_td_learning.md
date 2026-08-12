@@ -252,4 +252,4 @@ For bootstrap updates the rate is the same in the limit (Watkins–Dayan), but t
 
 ## Independent verification
 
-The script [scripts/verify_td_learning.py](scripts/verify_td_learning.py) drives a `TDLearningAgent` through several scenarios — terminal updates with i.i.d. rewards (compares to empirical mean), one-step bootstrap (compares to closed-form), and full two-phase update (verifies both rows shift correctly).
+The script [scripts/verify_td_learning.py](../scripts/verify_td_learning.py) drives a `TDLearningAgent` through several scenarios — terminal updates with i.i.d. rewards (compares to empirical mean), one-step bootstrap (compares to closed-form), and full two-phase update (verifies both rows shift correctly).

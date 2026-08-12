@@ -1,6 +1,6 @@
 # §2.3 Proof of Concept — paper-ready draft (V2)
 
-This is a tighter rewrite of [Proof of Concept (Paper Draft).md](./Proof%20of%20Concept%20(Paper%20Draft).md). It commits to a single figure — the Roth–Erev horizon sweep, [results/proof_of_concept/proof_of_concept_plot.png](../../results/proof_of_concept/proof_of_concept_plot.png) — and reorganizes the proof of concept around that one image.
+This is a tighter rewrite of [Proof of Concept (Paper Draft).md](./Proof%20of%20Concept%20%28Paper%20Draft%29.md). It commits to a single figure — the Roth–Erev horizon sweep, [results/proof_of_concept/proof_of_concept_plot.png](../../results/proof_of_concept/proof_of_concept_plot.png) — and reorganizes the proof of concept around that one image.
 
 Three changes relative to V1:
 

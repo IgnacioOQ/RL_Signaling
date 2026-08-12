@@ -19,7 +19,7 @@ The related document [initialization_basins.md](initialization_basins.md) addres
 
 The new authoritative reference for the Roth–Erev factored kernel and the Pólya-urn analysis of the signaling tables is [roth_erev_polya_mle.md](roth_erev_polya_mle.md); it supersedes the conceptual scaffolding of this file in §"Transition kernel" and motivates the Pure-Pólya theorem appended below.
 
-Conventions match [notation.md](notation.md). All numerical claims in this file are reproduced by the scripts at [scripts/study_toy_markov_chain.py](scripts/study_toy_markov_chain.py), [scripts/enumerate_absorbing_states.py](scripts/enumerate_absorbing_states.py), and [scripts/study_urn_basin_drift.py](scripts/study_urn_basin_drift.py); the math derivations and the scripts are designed to cross-validate each other.
+Conventions match [notation.md](notation.md). All numerical claims in this file are reproduced by the scripts at [scripts/study_toy_markov_chain.py](../scripts/study_toy_markov_chain.py), [scripts/enumerate_absorbing_states.py](../scripts/enumerate_absorbing_states.py), and [scripts/study_urn_basin_drift.py](../scripts/study_urn_basin_drift.py); the math derivations and the scripts are designed to cross-validate each other.
 
 ## Setting
 
@@ -121,7 +121,7 @@ $$\bar{r}_i(\sigma) \;=\; \frac{1}{|\mathcal{V}|} \sum_{\mathbf{v} \in \mathcal{
 
 where $\alpha_i^\sigma(\mathbf{v})$ is the action agent $i$ takes under $\sigma$ when the world state is $\mathbf{v}$. The rewards $\bar{r}_i(\sigma) \in \{0, \tfrac{1}{4}, \tfrac{1}{2}, \tfrac{3}{4}, 1\}$ since each agent's reward at each $\mathbf{v}$ is in $\{0, 1\}$ and $|\mathcal{V}| = 4$.
 
-The script [scripts/enumerate_absorbing_states.py](scripts/enumerate_absorbing_states.py) computes $\bar{r}_0(\sigma), \bar{r}_1(\sigma)$ for every $\sigma$. Running it on game seed $0$ produces the joint distribution shown in Table 1.
+The script [scripts/enumerate_absorbing_states.py](../scripts/enumerate_absorbing_states.py) computes $\bar{r}_0(\sigma), \bar{r}_1(\sigma)$ for every $\sigma$. Running it on game seed $0$ produces the joint distribution shown in Table 1.
 
 | Joint $(\bar{r}_0, \bar{r}_1)$ | count | fraction |
 |---|---:|---:|
@@ -146,7 +146,7 @@ The "4 ideal states" count has a clean structural explanation. For $\bar{r}_0(\s
 
 The **mean** $\tfrac{1}{|\Sigma_{\text{abs}}|}\sum_\sigma \bar{r}_i(\sigma) = \tfrac{1}{n_{\text{final\\_actions}}}$ also has a structural explanation: integrating over all $4!$ action bijections is integrating over a uniform-random action selection at every $(v_1, \sigma_{j(0)})$ key, which gives the random-action baseline.
 
-> **Empirical confirmation.** Running 200 independent seeds of `UrnAgent` at `[1, 0]` ([scripts/study_urn_basin_drift.py](scripts/study_urn_basin_drift.py) Section 2):
+> **Empirical confirmation.** Running 200 independent seeds of `UrnAgent` at `[1, 0]` ([scripts/study_urn_basin_drift.py](../scripts/study_urn_basin_drift.py) Section 2):
 >
 > - Reward $1.00$: 5 trials (theoretical 4/2304 → 0.34 expected; observed 5 within Poisson variance).
 > - Reward $0.50$: 53 (theoretical $\tfrac{576}{2304} = 25\%$ → 50 expected; observed 53).
@@ -158,7 +158,7 @@ The agreement is strong. The `[1, 0]` failure mode is fully explained by the abs
 
 ## Reachable states under `m > 0`
 
-When $m > 0$ the chain has no absorbing states (Proposition: not deterministic ⇒ not absorbing). Instead, each cell of every urn evolves according to a state-dependent birth process. The simplest tractable instance is the *single-state, single-channel, single-agent* reduction studied in [scripts/study_toy_markov_chain.py](scripts/study_toy_markov_chain.py).
+When $m > 0$ the chain has no absorbing states (Proposition: not deterministic ⇒ not absorbing). Instead, each cell of every urn evolves according to a state-dependent birth process. The simplest tractable instance is the *single-state, single-channel, single-agent* reduction studied in [scripts/study_toy_markov_chain.py](../scripts/study_toy_markov_chain.py).
 
 > **Toy model.** One agent, one observation, two signals $\{0, 1\}$, deterministic reward $r(\sigma) = \mathbb{1}[\sigma = i^\star]$ for a fixed correct signal $i^\star$. Urn $\mathbf{u} = (u_{\text{hot}}, u_{\text{cold}}) \in \mathbb{Z}_{\ge 0}^2$ where $u_{\text{hot}} = u[i^\star]$.
 
@@ -171,7 +171,7 @@ Define $X_t = u_{\text{hot}, t} - u_{\text{hot}, 0}$ (number of correct signals 
 
 $$\mathbb{P}(X_{t+1} = k+1 \mid X_t = k) = \rho_k = \frac{n_0 + k}{n_0 + k + m}, \qquad \mathbb{P}(X_{t+1} = k \mid X_t = k) = 1 - \rho_k,$$
 
-with $n_0 = u_{\text{hot}, 0}$, lets us compute the distribution of $X_t$ for any $t$ explicitly via dynamic programming. The script [scripts/study_toy_markov_chain.py](scripts/study_toy_markov_chain.py) does this and validates it against $50{,}000$-trajectory Monte Carlo simulations (Section 7).
+with $n_0 = u_{\text{hot}, 0}$, lets us compute the distribution of $X_t$ for any $t$ explicitly via dynamic programming. The script [scripts/study_toy_markov_chain.py](../scripts/study_toy_markov_chain.py) does this and validates it against $50{,}000$-trajectory Monte Carlo simulations (Section 7).
 
 | $(n, m)$ | $\mathbb{E}[\rho_0]$ | $\mathbb{E}[\rho_{10}]$ | $\mathbb{E}[\rho_{50}]$ | $\mathbb{E}[\rho_{100}]$ | $\mathbb{E}[\rho_{200}]$ | median $t$ for $\rho_t > 0.99$ |
 |---|---:|---:|---:|---:|---:|---:|
@@ -218,7 +218,7 @@ By the classical Eggenberger–Pólya theorem (see Pemantle 2007, §2 or Mahmoud
 
 The theorem makes precise what the §2.3 informal "miracle drift" picture says about a single agent in a static environment: the signaling table does *not* converge to a deterministic optimum — it converges to *some* random extreme point on the simplex, picked out by initial bias and the path realization. **The random selection of *which* signaling system is delivered by the Pólya structure of the $f^{(i)}$ urns; the *correctness* of the resulting communication is delivered by the $g^{(i)}$ urns adapting to whatever the $f^{(i)}$ urns drift into** ([roth_erev_polya_mle.md](roth_erev_polya_mle.md) §3, §7).
 
-The independence-of-color condition for $q^*(x)$ is fragile: if agent $j$'s policy is allowed to evolve, $q^*(x)$ becomes a function of $g^{(j)}_t$ — so the urn becomes a *generalized* Pólya urn whose reinforcement probability drifts. The theorem above is the static-partner reduction; the joint-chain extension is the open problem of the next section. The theorem and its empirical validation on a single agent against a frozen partner are in [scripts/study_polya_signaling_convergence.py](scripts/study_polya_signaling_convergence.py); a Kolmogorov–Smirnov test against the Beta marginal of $\mathrm{Dir}(n_0)$ does not reject at $\alpha = 0.005$ at $T = 8{,}000$ episodes across $M = 200$ seeds.
+The independence-of-color condition for $q^*(x)$ is fragile: if agent $j$'s policy is allowed to evolve, $q^*(x)$ becomes a function of $g^{(j)}_t$ — so the urn becomes a *generalized* Pólya urn whose reinforcement probability drifts. The theorem above is the static-partner reduction; the joint-chain extension is the open problem of the next section. The theorem and its empirical validation on a single agent against a frozen partner are in [scripts/study_polya_signaling_convergence.py](../scripts/study_polya_signaling_convergence.py); a Kolmogorov–Smirnov test against the Beta marginal of $\mathrm{Dir}(n_0)$ does not reject at $\alpha = 0.005$ at $T = 8{,}000$ episodes across $M = 200$ seeds.
 
 ## What is missing for a convergence-in-probability proof
 
@@ -242,13 +242,13 @@ Q-learning's joint chain is analyzed in stochastic-approximation language; defer
 |---|---|
 | State space and transition kernel | [rl_signaling/simulation.py](../../rl_signaling/simulation.py), [rl_signaling/env.py](../../rl_signaling/env.py) |
 | Absorbing $\Leftrightarrow$ deterministic for `UrnAgent` | [rl_signaling/agents.py:304-314](../../rl_signaling/agents.py#L304-L314) (clamped update) |
-| 2304 absorbing states | [scripts/enumerate_absorbing_states.py](scripts/enumerate_absorbing_states.py) §2 |
-| 4 ideal / 324 trap states | [scripts/enumerate_absorbing_states.py](scripts/enumerate_absorbing_states.py) §4 |
-| Mean reward $1/M$ over $\Sigma_{\text{abs}}$ | [scripts/enumerate_absorbing_states.py](scripts/enumerate_absorbing_states.py) §7 |
-| `[1, 0]` empirical reward histogram | [scripts/study_urn_basin_drift.py](scripts/study_urn_basin_drift.py) §2 |
-| Toy single-state Markov chain | [scripts/study_toy_markov_chain.py](scripts/study_toy_markov_chain.py) |
-| Closed-form $\rho_t$ recursion | [scripts/study_toy_markov_chain.py](scripts/study_toy_markov_chain.py) §1 |
-| $\rho_t$ sub-martingale convergence | [scripts/study_toy_markov_chain.py](scripts/study_toy_markov_chain.py) §5 |
+| 2304 absorbing states | [scripts/enumerate_absorbing_states.py](../scripts/enumerate_absorbing_states.py) §2 |
+| 4 ideal / 324 trap states | [scripts/enumerate_absorbing_states.py](../scripts/enumerate_absorbing_states.py) §4 |
+| Mean reward $1/M$ over $\Sigma_{\text{abs}}$ | [scripts/enumerate_absorbing_states.py](../scripts/enumerate_absorbing_states.py) §7 |
+| `[1, 0]` empirical reward histogram | [scripts/study_urn_basin_drift.py](../scripts/study_urn_basin_drift.py) §2 |
+| Toy single-state Markov chain | [scripts/study_toy_markov_chain.py](../scripts/study_toy_markov_chain.py) |
+| Closed-form $\rho_t$ recursion | [scripts/study_toy_markov_chain.py](../scripts/study_toy_markov_chain.py) §1 |
+| $\rho_t$ sub-martingale convergence | [scripts/study_toy_markov_chain.py](../scripts/study_toy_markov_chain.py) §5 |
 
 ## References
 

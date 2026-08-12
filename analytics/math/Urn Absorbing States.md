@@ -102,7 +102,7 @@ $$
 |\Sigma_\text{abs}| \;=\; 48 \;\times\; 48 \;=\; \boxed{2304}.
 $$
 
-The script [`enumerate_absorbing_states.py`](scripts/enumerate_absorbing_states.py) iterates over all 2304 profiles and confirms the count (line 130: `check_exact("joint absorbing states", n_joint, 2304)`).
+The script [`enumerate_absorbing_states.py`](../scripts/enumerate_absorbing_states.py) iterates over all 2304 profiles and confirms the count (line 130: `check_exact("joint absorbing states", n_joint, 2304)`).
 
 ## A subtlety: bijection-only vs all-deterministic
 
@@ -157,7 +157,7 @@ For a fixed key $(v_1, s) \in \{0, 1\}^2$, ask: as $g^{(0)}$ ranges over all 24 
 
 Uniform-random action gives expected reward $1/4$ (one of the 4 actions is correct under the matching game). So the mean of agent 0's reward across the 2304 profiles is exactly $1/4 = 0.25$, independent of the game seed (as long as the game has exactly one reward-1 action per world state, which the canonical matching games do).
 
-The empirical check in [`scripts/enumerate_absorbing_states.py`](scripts/enumerate_absorbing_states.py) §7 confirms this to machine precision: `mean r0 = 0.25` exactly.
+The empirical check in [`scripts/enumerate_absorbing_states.py`](../scripts/enumerate_absorbing_states.py) §7 confirms this to machine precision: `mean r0 = 0.25` exactly.
 
 ## The full marginal distribution
 
@@ -176,7 +176,7 @@ Two surprises worth noting:
 - **No 0.75.** Reward 0.75 means the agent's action is correct on exactly 3 of the 4 world states. Under the matching-game structure, that turns out to be combinatorially impossible — a deterministic action policy that's right on 3 of 4 world states would have to "agree with the optimal map" in a way that the bijection-only constraint forbids. (The full proof is mechanical: enumerate all 96 perfect-reward action maps, perturb one cell, check that the resulting policy can only go to reward 0.5 or 0.25 — there's no path through 0.75.)
 - **96 perfect, but only 4 *joint* ideal.** Each agent considered separately has 96 perfect-reward profiles. The joint ideal count is $4$, not $96 \times 96 = 9216$, because most "agent 0 perfect" profiles are incompatible with any "agent 1 perfect" profile under shared signaling bijections.
 
-The joint $(r_0, r_1)$ distribution is what Option C in the [proof-of-concept figures notebook](../../notebooks/proof_of_concept_figures.ipynb) plots as a heatmap.
+The joint $(r_0, r_1)$ distribution is what Option C in the [proof-of-concept figures notebook](../../notebooks/proof_of_concept_figures_final.ipynb) plots as a heatmap.
 
 ## Why the old `(1, 0)` regime gave reward 0.25
 
@@ -211,6 +211,6 @@ For §2.3 this means Option C (the absorbing-state distribution figure) is still
 | Formal absorbing-state propositions and proofs | [`proof_of_concept_markov.md`](proof_of_concept_markov.md) §"Absorbing states under `init_weights = (n, 0)`" |
 | Transition kernel for the Markov chain | [`proof_of_concept_markov.md`](proof_of_concept_markov.md) §"Transition kernel" |
 | Pure-Pólya theorem for a single signaling row | [`proof_of_concept_markov.md`](proof_of_concept_markov.md) §"Pure-Pólya signaling-urn convergence" |
-| Empirical enumeration of all 2304 profiles | [`scripts/enumerate_absorbing_states.py`](scripts/enumerate_absorbing_states.py) |
-| Figure of the joint reward distribution | [`scripts/figure_poc_options.py`](scripts/figure_poc_options.py) Option C |
-| §2.3 paper-draft connection | [`Proof of Concept (Paper Draft).md`](Proof%20of%20Concept%20(Paper%20Draft).md) |
+| Empirical enumeration of all 2304 profiles | [`scripts/enumerate_absorbing_states.py`](../scripts/enumerate_absorbing_states.py) |
+| Figure of the joint reward distribution | [`scripts/figure_poc_options.py`](../scripts/figure_poc_options.py) Option C |
+| §2.3 paper-draft connection | [`Proof of Concept (Paper Draft).md`](Proof%20of%20Concept%20%28Paper%20Draft%29.md) |

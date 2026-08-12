@@ -51,17 +51,17 @@ Three reasons:
 
 | Script | Math file | Reference implementation |
 |---|---|---|
-| `verify_information_theory.py` | [information_theory.md](../information_theory.md) | `scipy.stats.entropy` |
-| `verify_q_learning.py` | [agent_q_learning.md](../agent_q_learning.md) | Closed-form $Q_n = r(1 - (1-\alpha)^n)$ + asymptotic variance |
-| `verify_td_learning.py` | [agent_td_learning.md](../agent_td_learning.md) | Empirical mean (Robbins–Monro), bootstrap algebra |
-| `verify_costly_signaling.py` | [costly_signaling.md](../costly_signaling.md) | Hand arithmetic via `MultiAgentEnv.reward` |
-| `verify_urn_convergence.py` | [agent_urn.md](../agent_urn.md) | Closed-form sampling probability + empirical Monte Carlo |
-| `study_toy_markov_chain.py` | [proof_of_concept_markov.md](../proof_of_concept_markov.md), [initialization_basins.md](../initialization_basins.md) | Closed-form recursion for $\rho_t$ + 50k-trajectory MC |
-| `enumerate_absorbing_states.py` | [proof_of_concept_markov.md](../proof_of_concept_markov.md) | Brute-force enumeration of all 2304 deterministic policy profiles + reward computation |
-| `study_urn_basin_drift.py` | [proof_of_concept_markov.md](../proof_of_concept_markov.md), [initialization_basins.md](../initialization_basins.md) | UrnAgent only (Roth-Erev): 200-seed MC at `[1, 0]` validates analytical absorbing-state distribution; per-init drift snapshots across `init_weights`. Q-learning analysis is deferred — see `TODO_WORKFLOW.md::todo.qlearning_proof_of_concept`. |
-| `study_factored_kernel.py` | [docs/roth_erev_polya_mle.md](../docs/roth_erev_polya_mle.md) §2, §6 | Ports the doc's `one_step_kernel_value` to the simulator's dict-of-array urns; validates choice rule (100k MC), single-urn transition factorization vs `P(x) · n_σ/S · q*(x)`, and full-state kernel sum = 1 across all 256 candidate next states. |
-| `study_polya_signaling_convergence.py` | [docs/roth_erev_polya_mle.md](../docs/roth_erev_polya_mle.md) §3, [proof_of_concept_markov.md](../proof_of_concept_markov.md) §"Pure-Pólya signaling-urn convergence" | Empirical validation of the Dirichlet limit theorem under a frozen partner and frozen action policy: KS test against `Beta(n_0)` marginal across M = 200 seeds at T = 8000 episodes. |
-| `study_coarse_grained_mle.py` | [docs/roth_erev_polya_mle.md](../docs/roth_erev_polya_mle.md) §4–5 | Coarse-grained MLE: empirical transition matrices on modal-map, simplex-bin, and NMI-bin projections. Basin-reach probabilities at NMI > 0.7 / 0.9 thresholds. Visit-time fraction in the high-NMI basin is monotone non-decreasing in pre-seed strength, confirming the §2.3 informal claim. |
+| `verify_information_theory.py` | [information_theory.md](../math/information_theory.md) | `scipy.stats.entropy` |
+| `verify_q_learning.py` | [agent_q_learning.md](../math/agent_q_learning.md) | Closed-form $Q_n = r(1 - (1-\alpha)^n)$ + asymptotic variance |
+| `verify_td_learning.py` | [agent_td_learning.md](../math/agent_td_learning.md) | Empirical mean (Robbins–Monro), bootstrap algebra |
+| `verify_costly_signaling.py` | [costly_signaling.md](../math/costly_signaling.md) | Hand arithmetic via `MultiAgentEnv.reward` |
+| `verify_urn_convergence.py` | [agent_urn.md](../math/agent_urn.md) | Closed-form sampling probability + empirical Monte Carlo |
+| `study_toy_markov_chain.py` | [proof_of_concept_markov.md](../math/proof_of_concept_markov.md), [initialization_basins.md](../math/initialization_basins.md) | Closed-form recursion for $\rho_t$ + 50k-trajectory MC |
+| `enumerate_absorbing_states.py` | [proof_of_concept_markov.md](../math/proof_of_concept_markov.md) | Brute-force enumeration of all 2304 deterministic policy profiles + reward computation |
+| `study_urn_basin_drift.py` | [proof_of_concept_markov.md](../math/proof_of_concept_markov.md), [initialization_basins.md](../math/initialization_basins.md) | UrnAgent only (Roth-Erev): 200-seed MC at `[1, 0]` validates analytical absorbing-state distribution; per-init drift snapshots across `init_weights`. Q-learning analysis is deferred — see `TODO_WORKFLOW.md::todo.qlearning_proof_of_concept`. |
+| `study_factored_kernel.py` | [docs/roth_erev_polya_mle.md](../math/roth_erev_polya_mle.md) §2, §6 | Ports the doc's `one_step_kernel_value` to the simulator's dict-of-array urns; validates choice rule (100k MC), single-urn transition factorization vs `P(x) · n_σ/S · q*(x)`, and full-state kernel sum = 1 across all 256 candidate next states. |
+| `study_polya_signaling_convergence.py` | [docs/roth_erev_polya_mle.md](../math/roth_erev_polya_mle.md) §3, [proof_of_concept_markov.md](../math/proof_of_concept_markov.md) §"Pure-Pólya signaling-urn convergence" | Empirical validation of the Dirichlet limit theorem under a frozen partner and frozen action policy: KS test against `Beta(n_0)` marginal across M = 200 seeds at T = 8000 episodes. |
+| `study_coarse_grained_mle.py` | [docs/roth_erev_polya_mle.md](../math/roth_erev_polya_mle.md) §4–5 | Coarse-grained MLE: empirical transition matrices on modal-map, simplex-bin, and NMI-bin projections. Basin-reach probabilities at NMI > 0.7 / 0.9 thresholds. Visit-time fraction in the high-NMI basin is monotone non-decreasing in pre-seed strength, confirming the §2.3 informal claim. |
 
 ## Common conventions
 

@@ -217,4 +217,4 @@ The decay is applied **per channel** for `QLearningAgent` (separate rates for si
 
 ## Independent verification
 
-No dedicated script — the strategies are exercised by the agent-level scripts ([scripts/verify_q_learning.py](scripts/verify_q_learning.py), [scripts/verify_td_learning.py](scripts/verify_td_learning.py)) which run the agent end-to-end under each `choice` value and check that the action distribution converges to the expected limit (greedy under low ε, near-uniform under high ε / large τ).
+No dedicated script — the strategies are exercised by the agent-level scripts ([scripts/verify_q_learning.py](../scripts/verify_q_learning.py), [scripts/verify_td_learning.py](../scripts/verify_td_learning.py)) which run the agent end-to-end under each `choice` value and check that the action distribution converges to the expected limit (greedy under low ε, near-uniform under high ε / large τ).

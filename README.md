@@ -47,7 +47,7 @@ rl_signaling/                   # the package
   plotting.py                   # plot helpers, post-processing utilities, plot_simulation_summary
 notebooks/                      # experiment notebooks (see table below)
 analytics/                      # mathematical reference (every quantity the package computes) + independent verification scripts
-  math/                         # math files: notation, info_theory, signaling_model, agents, proof_of_concept_markov, the proof-of-concept markdown drafts, and the authoritative roth_erev_polya_mle.md reference
+  math/                         # notation, info_theory, signaling_model, per-agent derivations, proof_of_concept_markov, and the authoritative roth_erev_polya_mle.md reference
   scripts/                      # standalone PASS/FAIL verification scripts (see analytics/scripts/SCRIPTS_README.md)
 results/                        # saved CSVs and PNG figures from each experiment
   MANIFEST.md                   # figure -> notebook -> dataset traceability for every published figure
@@ -55,22 +55,14 @@ results/                        # saved CSVs and PNG figures from each experimen
   legacy/plots/                 # figures from the original run
   proof_of_concept/             # proof-of-concept figures
   new_code/plots/               # post-refactor verification figure
-notebooks/                      # experiment notebooks (see table below)
-tests/                          # pytest suite (80 tests, ~12 s); includes a golden-run regression against tests/golden/baseline.json
-scripts/                        # standalone LaTeX revision-audit toolkit (word count, bib hygiene, em-dash audit)
-templates/revision/             # revise-and-resubmit artifact skeletons
+tests/                          # pytest suite (63 tests, ~4 s); includes a golden-run regression against tests/golden/baseline.json
 README.md                       # this file
 PUBLICATION_CHECKLIST.md        # what was excluded from this repository and why
 HOUSEKEEPING.md                 # recurring repo health check
-LP_TEX_REF.md                   # LaTeX conventions used for the manuscript (kept as a reusable reference)
-PAPER_WRITING_SKILL.md          # paper-writing workflow (kept as a reusable reference)
-docs/
-  archive/
-    REFACTOR_PLAN.md            # phased refactor plan (Phases 1–7 complete; historical)
 pyproject.toml, requirements.txt, LICENSE, .gitignore
 ```
 
-`LP_TEX_REF.md` and `PAPER_WRITING_SKILL.md` describe conventions for a manuscript that is not distributed here (see above). They are retained because they are useful independently of this particular paper.
+That is the whole repository. Everything relating to the manuscript — the LaTeX sources, the referee correspondence, the revision toolkit and its templates, the LaTeX style notes, and the internal audit trail — is excluded by design; see [PUBLICATION_CHECKLIST.md](PUBLICATION_CHECKLIST.md).
 
 | Module | Purpose |
 |---|---|
@@ -93,6 +85,9 @@ pyproject.toml, requirements.txt, LICENSE, .gitignore
 | [notebooks/Parameter_Optimization_wchoices.ipynb](notebooks/Parameter_Optimization_wchoices.ipynb) | Hyperparameter tuning for Q-learning and TD-learning |
 | [notebooks/Final_Costly_Signaling_Run_Simulations.ipynb](notebooks/Final_Costly_Signaling_Run_Simulations.ipynb) | Costly-signaling experiments |
 | [notebooks/plotting_results.ipynb](notebooks/plotting_results.ipynb) | Builds the final figures from the saved CSVs in `results/` |
+| [notebooks/proof_of_concept_figures_final.ipynb](notebooks/proof_of_concept_figures_final.ipynb) | **Produces the paper's proof-of-concept figure** (§2.2). Roth–Erev and Q-learning candidates |
+| [notebooks/proof_of_concept_figures_aggregate.ipynb](notebooks/proof_of_concept_figures_aggregate.ipynb) | Every proof-of-concept plot considered, kept as a record of the options |
+| [notebooks/proof_of_concept_figures_backup.ipynb](notebooks/proof_of_concept_figures_backup.ipynb) | Earlier snapshot of the `_final` notebook |
 
 ## Setup
 
@@ -196,7 +191,7 @@ Each agent's payoff is independent of the others' actions, so there is no immedi
 
 ## Status and known limitations
 
-- The seven-phase refactor described in [docs/archive/REFACTOR_PLAN.md](docs/archive/REFACTOR_PLAN.md) is **complete**. A model-vs-implementation audit and a notebook-migration cleanup were planned but not carried out; their working notes are not distributed with this repository.
+- A seven-phase refactor moved the code from a flat collection of scripts into the `rl_signaling/` package; it is **complete**. A model-vs-implementation audit and a notebook-migration cleanup were planned but not carried out. The working notes for all three are internal documents, not distributed with this repository.
 - `signal_usage` history in [rl_signaling/env.py](rl_signaling/env.py) is appended every episode via `deepcopy`, which is memory-inefficient for long runs but kept for plotting compatibility.
 - **Legacy and canonical APIs diverge slightly for `TDLearningAgent`.** In the legacy two-step flow (`TempNetMultiAgentEnv` + `temp_simulation_function`), the signal-phase update decays `exploration_rate` **before** the action-phase `get_action` runs. In the canonical `MultiAgentEnv` + `run_simulation` flow, both TD updates run at end-of-episode inside `update_episode`. As a result, the action-phase `get_action` sees a slightly higher `exploration_rate` in the new flow, which causes roughly 1 in 100 episodes to take a different explore/exploit branch and produce a different reward. The Q-value math is unchanged — this is purely an exploration-schedule ordering difference. The golden-run baseline at [tests/golden/baseline.json](tests/golden/baseline.json) is captured against the canonical API; the deprecated path is no longer the reference. `UrnAgent` and `QLearningAgent` produce byte-identical output across both APIs.
 - An `UrnAgent` action-urn initialization bug was found and fixed during the refactor. It changes the output of [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb): the saved `init_smooth_*.png` figures reflect the **pre-fix** behaviour and would need regenerating to reflect the corrected experiment. Those figures are exploratory and do not appear in the paper — see [results/MANIFEST.md](results/MANIFEST.md).
