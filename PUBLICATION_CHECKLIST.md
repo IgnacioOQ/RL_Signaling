@@ -59,13 +59,14 @@ To inspect or recover anything from the old history:
 git clone ~/Desktop/RL_Signaling_backups/RL_Signaling-7f770cc.bundle recovered/
 ```
 
-**Keep this backup until the new remote is confirmed good.** It is the only copy of the pre-scrub history once the old remote is deleted.
+> **This backup is now load-bearing — do not delete it.** The old remote was deleted and recreated on 2026-08-12, and the pre-scrub commits are confirmed gone from GitHub. Your working copies of `manuscript/` and `slides/` are still on disk, but **their git history now exists nowhere else.** Move this backup to durable storage (external drive or encrypted cloud); a single Desktop folder is not a backup.
 
 ## Remaining steps before going public
 
-- [ ] **Delete the existing GitHub remote and recreate it empty.** Force-pushing rewritten history leaves the old objects in GitHub's storage, reachable by direct SHA until their garbage collection runs. Deleting the repository is the only immediate guarantee. Confirm first that no issues, PRs, stars, or forks are worth preserving.
-- [ ] **Push all branches to the fresh remote** and confirm `manuscript/`, `slides/`, and the referee material are absent from the GitHub file browser *and* from the commit history.
-- [ ] **Re-clone into a scratch directory and verify.** `git log --all --name-only | grep -i manuscript` must return nothing.
+- [x] **Delete the existing GitHub remote and recreate it empty.** *(Done 2026-08-12.)* Force-pushing rewritten history leaves the old objects in GitHub's storage, reachable by direct SHA until their garbage collection runs. Deleting the repository was the immediate guarantee.
+- [x] **Push all branches to the fresh remote.** *(Done 2026-08-12.)*
+- [x] **Re-clone and verify.** *(Done 2026-08-12.)* A fresh clone from GitHub shows none of the excluded paths in any of 227 commits across all three branches, the three pre-scrub SHAs (`7f770cc`, `2cb5ab3`, `104868b9`) are unreachable, and the test suite passes (80 tests) from the clone.
+- [ ] **Move the backup to durable storage** — see the warning above.
 - [ ] **Add the article citation and DOI** to `README.md` once available.
 - [ ] **Check the journal's data/code policy** for a required deposit (Zenodo, OSF) and mint a DOI for the repository if expected.
 - [ ] **Decide on preprint linkage.** The accepted manuscript cannot be distributed here, but *Philosophy of Science* policy typically permits an author-accepted-manuscript postprint elsewhere; link it from the README rather than committing it.
