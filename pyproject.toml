@@ -9,7 +9,7 @@ description = "Reinforcement-learning study of emergent signaling between agents
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
-authors = [{ name = "Anonymous" }]
+authors = [{ name = "Ignacio Ojea Quintana", email = "ignacioojea@gmail.com" }]
 keywords = ["reinforcement-learning", "multi-agent", "signaling", "game-theory"]
 classifiers = [
     "Development Status :: 3 - Alpha",
