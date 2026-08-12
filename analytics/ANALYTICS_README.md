@@ -15,9 +15,11 @@ This folder is the project's mathematical reference. It defines every quantity t
 
 The companion documents are:
 
-- [DEBUGGING_PLAN.md](../docs/code-audit/DEBUGGING_PLAN.md) — Phase 1 confirmed model specification (the *what*).
-- [MODELING_CHOICES_REF.md](../docs/code-audit/MODELING_CHOICES_REF.md) — design-space catalog (the *why this choice*).
+- DEBUGGING_PLAN.md — Phase 1 confirmed model specification (the *what*).
+- MODELING_CHOICES_REF.md — design-space catalog (the *why this choice*).
 - This folder — the math behind those choices and what the code actually computes (the *how*, formally).
+
+> **Note on citations to documents not in this repository.** Files in this folder cite `DEBUGGING_PLAN.md` (as "Phase 1 Axis *N*"), `MODELING_CHOICES_REF.md`, `LEGACY_BUGS_LOG.md`, `LEGACY_ERRORS_LOG.md`, `TODO_WORKFLOW.md`, and the manuscript PDF. These were internal working documents and are **not distributed with this repository** — see [PUBLICATION_CHECKLIST.md](../PUBLICATION_CHECKLIST.md). The citations are retained because they record *why* a modelling choice was made and where it was confirmed; they are provenance notes, not navigable links. Every claim they support is derived in full in the file that cites them, so nothing here depends on reading them.
 
 ## Reading order
 
@@ -78,7 +80,7 @@ Each script prints a one-line PASS/FAIL summary per check and exits non-zero if 
 
 ## Proof-of-concept improvement work (2026-05-09)
 
-Files 9–10 above and the new authoritative reference [math/roth_erev_polya_mle.md](math/roth_erev_polya_mle.md) are companions to §2.3 ("Proof of Concept") of [manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf](../manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf). They formalize the informal "miracle drift" argument and identify what is missing for a convergence-in-probability proof.
+Files 9–10 above and the new authoritative reference [math/roth_erev_polya_mle.md](math/roth_erev_polya_mle.md) are companions to §2.3 ("Proof of Concept") of manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf. They formalize the informal "miracle drift" argument and identify what is missing for a convergence-in-probability proof.
 
 ### Frame: modeler perspective only
 
@@ -115,7 +117,7 @@ The files above focus on `UrnAgent` (Roth-Erev) because it has a discrete state 
 
 ## File metadata schema
 
-Every `.md` file in this folder follows the metadata format used elsewhere in the repository (see [LEGACY_BUGS_LOG.md](../docs/code-audit/LEGACY_BUGS_LOG.md), [DEBUGGING_PLAN.md](../docs/code-audit/DEBUGGING_PLAN.md), etc.):
+Every `.md` file in this folder follows the metadata format used elsewhere in the repository (see LEGACY_BUGS_LOG.md, DEBUGGING_PLAN.md, etc.):
 
 ```markdown
 # Title

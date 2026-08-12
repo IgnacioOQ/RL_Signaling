@@ -11,7 +11,7 @@
 - last_checked: 2026-05-09
 <!-- content -->
 
-This file is the formal companion to §2.3 of [manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf](../../manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf). The paper sketches an informal "miracle drift" argument: the joint signal-trading game is a Markov chain over states; the ideal signaling profiles are *attractors*; if the system happens to enter the basin of attraction the ideal becomes reachable. The argument is acknowledged in footnote 4 to fall short of convergence in probability — only $\\|f_t - f^\\star\\|, \\|g_t - g^\\star\\|$ are shown to decrease in the right direction.
+This file is the formal companion to the Proof of Concept section (§2.2) of the published article, "Signaling Games with Distributed Rewards" (*Philosophy of Science*). The paper sketches an informal "miracle drift" argument: the joint signal-trading game is a Markov chain over states; the ideal signaling profiles are *attractors*; if the system happens to enter the basin of attraction the ideal becomes reachable. The argument is acknowledged in footnote 4 to fall short of convergence in probability — only $\\|f_t - f^\\star\\|, \\|g_t - g^\\star\\|$ are shown to decrease in the right direction.
 
 This document tightens the argument by writing out the chain explicitly, identifying the absorbing states for `UrnAgent` under `init_weights = [1, 0]`, counting them, and showing that the reward distribution over absorbing states explains the empirical NMI ≈ 1.0 / reward ≈ 0.25 pattern observed at `[1, 0]` in the post-fix re-run of [notebooks/Initializations_test.ipynb](../../notebooks/Initializations_test.ipynb).
 
@@ -31,7 +31,7 @@ We work in the canonical setup of §2.3 / Figure 1:
 - **Signals.** Each agent emits a signal from $\mathcal{A}_{\text{sig}} = \{0, 1\}$ (so $K = 2$).
 - **Actions.** Each agent picks a final action from $\mathcal{A}_{\text{act}} = \{0, 1, 2, 3\}$ (so $M = 4$).
 - **Games.** A per-agent canonical matching game $G_i \colon \mathcal{V} \to \mathcal{A}_{\text{act}} \to \{0, 1\}$ such that for every world state $\mathbf{v}$ exactly one action $\alpha^\star_i(\mathbf{v}) \in \mathcal{A}_{\text{act}}$ pays $1$ and the other three pay $0$.
-- **Learning rule.** `UrnAgent` (Roth-Erev). The continuous-state TD-learning dynamics are deferred to a separate task — see [TODO_WORKFLOW.md](../../TODO_WORKFLOW.md) `todo.qlearning_proof_of_concept`.
+- **Learning rule.** `UrnAgent` (Roth-Erev). The continuous-state TD-learning dynamics are deferred to a separate task — see TODO_WORKFLOW.md `todo.qlearning_proof_of_concept`.
 - **Initialization.** `init_weights = (n, m)` controls how the urns are pre-seeded by [rl_signaling/games.py:115-160](../../rl_signaling/games.py#L115-L160), `create_initial_signals`. The four notebook settings are $(1, 0)$, $(1, 1)$, $(5, 1)$, $(100, 1)$.
 
 This is the smallest setting in which the proof of concept is non-trivial. Generalizations to more features, more signals, more agents, or random games (§3.2) are noted but not formalized here.
@@ -51,7 +51,7 @@ Each component is a non-negative-real-valued matrix. The state space is therefor
 
 $$\Sigma \;=\; \bigl(\mathbb{R}_{\ge 0}^{2 \times 2}\bigr)^2 \times \bigl(\mathbb{R}_{\ge 0}^{4 \times 4}\bigr)^2.$$
 
-Under integer-valued canonical-game rewards $r \in \{0, 1\}$ and `init_weights` integer-valued, every entry stays integer-valued (the bug fix in [LEGACY_BUGS_LOG.md](../../docs/code-audit/LEGACY_BUGS_LOG.md) Bug 9 makes the storage dtype float, but the values are integer-valued under integer rewards). So in practice $\Sigma$ is a countable lattice.
+Under integer-valued canonical-game rewards $r \in \{0, 1\}$ and `init_weights` integer-valued, every entry stays integer-valued (the bug fix in LEGACY_BUGS_LOG.md Bug 9 makes the storage dtype float, but the values are integer-valued under integer rewards). So in practice $\Sigma$ is a countable lattice.
 
 This is a **larger** state than the §2.3 description ("a full description of the system including observed states of nature, $f$s and $g$s as tables, the signals and actions sent, and the reward obtained") — we drop the per-episode random outcomes from the state, since they are not Markov sufficient. The Markov property holds because, given $\sigma_t$, the next state $\sigma_{t+1}$ depends only on the random draws made in episode $t+1$ and not on the history of episode $1, \dots, t$.
 
@@ -96,7 +96,7 @@ The construction of `create_initial_signals` ([rl_signaling/games.py:115-160](..
 
 > **Corollary.** When `init_weights = (n, 0)` for any $n > 0$, the chain starts in an absorbing state and stays in the same policy forever.
 
-This is the formal statement underlying the empirical observation in [LEGACY_BUGS_LOG.md](../../docs/code-audit/LEGACY_BUGS_LOG.md) Bug 5's post-fix observation: under `[1, 0]`, NMI ≈ 1.0 (the policy is deterministic, so signals carry full information about the observation), while reward depends on whether the random initial bijection happens to be aligned with the games $G_0, G_1$.
+This is the formal statement underlying the empirical observation in LEGACY_BUGS_LOG.md Bug 5's post-fix observation: under `[1, 0]`, NMI ≈ 1.0 (the policy is deterministic, so signals carry full information about the observation), while reward depends on whether the random initial bijection happens to be aligned with the games $G_0, G_1$.
 
 ## Counting absorbing states
 
@@ -234,7 +234,7 @@ We do not solve this here. The `[1, 0]` empirical pattern (concentrate at a unif
 
 ## Q-learning — deferred
 
-Q-learning's joint chain is analyzed in stochastic-approximation language; deferred — see [TODO_WORKFLOW.md](../../TODO_WORKFLOW.md) `todo.qlearning_proof_of_concept`.
+Q-learning's joint chain is analyzed in stochastic-approximation language; deferred — see TODO_WORKFLOW.md `todo.qlearning_proof_of_concept`.
 
 ## Cross-references
 

@@ -36,7 +36,7 @@ So if the user passes `n_signaling_actions=2, costly_signaling=True`, the agents
 
 ## Per-agent cost
 
-Each agent $i$ has a fixed cost $c_i \ge 0$ (Phase 1 [Axis 13](../../docs/code-audit/DEBUGGING_PLAN.md#costly-signaling)). The cost is per-agent — it does **not** depend on which non-null symbol was emitted, nor on the world state, nor on time.
+Each agent $i$ has a fixed cost $c_i \ge 0$ (Phase 1 Axis 13). The cost is per-agent — it does **not** depend on which non-null symbol was emitted, nor on the world state, nor on time.
 
 In the experiment notebooks, $c_i$ is sampled uniformly per iteration:
 
@@ -63,7 +63,7 @@ rewards = [
 
 at [rl_signaling/env.py:236-241](../../rl_signaling/env.py#L236-L241), where `rewards` on the right-hand side is the pre-cost game-dict lookup $G_i(\mathbf{v}, \alpha_i)$.
 
-The cost is **subtracted from the per-episode reward** (Phase 1 [Axis 14](../../docs/code-audit/DEBUGGING_PLAN.md#costly-signaling)). It is not tracked on a separate accumulator — `rewards_history` records the **net** value $r_i$. Recovering the gross reward and the cost separately would require adding parallel storage, which the env does not currently do.
+The cost is **subtracted from the per-episode reward** (Phase 1 Axis 14). It is not tracked on a separate accumulator — `rewards_history` records the **net** value $r_i$. Recovering the gross reward and the cost separately would require adding parallel storage, which the env does not currently do.
 
 ### Worked arithmetic — three cases
 
@@ -79,7 +79,7 @@ These three cases are the assertions in [tests/test_numerical_sanity.py](../../t
 
 ## Suppression on the receiver side
 
-The null signal carries an additional special role: it is **not appended** to the receiver's post-signal observation $\tilde{\mathbf{o}}_i$ (Phase 1 [Axis 5](../../docs/code-audit/DEBUGGING_PLAN.md#signals)). So if agent $j \in \mathcal{N}_i$ emits null, agent $i$ receives no token from $j$ — silence is silent.
+The null signal carries an additional special role: it is **not appended** to the receiver's post-signal observation $\tilde{\mathbf{o}}_i$ (Phase 1 Axis 5). So if agent $j \in \mathcal{N}_i$ emits null, agent $i$ receives no token from $j$ — silence is silent.
 
 Implementation: the suppression is at [rl_signaling/env.py:274-281](../../rl_signaling/env.py#L274-L281):
 
@@ -128,7 +128,7 @@ For the formal treatment of these constraints, see [agent_urn.md, "Applicability
 
 The costly-signaling experiment should be reported only for `QLearningAgent` and `TDLearningAgent`. If `UrnAgent` results under costly signaling are produced for any reason, they should be labeled as "Roth-Erev with non-negativity-clamped costly extension" so the deviation from the canonical Roth-Erev rule is visible to readers.
 
-The saved costly Roth-Erev figures in [results/](../../results/) (`Roth-Erev_canonical_costly_signal_*.png`, `q_costly_*.png`, `q_learning_costly_single_run*.png`) are flagged in [LEGACY_ERRORS_LOG.md, Error 5a](../../docs/code-audit/LEGACY_ERRORS_LOG.md#error-5a--roth-erev-costly-figures-unreproducible-cost-protocol-drift) for two compounding reasons: (i) the cost protocol drift surfaced during the audit, and (ii) the theoretical incompatibility documented in this section.
+The saved costly Roth-Erev figures in [results/](../../results/) (`Roth-Erev_canonical_costly_signal_*.png`, `q_costly_*.png`, `q_learning_costly_single_run*.png`) are flagged in LEGACY_ERRORS_LOG.md, Error 5a for two compounding reasons: (i) the cost protocol drift surfaced during the audit, and (ii) the theoretical incompatibility documented in this section.
 
 ## Connection to the classical signaling-game literature
 

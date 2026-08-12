@@ -44,3 +44,37 @@ htmlcov/
 
 # macOS metadata
 .DS_Store
+
+# ---------------------------------------------------------------------------
+# Publication boundary — local-only, never tracked.
+# Scrubbed from all history on 2026-08-12; see PUBLICATION_CHECKLIST.md.
+# These paths still exist on disk. Do not `git add -f` them.
+# ---------------------------------------------------------------------------
+
+# Manuscript sources, referee reports, and response letters.
+# The published article is under journal copyright; referee material is
+# confidential. This repository is code-only by design.
+manuscript/
+
+# Talk slides built on the paper.
+slides/
+
+# Submission-process and internal-audit notes.
+writing_comments.md
+docs/JOURNAL_WORD_LIMIT.md
+docs/code-audit/
+docs/Gmail*.pdf
+
+# Agent tooling config (local absolute paths, personal workflow record).
+.claude/
+
+# Retired per-repo governance artifacts (superseded by the cps store).
+worklog.jsonl
+WORKLOG.md
+TODO_WORKFLOW.md
+
+# Scratch output.
+dummy_plot.png
+
+# Editor backup artifacts.
+*.json-e

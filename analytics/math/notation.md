@@ -91,4 +91,4 @@ When this folder cites a code line, it uses the form:
 
 The link points at the canonical implementation. Deprecated paths in the same module ([rl_signaling/env.py](../../rl_signaling/env.py)'s `NetMultiAgentEnv` and `TempNetMultiAgentEnv`) are noted only when their behavior diverges from the canonical implementation.
 
-When this folder cites a Phase 1 confirmed-model axis from [DEBUGGING_PLAN.md](../../docs/code-audit/DEBUGGING_PLAN.md), the citation reads "Axis $n$" and refers to the numbered axes in the [Phase 1 — Confirmed model specification](../../docs/code-audit/DEBUGGING_PLAN.md#phase-1--confirmed-model-specification) section.
+When this folder cites a Phase 1 confirmed-model axis from DEBUGGING_PLAN.md, the citation reads "Axis $n$" and refers to the numbered axes in the Phase 1 — Confirmed model specification section.

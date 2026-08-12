@@ -33,7 +33,7 @@ The standard Q-learning update is
 
 $$Q(s, a) \;\leftarrow\; Q(s, a) + \alpha \big[\, r + \gamma \max_{a'} Q(s', a') \;-\; Q(s, a)\,\big].$$
 
-In the project's signaling game (Phase 1 [Axis 19](../../docs/code-audit/DEBUGGING_PLAN.md#agent-learning-rules)), every episode is **terminal** — there is no next state $s'$ for the agent to bootstrap from. Mathematically, the bootstrap term $\gamma \max_{a'} Q(s', a')$ collapses to zero by the Bellman equation's terminal-state convention. So the update reduces to:
+In the project's signaling game (Phase 1 Axis 19), every episode is **terminal** — there is no next state $s'$ for the agent to bootstrap from. Mathematically, the bootstrap term $\gamma \max_{a'} Q(s', a')$ collapses to zero by the Bellman equation's terminal-state convention. So the update reduces to:
 
 $$\boxed{\; Q(s, a) \;\leftarrow\; Q(s, a) + \alpha \big[\, r \;-\; Q(s, a)\,\big]. \;}$$
 
@@ -45,7 +45,7 @@ The learning rate is hardcoded:
 
 $$\alpha = 0.1$$
 
-at [rl_signaling/agents.py:458](../../rl_signaling/agents.py#L458) and [:476](../../rl_signaling/agents.py#L476). The Phase 1 spec [Axis 19](../../docs/code-audit/DEBUGGING_PLAN.md#agent-learning-rules) confirms this is intentional. A constant $\alpha$ keeps the update responsive to changes in the environment (in our case, changes in the *partner's* signaling policy) at the cost of asymptotic noise — Q never settles to a single value, it tracks a moving target with ~10% step size.
+at [rl_signaling/agents.py:458](../../rl_signaling/agents.py#L458) and [:476](../../rl_signaling/agents.py#L476). The Phase 1 spec Axis 19 confirms this is intentional. A constant $\alpha$ keeps the update responsive to changes in the environment (in our case, changes in the *partner's* signaling policy) at the cost of asymptotic noise — Q never settles to a single value, it tracks a moving target with ~10% step size.
 
 The alternative, decaying learning rate $\alpha_n = 1/n$, would satisfy the Robbins–Monro convergence condition. The TD agent uses it. The Q-agent does not, and that is a deliberate design choice.
 

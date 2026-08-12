@@ -2,15 +2,19 @@
 - status: active
 - type: how-to
 - id: rl_signaling.readme
-- description: Reinforcement-learning study of emergent signaling between agents under partial observation; covers the model, repository layout, setup, and a minimal runnable example.
+- description: Reinforcement-learning study of emergent signaling between agents under partial observation; companion code for "Signaling Games with Distributed Rewards" (Philosophy of Science). Covers the model, repository layout, setup, figure reproduction, and a minimal runnable example.
 - label: [core]
 - injection: informational
 - volatility: evolving
 - scope: project-specific
-- last_checked: 2026-05-18
+- last_checked: 2026-08-12
 <!-- content -->
 
+Companion code for **"Signaling Games with Distributed Rewards"**, accepted at *Philosophy of Science* (PHOS-17993).
+
 A reinforcement-learning study of emergent signaling between agents under partial observation. Two or more agents on a directed graph each observe a subset of the world state, exchange signals, then take an action whose payoff depends on the full state. The question is whether — and when — meaningful communication emerges, even though each agent's payoff is independent of the others' actions.
+
+> **This repository is code-only.** The manuscript sources, referee correspondence, and talk slides are deliberately not distributed here — the published article is under journal copyright and referee material is confidential. See [PUBLICATION_CHECKLIST.md](PUBLICATION_CHECKLIST.md). Every figure in the paper is traced back to the code and data that produced it in [results/MANIFEST.md](results/MANIFEST.md).
 
 ## Model
 
@@ -43,34 +47,30 @@ rl_signaling/                   # the package
   plotting.py                   # plot helpers, post-processing utilities, plot_simulation_summary
 notebooks/                      # experiment notebooks (see table below)
 analytics/                      # mathematical reference (every quantity the package computes) + independent verification scripts
-  math/                         # math files: notation, info_theory, signaling_model, agents, proof_of_concept_markov, the §2.3 markdown drafts, and the authoritative roth_erev_polya_mle.md reference
+  math/                         # math files: notation, info_theory, signaling_model, agents, proof_of_concept_markov, the proof-of-concept markdown drafts, and the authoritative roth_erev_polya_mle.md reference
   scripts/                      # standalone PASS/FAIL verification scripts (see analytics/scripts/SCRIPTS_README.md)
-manuscript/                     # paper sources for PHOS-17993 ("Signaling Games with Distributed Rewards")
-  main.tex                      # pre-revision snapshot (frozen); compiles to main.pdf
-  main_v2.tex                   # working copy with reviewer revisions in progress; compiles to main_v2.pdf
-  Appendix.tex                  # standalone appendix document (own \documentclass); compiles to Appendix.pdf
-  section_2_3.tex               # standalone LaTeX fragment of §2.3 prose (reference copy)
-  References.bib                # BibTeX file (shared cross-paper library, ~28 cited from main.tex)
-  reviewers/                    # responses_to_reviewers.md (formal narrative) + responses_checklist.md (operational tracker)
-  submission/                   # original submitted PDF
 results/                        # saved CSVs and PNG figures from each experiment
-tests/                          # pytest suite (63 tests, ~5 s); includes a golden-run regression against tests/golden/baseline.json
+  MANIFEST.md                   # figure -> notebook -> dataset traceability for every published figure
+  legacy/datasets/              # the seven simulation outputs behind the paper (~24 MB, tracked deliberately)
+  legacy/plots/                 # figures from the original run
+  proof_of_concept/             # proof-of-concept figures
+  new_code/plots/               # post-refactor verification figure
+notebooks/                      # experiment notebooks (see table below)
+tests/                          # pytest suite (80 tests, ~12 s); includes a golden-run regression against tests/golden/baseline.json
+scripts/                        # standalone LaTeX revision-audit toolkit (word count, bib hygiene, em-dash audit)
+templates/revision/             # revise-and-resubmit artifact skeletons
 README.md                       # this file
-worklog.jsonl                   # append-only JSONL history of significant changes
-TODO_WORKFLOW.md                # cross-session task backlog
+PUBLICATION_CHECKLIST.md        # what was excluded from this repository and why
 HOUSEKEEPING.md                 # recurring repo health check
-LP_TEX_REF.md                   # project-local LaTeX conventions for manuscript/
+LP_TEX_REF.md                   # LaTeX conventions used for the manuscript (kept as a reusable reference)
+PAPER_WRITING_SKILL.md          # paper-writing workflow (kept as a reusable reference)
 docs/
   archive/
     REFACTOR_PLAN.md            # phased refactor plan (Phases 1–7 complete; historical)
-  code-audit/                   # dormant code-audit workstream (resumes after the paper)
-    DEBUGGING_PLAN.md           # phased audit of code vs intended model
-    NOTEBOOK_REFACTOR_PLAN.md   # plan to migrate notebooks onto the canonical API
-    MODELING_CHOICES_REF.md     # design-space catalog companion to DEBUGGING_PLAN
-    LEGACY_BUGS_LOG.md          # catalog of bugs surfaced by the refactor
-    LEGACY_ERRORS_LOG.md        # per-figure/CSV honesty audit (companion to LEGACY_BUGS_LOG)
 pyproject.toml, requirements.txt, LICENSE, .gitignore
 ```
+
+`LP_TEX_REF.md` and `PAPER_WRITING_SKILL.md` describe conventions for a manuscript that is not distributed here (see above). They are retained because they are useful independently of this particular paper.
 
 | Module | Purpose |
 |---|---|
@@ -81,7 +81,7 @@ pyproject.toml, requirements.txt, LICENSE, .gitignore
 | [rl_signaling/info_theory.py](rl_signaling/info_theory.py) | Mutual information and normalized mutual information |
 | [rl_signaling/plotting.py](rl_signaling/plotting.py) | KDE histograms, regression plots, reward/NMI-vs-cost plots, smoothing, CSV post-processing, the `plot_simulation_summary` helper used by `run_simulation` |
 | [analytics/](analytics/) | Mathematical reference for every quantity the package computes, plus independent verification scripts. See [analytics/ANALYTICS_README.md](analytics/ANALYTICS_README.md) for the reading order; the Markov-chain analysis of the signal-trading game lives in [analytics/math/proof_of_concept_markov.md](analytics/math/proof_of_concept_markov.md), [analytics/math/initialization_basins.md](analytics/math/initialization_basins.md), [analytics/math/argiento_obstruction.md](analytics/math/argiento_obstruction.md), and the authoritative reference [analytics/math/roth_erev_polya_mle.md](analytics/math/roth_erev_polya_mle.md). |
-| [manuscript/](manuscript/) | Paper sources for PHOS-17993. `main_v2.tex` is the active working copy (compiles to `main_v2.pdf`); `Appendix.tex` is a standalone companion. Reviewer-response material lives in [manuscript/reviewers/](manuscript/reviewers/). See [LP_TEX_REF.md](LP_TEX_REF.md) for the project-local LaTeX conventions. |
+| [results/MANIFEST.md](results/MANIFEST.md) | Traceability map from each published figure back to the notebook, module function, and dataset that produced it — including four recorded reproducibility gaps. |
 
 ### Notebooks
 
@@ -157,14 +157,23 @@ The legacy `NetMultiAgentEnv` / `TempNetMultiAgentEnv` classes and `simulation_f
 
 ## Reproducing the figures
 
-The CSVs and PNGs under [results/](results/) are the canonical outputs of the experiment notebooks. To regenerate them:
+**[results/MANIFEST.md](results/MANIFEST.md) is the authoritative map** from each of the paper's 27 figures to the code and data behind it. Read it first — figure filenames are constructed at save time from a prefix plus a variable name, so grepping the codebase for a figure's filename will find nothing.
 
-1. Run the experiment notebooks to produce per-experiment CSVs:
-   - [notebooks/Run_Simulations.ipynb](notebooks/Run_Simulations.ipynb) — canonical and complex models across the three agent types.
-   - [notebooks/Final_Costly_Signaling_Run_Simulations.ipynb](notebooks/Final_Costly_Signaling_Run_Simulations.ipynb) — costly-signaling experiments.
-   - [notebooks/Parameter_Optimization_wchoices.ipynb](notebooks/Parameter_Optimization_wchoices.ipynb) — hyperparameter sweeps.
-   - [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) — urn-initialization variants.
-2. Run [notebooks/plotting_results.ipynb](notebooks/plotting_results.ipynb) to consume the CSVs and emit the figures.
+The seven datasets behind the published figures are committed under `results/legacy/datasets/`, so the figures can be rebuilt without re-running the simulations:
+
+```bash
+pip install -e .
+jupyter nbconvert --to notebook --execute --inplace notebooks/plotting_results.ipynb
+```
+
+That regenerates 15 of the 27 published figures. The remaining 12 have documented gaps — hand-renamed files, figures saved with an explicit path in an interactive session, and one hyperparameter sweep that ran on Colab and whose raw output was never committed. All four gaps are described in the MANIFEST rather than glossed over.
+
+To re-run the simulations from scratch instead of reusing the committed CSVs:
+
+- [notebooks/Run_Simulations.ipynb](notebooks/Run_Simulations.ipynb) — canonical and complex models across the three agent types.
+- [notebooks/Final_Costly_Signaling_Run_Simulations.ipynb](notebooks/Final_Costly_Signaling_Run_Simulations.ipynb) — costly-signaling experiments.
+- [notebooks/Parameter_Optimization_wchoices.ipynb](notebooks/Parameter_Optimization_wchoices.ipynb) — hyperparameter sweeps (expects a Colab/Drive path; see MANIFEST Gap 4).
+- [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) — urn-initialization variants.
 
 ## Tests
 
@@ -187,7 +196,8 @@ Each agent's payoff is independent of the others' actions, so there is no immedi
 
 ## Status and known limitations
 
-- The seven-phase refactor described in [docs/archive/REFACTOR_PLAN.md](docs/archive/REFACTOR_PLAN.md) is **complete**. The next code-side workstream is the model-vs-implementation audit in [docs/code-audit/DEBUGGING_PLAN.md](docs/code-audit/DEBUGGING_PLAN.md) (and the notebook-side cleanup in [docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md](docs/code-audit/NOTEBOOK_REFACTOR_PLAN.md)); both are parked while the paper rewrite is in flight. See [TODO_WORKFLOW.md](TODO_WORKFLOW.md) for the active cross-session task and [worklog.jsonl](worklog.jsonl) for the full history.
+- The seven-phase refactor described in [docs/archive/REFACTOR_PLAN.md](docs/archive/REFACTOR_PLAN.md) is **complete**. A model-vs-implementation audit and a notebook-migration cleanup were planned but not carried out; their working notes are not distributed with this repository.
 - `signal_usage` history in [rl_signaling/env.py](rl_signaling/env.py) is appended every episode via `deepcopy`, which is memory-inefficient for long runs but kept for plotting compatibility.
 - **Legacy and canonical APIs diverge slightly for `TDLearningAgent`.** In the legacy two-step flow (`TempNetMultiAgentEnv` + `temp_simulation_function`), the signal-phase update decays `exploration_rate` **before** the action-phase `get_action` runs. In the canonical `MultiAgentEnv` + `run_simulation` flow, both TD updates run at end-of-episode inside `update_episode`. As a result, the action-phase `get_action` sees a slightly higher `exploration_rate` in the new flow, which causes roughly 1 in 100 episodes to take a different explore/exploit branch and produce a different reward. The Q-value math is unchanged — this is purely an exploration-schedule ordering difference. The golden-run baseline at [tests/golden/baseline.json](tests/golden/baseline.json) is captured against the canonical API; the deprecated path is no longer the reference. `UrnAgent` and `QLearningAgent` produce byte-identical output across both APIs.
-- Known legacy-code bugs are catalogued in [docs/code-audit/LEGACY_BUGS_LOG.md](docs/code-audit/LEGACY_BUGS_LOG.md), with a results-level figure-by-figure honesty audit in [docs/code-audit/LEGACY_ERRORS_LOG.md](docs/code-audit/LEGACY_ERRORS_LOG.md). The `UrnAgent` action-urn initialization bug (Bug 1) was fixed during the refactor and changes the output of [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb) — the saved `initializations_*.png` figures reflect the pre-fix behavior and need to be regenerated to reflect the corrected experiment.
+- An `UrnAgent` action-urn initialization bug was found and fixed during the refactor. It changes the output of [notebooks/Initializations_test.ipynb](notebooks/Initializations_test.ipynb): the saved `init_smooth_*.png` figures reflect the **pre-fix** behaviour and would need regenerating to reflect the corrected experiment. Those figures are exploratory and do not appear in the paper — see [results/MANIFEST.md](results/MANIFEST.md).
+- Four of the paper's 27 figures cannot be reproduced byte-identically from a clean clone. The causes are documented as Gaps 1–4 in [results/MANIFEST.md](results/MANIFEST.md); the underlying data is committed in every case except the Colab hyperparameter sweep.

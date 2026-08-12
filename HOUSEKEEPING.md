@@ -17,7 +17,8 @@ The workflow covers four concerns regardless of stack: (1) static quality of the
 
 **Prerequisites:**
 - Python 3.10+ available; project dependencies installed via `pip install -e ".[dev]"` (the `dev` extras pull in `ruff` and `pytest`).
-- A working `worklog.jsonl` and `TODO_WORKFLOW.md` at the repo root.
+
+> The per-repo `worklog.jsonl` and `TODO_WORKFLOW.md` that this workflow used to write to were retired on 2026-07-31; tasks and session history now live in the central planner store. Steps below that referred to them record their findings in the "Latest Report" section of this file instead.
 
 ---
 
@@ -133,9 +134,9 @@ n/a — research codebase.
 
 - Does `README.md` still describe the actual entrypoints and module names? (Especially after Phase 3 of `REFACTOR_PLAN.md` migrates modules into `rl_signaling/`.)
 - Is `REFACTOR_PLAN.md`'s "Phase status" table accurate?
-- Are there `worklog.jsonl` / `TODO_WORKFLOW.md` entries that reference resolved work and should now be cleaned up?
+- Does this file's "Latest Report" history reference resolved work that should now be marked closed?
 
-**Exit criterion:** No surprising drift. Anything actionable that is out of scope for this run is filed in `TODO_WORKFLOW.md` with a reproduction step.
+**Exit criterion:** No surprising drift. Anything actionable that is out of scope for this run is filed as a task in the planner store with a reproduction step.
 
 ---
 
@@ -153,13 +154,13 @@ Use the template at the bottom of this file. Fill every section. If a phase did 
 
 ### Step 3 — File follow-ups
 
-If anything was found and not fixed, file it in `TODO_WORKFLOW.md` with enough context for a fresh agent to pick it up.
+If anything was found and not fixed, file it as a task in the planner store with enough context for a fresh agent to pick it up.
 
 ### Step 4 — Bump `last_checked`
 
 Update the `last_checked` field in this file's metadata header to today's date.
 
-**Exit criterion:** The "Latest Report" reflects today's run, deferred work is recorded in `TODO_WORKFLOW.md`, and tests / linters are green or have explicit known-issue annotations.
+**Exit criterion:** The "Latest Report" reflects today's run, deferred work is recorded in the planner store, and tests / linters are green or have explicit known-issue annotations.
 
 ---
 
@@ -170,7 +171,7 @@ Update the `last_checked` field in this file's metadata header to today's date.
 [ ] Phase 2: Format / lint / type checks — clean
 [ ] Phase 3: Unit tests — green; counts steady or improving
 [ ] Phase 4: Dependency / dead-code / docs — no surprising drift
-[ ] Phase 5: New "Latest Report" appended; deferrals filed in TODO_WORKFLOW.md; last_checked bumped
+[ ] Phase 5: New "Latest Report" appended; deferrals filed in the planner store; last_checked bumped
 ```
 
 ---
@@ -210,6 +211,6 @@ Copy the block below and fill it in for each housekeeping run. The most recent b
 ### Files modified this run
 - {{Path: change}}
 
-### Follow-ups recorded in TODO_WORKFLOW.md
+### Follow-ups recorded in the planner store
 - {{Title — short reason | none}}
 ````

@@ -6,7 +6,7 @@ these scripts operate on the manuscript / response / checklist orbit and
 are designed to copy verbatim into another paper's repository.
 
 Paired with the templates at [`../templates/revision/`](../templates/revision/).
-Built per [TODO_WORKFLOW.md](../TODO_WORKFLOW.md)'s `todo.revision_tooling` task.
+Built during the PHOS-17993 revision cycle as a standalone, dependency-free audit toolkit.
 
 ## Quick reference
 

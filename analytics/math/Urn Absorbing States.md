@@ -15,7 +15,7 @@
 
 [`proof_of_concept_markov.md`](proof_of_concept_markov.md) is the formal reference for the §2.3 Markov chain on policy space — it states the propositions, gives the transition kernel, and proves the Pure-Pólya convergence theorem for single signaling rows. This doc is a slower, more example-driven walk through one specific piece of that picture: the *count* of absorbing states (the "2304" number), how the count is derived, what the absorbing states look like, and how to read the structural reward distribution over them. The two docs cover overlapping material, but the emphasis is different: the formal doc tells you the result; this one tells you why the result has the shape it does and how to think about it.
 
-It is written for the philosophical-paper context: §2.3 of [`manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf`](../../manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf) refers to absorbing states informally as "deterministic policies the chain can get stuck at." The reader of the philosophy paper does not need any of the math below, but the author needs to *know* it in order to write the §2.3 caveats correctly. This doc is for the author.
+It is written for the philosophical-paper context: §2.3 of `manuscript/submission/Signaling_Games_with_Distributed_Rewards__Shortened_.pdf` refers to absorbing states informally as "deterministic policies the chain can get stuck at." The reader of the philosophy paper does not need any of the math below, but the author needs to *know* it in order to write the §2.3 caveats correctly. This doc is for the author.
 
 ## The setup, briefly
 
