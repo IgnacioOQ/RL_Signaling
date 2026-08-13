@@ -47,7 +47,7 @@ htmlcov/
 
 # ---------------------------------------------------------------------------
 # Publication boundary — local-only, never tracked.
-# Scrubbed from all history on 2026-08-12; see PUBLICATION_CHECKLIST.md.
+# Scrubbed from all history on 2026-08-12.
 # These paths still exist on disk. Do not `git add -f` them.
 # ---------------------------------------------------------------------------
 
@@ -58,6 +58,10 @@ manuscript/
 
 # Talk slides built on the paper.
 slides/
+
+# Pre-publication record: what was excluded from this repository and why,
+# the history-scrub account, and the backup location. Local-only.
+PUBLICATION_CHECKLIST.md
 
 # Submission-process and internal-audit notes.
 writing_comments.md

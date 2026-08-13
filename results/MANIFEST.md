@@ -12,7 +12,7 @@
 
 This file answers one question: **which code produced which figure in the paper?**
 
-The manuscript sources are not part of this repository (see [PUBLICATION_CHECKLIST.md](../PUBLICATION_CHECKLIST.md)), so figures are located by their paper section and `\label`, not by file path. Section numbers refer to the published article.
+The manuscript sources are not part of this repository, so figures are located by their paper section and `\label`, not by file path. Section numbers refer to the published article.
 
 `results/` holds 54 tracked PNGs. **27 appear in the paper**; the other 27 are exploratory variants retained as a record of what was examined. The two groups are separated below so a reader is never left guessing which is which.
 

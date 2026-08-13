@@ -162,7 +162,7 @@ n/a — research codebase.
 - Does `README.md` still describe the actual entrypoints, module names, and notebook list?
 - Does `results/MANIFEST.md` still match the figures actually present in `results/`?
 - Do all relative markdown links still resolve? (A renamed file silently breaks them.)
-- Does `.gitignore` still exclude everything listed in `PUBLICATION_CHECKLIST.md`? Run `git ls-files | grep -Ei 'manuscript|slides|reviewer'` — it must return nothing.
+- Does `.gitignore` still exclude every path in the publication-boundary block? Run `git ls-files | grep -Ei 'manuscript|slides|reviewer'` — it must return nothing.
 - Does this file's "Latest Report" history reference resolved work that should now be marked closed?
 
 **Exit criterion:** No surprising drift. Anything actionable that is out of scope for this run is filed as a task in the planner store with a reproduction step.
@@ -282,7 +282,7 @@ Copy the block below and fill it in for each housekeeping run. The most recent b
 - `.gitignore`: publication boundary block; excludes `manuscript/`, `slides/`, `docs/`, `scripts/`, `templates/`, `LP_TEX_REF.md`, `PAPER_WRITING_SKILL.md`, `.vscode/`
 - `README.md`: accepted-article framing, corrected layout, full notebook table, figure-reproduction section
 - `HOUSEKEEPING.md`: this rewrite — toolchain table, lint policy, freshness checks, first baseline report
-- `PUBLICATION_CHECKLIST.md`, `results/MANIFEST.md`: new
+- `results/MANIFEST.md`: new
 - 16 markdown files under `analytics/`: link repairs
 
 ### Follow-ups recorded in the planner store

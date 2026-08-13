@@ -14,7 +14,7 @@ Companion code for **"Signaling Games with Distributed Rewards"**, accepted at *
 
 A reinforcement-learning study of emergent signaling between agents under partial observation. Two or more agents on a directed graph each observe a subset of the world state, exchange signals, then take an action whose payoff depends on the full state. The question is whether — and when — meaningful communication emerges, even though each agent's payoff is independent of the others' actions.
 
-> **This repository is code-only.** The manuscript sources, referee correspondence, and talk slides are deliberately not distributed here — the published article is under journal copyright and referee material is confidential. See [PUBLICATION_CHECKLIST.md](PUBLICATION_CHECKLIST.md). Every figure in the paper is traced back to the code and data that produced it in [results/MANIFEST.md](results/MANIFEST.md).
+> **This repository is code-only.** The manuscript sources, referee correspondence, and talk slides are deliberately not distributed here — the published article is under journal copyright and referee material is confidential. Every figure in the paper is traced back to the code and data that produced it in [results/MANIFEST.md](results/MANIFEST.md).
 
 ## Model
 
@@ -54,12 +54,11 @@ results/                        # saved CSVs and PNG figures from each experimen
   new_code/plots/               # post-refactor verification figure
 tests/                          # pytest suite (63 tests, ~4 s); includes a golden-run regression against tests/golden/baseline.json
 README.md                       # this file
-PUBLICATION_CHECKLIST.md        # what was excluded from this repository and why
 HOUSEKEEPING.md                 # recurring repo health check
 pyproject.toml, requirements.txt, LICENSE, .gitignore
 ```
 
-That is the whole repository. Everything relating to the manuscript — the LaTeX sources, the referee correspondence, the revision toolkit and its templates, the LaTeX style notes, and the internal audit trail — is excluded by design; see [PUBLICATION_CHECKLIST.md](PUBLICATION_CHECKLIST.md). The `analytics/` tree — the mathematical derivations behind every quantity the package computes, and the standalone verification scripts that check them — is likewise kept local and not distributed here, along with the working-material notebooks that depend on it and the generators that built them.
+That is the whole repository. Everything relating to the manuscript — the LaTeX sources, the referee correspondence, the revision toolkit and its templates, the LaTeX style notes, and the internal audit trail — is excluded by design. The `analytics/` tree — the mathematical derivations behind every quantity the package computes, and the standalone verification scripts that check them — is likewise kept local and not distributed here, along with the working-material notebooks that depend on it and the generators that built them.
 
 | Module | Purpose |
 |---|---|
