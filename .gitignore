@@ -78,6 +78,11 @@ PAPER_WRITING_SKILL.md
 # Agent tooling config (local absolute paths, personal workflow record).
 .claude/
 
+# Mathematical reference notes and independent verification scripts.
+# Untracked on 2026-08-13 — unlike the paths above, this one was NOT scrubbed
+# from history; it remains visible in commits up to 88350e5.
+analytics/
+
 # Retired per-repo governance artifacts (superseded by the cps store).
 worklog.jsonl
 WORKLOG.md
