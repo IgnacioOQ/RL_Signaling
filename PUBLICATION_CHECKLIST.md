@@ -66,11 +66,17 @@ git clone ~/Desktop/RL_Signaling_backups/RL_Signaling-7f770cc.bundle recovered/
 - [x] **Delete the existing GitHub remote and recreate it empty.** *(Done 2026-08-12.)* Force-pushing rewritten history leaves the old objects in GitHub's storage, reachable by direct SHA until their garbage collection runs. Deleting the repository was the immediate guarantee.
 - [x] **Push all branches to the fresh remote.** *(Done 2026-08-12.)*
 - [x] **Re-clone and verify.** *(Done 2026-08-12.)* A fresh clone from GitHub shows none of the excluded paths in any of 227 commits across all three branches, the three pre-scrub SHAs (`7f770cc`, `2cb5ab3`, `104868b9`) are unreachable, and the test suite passes (80 tests) from the clone.
-- [ ] **Move the backup to durable storage** — see the warning above.
+- [x] **Flip the repository to public.** *(Done 2026-08-13.)* `https://github.com/IgnacioOQ/RL_Signaling` resolves publicly. This was needed before submission: the manuscript's abstract carries a footnote pointing at this URL, replacing the anonymized OSF view-only link used during review.
+- [ ] **Move the backup to durable storage** — see the warning above. Still the only copy of the pre-scrub history.
 - [ ] **Add the article citation and DOI** to `README.md` once available.
-- [ ] **Check the journal's data/code policy** for a required deposit (Zenodo, OSF) and mint a DOI for the repository if expected.
-- [ ] **Decide on preprint linkage.** The accepted manuscript cannot be distributed here, but *Philosophy of Science* policy typically permits an author-accepted-manuscript postprint elsewhere; link it from the README rather than committing it.
-- [ ] **Flip the repository to public.**
+- [ ] **Check the journal's data/code policy** for a required deposit (Zenodo, OSF) and mint a DOI for the repository if expected. *Partly checked 2026-08-13:* neither the acceptance letter nor the CUP "preparing your materials" page mentions a required data or code deposit, so nothing appears to be mandated. A Zenodo DOI is still worth minting from a tagged release so the paper can cite a fixed snapshot rather than the branch tip.
+- [ ] **Decide on preprint linkage.** The accepted manuscript cannot be distributed here, but *Philosophy of Science* policy typically permits an author-accepted-manuscript postprint elsewhere; link it from the README rather than committing it. *Note (2026-08-13):* the letter states the PDF submitted with the final files is itself posted to CUP's [Accepted Manuscripts page](https://www.cambridge.org/core/journals/philosophy-of-science/accepted-manuscripts), so a publisher-hosted preprint will exist regardless — link that.
+
+## Final files for the publisher
+
+Accepted 2026-08-12; final files due **2026-09-02** via [Editorial Manager](https://www.editorialmanager.com/phos/). The submission bundle is built and clean-room verified at `manuscript/publication/submission_package/` (untracked, on disk only, like the rest of `manuscript/`). It is formatted to the CUP PSA class with Chicago author-date references, one file per figure and table, and the required Acknowledgments / Funding Statement / Declarations sections.
+
+The bundle's content is identical to the accepted version apart from four figure cross-references (one figure previously had no in-text callout at all) and the three required back-matter sections.
 
 ## If the manuscript ever needs to be added back
 
