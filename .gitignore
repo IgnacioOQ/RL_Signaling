@@ -83,6 +83,15 @@ PAPER_WRITING_SKILL.md
 # from history; it remains visible in commits up to 88350e5.
 analytics/
 
+# Working-material notebooks that depend on the local-only analytics/ tree:
+# an "options considered" record and an earlier snapshot of the _final
+# notebook, plus the generators that built them. proof_of_concept_figures_final
+# stays tracked — results/MANIFEST.md names it as the provenance for the
+# paper's §2.2 figure.
+notebooks/proof_of_concept_figures_aggregate.ipynb
+notebooks/proof_of_concept_figures_backup.ipynb
+notebooks/_tools/
+
 # Retired per-repo governance artifacts (superseded by the cps store).
 worklog.jsonl
 WORKLOG.md

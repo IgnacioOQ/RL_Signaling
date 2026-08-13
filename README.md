@@ -59,7 +59,7 @@ HOUSEKEEPING.md                 # recurring repo health check
 pyproject.toml, requirements.txt, LICENSE, .gitignore
 ```
 
-That is the whole repository. Everything relating to the manuscript — the LaTeX sources, the referee correspondence, the revision toolkit and its templates, the LaTeX style notes, and the internal audit trail — is excluded by design; see [PUBLICATION_CHECKLIST.md](PUBLICATION_CHECKLIST.md). The `analytics/` tree — the mathematical derivations behind every quantity the package computes, and the standalone verification scripts that check them — is likewise kept local and not distributed here.
+That is the whole repository. Everything relating to the manuscript — the LaTeX sources, the referee correspondence, the revision toolkit and its templates, the LaTeX style notes, and the internal audit trail — is excluded by design; see [PUBLICATION_CHECKLIST.md](PUBLICATION_CHECKLIST.md). The `analytics/` tree — the mathematical derivations behind every quantity the package computes, and the standalone verification scripts that check them — is likewise kept local and not distributed here, along with the working-material notebooks that depend on it and the generators that built them.
 
 | Module | Purpose |
 |---|---|
@@ -82,8 +82,7 @@ That is the whole repository. Everything relating to the manuscript — the LaTe
 | [notebooks/Final_Costly_Signaling_Run_Simulations.ipynb](notebooks/Final_Costly_Signaling_Run_Simulations.ipynb) | Costly-signaling experiments |
 | [notebooks/plotting_results.ipynb](notebooks/plotting_results.ipynb) | Builds the final figures from the saved CSVs in `results/` |
 | [notebooks/proof_of_concept_figures_final.ipynb](notebooks/proof_of_concept_figures_final.ipynb) | **Produces the paper's proof-of-concept figure** (§2.2). Roth–Erev and Q-learning candidates |
-| [notebooks/proof_of_concept_figures_aggregate.ipynb](notebooks/proof_of_concept_figures_aggregate.ipynb) | Every proof-of-concept plot considered, kept as a record of the options |
-| [notebooks/proof_of_concept_figures_backup.ipynb](notebooks/proof_of_concept_figures_backup.ipynb) | Earlier snapshot of the `_final` notebook |
+| [notebooks/poc_absorbing_states.py](notebooks/poc_absorbing_states.py) | `enumerate_absorbing_rewards` — mean reward over the 2304 absorbing states, used by the notebook above |
 
 ## Setup
 

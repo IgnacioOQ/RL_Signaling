@@ -7,7 +7,7 @@
 - injection: excluded
 - volatility: evolving
 - scope: project-specific
-- last_checked: 2026-08-12
+- last_checked: 2026-08-13
 <!-- content -->
 Per-repository housekeeping workflow for `RL_Signaling`. Run periodically or after any significant batch of changes. The "Latest Report" section at the bottom is the baseline for the next run; demote it to "Previous Report" before appending a new one.
 
@@ -121,6 +121,10 @@ done
 `notebooks/Parameter_Optimization_wchoices.ipynb` is excluded from that sweep in practice — it writes to a Google Drive path and was run on Colab (see `results/MANIFEST.md`, Gap 4).
 
 ### Step 3 — Test count comparison
+
+**Expected counts: 63 tracked, 80 collected locally.** The 17-test difference is `tests/test_revision_tooling.py`, which exercises the LaTeX revision toolkit under `scripts/`. Both are gitignored on purpose — kept on disk as reusable tooling for a future paper, but not part of what this repository publishes (see `.gitignore`, "Manuscript-support tooling"). A local run of `pytest tests/` therefore reports **80**; a fresh clone reports **63**. Neither number is wrong, and the gap is not a finding — do not re-investigate it each run.
+
+Use `git ls-files tests/` to distinguish the two when a count looks off.
 
 Compare pass / fail / skipped counts against the prior "Latest Report." Any regression is a finding to investigate before closing the run. A count that *drops* is only acceptable when tests were deliberately removed with the code they covered — record the reason in the report, as with the 80 → 63 drop when the LaTeX revision toolkit left the repository.
 
@@ -288,7 +292,7 @@ Copy the block below and fill it in for each housekeeping run. The most recent b
 
 ---
 
-## Latest Report
+## Previous Report
 
 **Date:** 2026-08-12
 **Trigger:** Post-publication-prep verification run, requested after the repository was reduced to code-only. First run under the revised Phase 3, which now documents what the test suite covers relative to the paper's model.
@@ -326,5 +330,59 @@ Copy the block below and fill it in for each housekeeping run. The most recent b
 
 ### Follow-ups recorded in the planner store
 - `results/MANIFEST.md` names 32 of the 54 tracked figures literally; the other 22 are covered by grouped family rows in the exploratory table. All 27 **paper** figures are named individually, so traceability is complete — but a reader grepping for an exploratory filename will not find it. Low priority.
+- Move `~/Desktop/RL_Signaling_backups/` to durable storage — still the only reliable copy of the pre-scrub history.
+- Add the article DOI and citation to `README.md`; check the *Philosophy of Science* code-deposit policy before going public.
+
+---
+
+## Latest Report
+
+**Date:** 2026-08-13
+**Trigger:** User request — "make sure the models work well." Verification-focused run; scope was deliberately capped at the unit suite (notebook Restart-and-Run-All and the findings-level test were both offered and declined).
+
+### Artifact counts
+- Tracked files: **100** (down from 135 — see Notable events)
+- Source files (tracked `.py`): **20** — of which 7 are the `rl_signaling/` package
+- Lines of code: 3,019 in the package; **6,461** across all tracked Python (down from 9,664)
+- Registered tests: **63 tracked** (80 collected — see Notable events)
+
+### Static quality
+- Format: 23 of 29 files would be reformatted — pre-existing, notebook-derived. Deliberately not addressed (Phase 2 Step 4). Unchanged from prior report.
+- Lint (`rl_signaling/`): **pass — all checks passed**
+- Lint (repo-wide): **205 findings**, informational — identical to the prior report. Top rules: E402 (55), D103 (40), E501 (24), F821 (23), I001 (17). The count did not fall when `analytics/` was untracked, because `ruff` walks the filesystem and `analytics/` is still on disk.
+- Type check: n/a — no type gate in this repository.
+
+### Tests
+- Unit: **80 passed / 0 failed / 0 skipped** (9.1 s)
+- Comparison vs. previous report: **steady on the tracked suite at 63.** The 17-test surplus is `tests/test_revision_tooling.py`, which is untracked-but-present on disk; see Notable events.
+
+### Repository health
+- Dependencies: 109 packages behind latest. None of the 8 declared runtime dependencies are outdated; the drift is transitive/dev. No EOL pins, no advisories. Not actioned — same reasoning as prior runs: the committed datasets were produced under the current pins, and bumping them risks perturbing the golden-run baseline for no scientific gain.
+- Dead code: 12 findings (F401/F841), **none in the package** — `ruff check rl_signaling/ --select=F401,F841` passes.
+- Docs: **current.** An earlier pass in this run flagged dangling `analytics/` links in `README.md` and `results/MANIFEST.md`; on re-verification against `HEAD` (`0cd1b7e`) they were already repaired. See Notable events.
+- Publication boundary: **intact.** `git ls-files | grep -Ei 'manuscript|slides|reviewer|writing_comments|LP_TEX|PAPER_WRITING'` returns nothing.
+
+### Notable events
+- **The models are sound at the mechanism level.** Every test covering the paper's model passes: the three learning rules with all three selection strategies, the three information regimes, the NMI identities, the hand-derived analytical cases in `test_numerical_sanity.py`, and the seed-12345 golden regression in `test_golden.py`. Nothing has drifted since the baseline.
+- **The findings-level gap recorded last run is still open and was not closed this run.** No test asserts that signalling raises reward or NMI under partial information. That remains evidenced by the committed datasets and the figures traced in `results/MANIFEST.md`, not by pytest. Writing such a test was offered and declined for this run; it stays a standing option, not a defect.
+- Commit `11afe8a` ("Untrack analytics/ from the published repository") landed after the prior report and removed 36 files / 6,857 lines from tracking. This accounts for the entire 135 → 100 tracked-file and 9,664 → 6,461 LOC drop. The directory is intact on disk, and `0cd1b7e` then rewrote the `README.md` and `results/MANIFEST.md` references into unlinked prose. **Process note:** the Phase 4 docs check in this run read a working tree at `11afe8a` and reported the links as dangling; the follow-up filed against them was already satisfied by `0cd1b7e`. Verify the docs check against `git log --oneline -1` before filing link findings.
+- `tests/test_revision_tooling.py` (17 tests) is gitignored but present on disk, so `pytest tests/` collects 80 against the tracked 63. This is **deliberate**, not leftover: `.gitignore` keeps the revision toolkit and its test file local as reusable tooling for a future paper. Phase 3 Step 3 now documents both numbers so future runs stop treating the gap as a finding.
+- The planner MCP credential was expired at the start of the session (`cps_session_start` → `RefreshError`) and was re-authenticated mid-run via `uv run cps-ctrl login --no-browser` from `central_planner_storage`. Session `bf4aa1ed`, worklog `672ee7f6`.
+- **The follow-ups claimed by both 2026-08-12 reports were never actually filed.** The `rl_signaling` repo held exactly two tasks in the planner store, both `done` and both from the July revision round. The carried-forward items below therefore exist only as prose in this file; they were reviewed this run and deliberately left unfiled.
+
+### Files modified this run
+- `HOUSEKEEPING.md`: prior report demoted; this report appended; `last_checked` bumped.
+
+### Follow-ups recorded in the planner store
+Both were filed and both were closed in the same run:
+- `todo.docs.repoint-analytics-links` — **closed, already done.** Commit `0cd1b7e` had repaired the references before the task was filed; the finding was an artefact of checking a stale working tree.
+- `todo.tests.resolve-untracked-revision-tooling` — **closed, resolved.** Not by deleting the file: `.gitignore` keeps it on disk deliberately. Phase 3 Step 3 now documents the expected 63-tracked / 80-collected split.
+
+### Files not addressed
+- `notebooks/poc_absorbing_states.py` is untracked and unexplained — it is neither gitignored nor committed. Left alone this run; decide whether it belongs in the repository or in the local-only `analytics/` tree.
+
+### Follow-ups carried forward, not filed
+These were listed as "recorded in the planner store" by the 2026-08-12 reports but never actually filed. They remain prose-only by explicit decision this run:
+- `results/MANIFEST.md` names 32 of 54 tracked figures literally; all 27 paper figures are individually named, so traceability is complete. Low priority.
 - Move `~/Desktop/RL_Signaling_backups/` to durable storage — still the only reliable copy of the pre-scrub history.
 - Add the article DOI and citation to `README.md`; check the *Philosophy of Science* code-deposit policy before going public.
