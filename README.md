@@ -46,9 +46,6 @@ rl_signaling/                   # the package
   info_theory.py                # mutual-information / NMI metrics
   plotting.py                   # plot helpers, post-processing utilities, plot_simulation_summary
 notebooks/                      # experiment notebooks (see table below)
-analytics/                      # mathematical reference (every quantity the package computes) + independent verification scripts
-  math/                         # notation, info_theory, signaling_model, per-agent derivations, proof_of_concept_markov, and the authoritative roth_erev_polya_mle.md reference
-  scripts/                      # standalone PASS/FAIL verification scripts (see analytics/scripts/SCRIPTS_README.md)
 results/                        # saved CSVs and PNG figures from each experiment
   MANIFEST.md                   # figure -> notebook -> dataset traceability for every published figure
   legacy/datasets/              # the seven simulation outputs behind the paper (~24 MB, tracked deliberately)
@@ -62,7 +59,7 @@ HOUSEKEEPING.md                 # recurring repo health check
 pyproject.toml, requirements.txt, LICENSE, .gitignore
 ```
 
-That is the whole repository. Everything relating to the manuscript — the LaTeX sources, the referee correspondence, the revision toolkit and its templates, the LaTeX style notes, and the internal audit trail — is excluded by design; see [PUBLICATION_CHECKLIST.md](PUBLICATION_CHECKLIST.md).
+That is the whole repository. Everything relating to the manuscript — the LaTeX sources, the referee correspondence, the revision toolkit and its templates, the LaTeX style notes, and the internal audit trail — is excluded by design; see [PUBLICATION_CHECKLIST.md](PUBLICATION_CHECKLIST.md). The `analytics/` tree — the mathematical derivations behind every quantity the package computes, and the standalone verification scripts that check them — is likewise kept local and not distributed here.
 
 | Module | Purpose |
 |---|---|
@@ -72,7 +69,6 @@ That is the whole repository. Everything relating to the manuscript — the LaTe
 | [rl_signaling/games.py](rl_signaling/games.py) | Random and canonical game generators; signal-urn initializers |
 | [rl_signaling/info_theory.py](rl_signaling/info_theory.py) | Mutual information and normalized mutual information |
 | [rl_signaling/plotting.py](rl_signaling/plotting.py) | KDE histograms, regression plots, reward/NMI-vs-cost plots, smoothing, CSV post-processing, the `plot_simulation_summary` helper used by `run_simulation` |
-| [analytics/](analytics/) | Mathematical reference for every quantity the package computes, plus independent verification scripts. See [analytics/ANALYTICS_README.md](analytics/ANALYTICS_README.md) for the reading order; the Markov-chain analysis of the signal-trading game lives in [analytics/math/proof_of_concept_markov.md](analytics/math/proof_of_concept_markov.md), [analytics/math/initialization_basins.md](analytics/math/initialization_basins.md), [analytics/math/argiento_obstruction.md](analytics/math/argiento_obstruction.md), and the authoritative reference [analytics/math/roth_erev_polya_mle.md](analytics/math/roth_erev_polya_mle.md). |
 | [results/MANIFEST.md](results/MANIFEST.md) | Traceability map from each published figure back to the notebook, module function, and dataset that produced it — including four recorded reproducibility gaps. |
 
 ### Notebooks

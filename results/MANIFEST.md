@@ -100,10 +100,10 @@ Retained as a record of what was examined. Grouped by why they exist.
 | Prefix-convention TD complex | `TD-learning_complex_randomized_Agent_0_{NMI,avg_reward,final_reward}.png` (3) | Superseded — see Gap 3. |
 | TD complex alternates | `td_complex_random_{nmi,reward}.png`, `td_complex_regression.png` (3) | Near-duplicates of the appendix TD figures under different randomization. |
 | Proof-of-concept alternates | `proof_of_concept_plot.png`, `proof_of_concept_plot_QL.png` (2) | `_QL` is the Q-learning companion; the paper prints only the Roth–Erev panel. |
-| Initialization study | `init_smooth_{nmi,r}.png` (2) | From [Initializations_test.ipynb](../notebooks/Initializations_test.ipynb); the initialization-basin analysis lives in `analytics/math/initialization_basins.md`. |
+| Initialization study | `init_smooth_{nmi,r}.png` (2) | From [Initializations_test.ipynb](../notebooks/Initializations_test.ipynb); the initialization-basin analysis lives in `analytics/math/initialization_basins.md`, which is kept local and not distributed with this repository. |
 | Worked example | `example_process_{nmi,rewards}.png` (2) | Single-run illustration of one simulation trajectory. |
 | Costly-signal NMI | `q_nmi_costlysignal.png` (1) | Cut from the appendix figure pair. |
-| Post-refactor check | `new_code/plots/figure_ql_vs_re_canonical.png` (1) | From [analytics/scripts/figure_ql_vs_re_canonical.py](../analytics/scripts/figure_ql_vs_re_canonical.py) — the only figure whose filename appears literally in the source. Verifies the refactored package reproduces the legacy comparison. |
+| Post-refactor check | `new_code/plots/figure_ql_vs_re_canonical.png` (1) | From `analytics/scripts/figure_ql_vs_re_canonical.py` (kept local, not distributed) — the only figure whose filename appears literally in the source. Verifies the refactored package reproduces the legacy comparison. |
 
 ## Datasets
 
