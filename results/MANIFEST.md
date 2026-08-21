@@ -34,18 +34,18 @@ Both are driven from [notebooks/plotting_results.ipynb](../notebooks/plotting_re
 | Paper location | Figure file | Produced by | Input data | Traced |
 |:---|:---|:---|:---|:---|
 | §2.2 Proof of Concept, `fig:proof-of-concept` | `proof_of_concept/proof_of_concept_plot_RE.png` | [proof_of_concept_figures_final.ipynb](../notebooks/proof_of_concept_figures_final.ipynb) | generated in-notebook | inferred — see Gap 1 |
-| §3.1 Matching Games, `fig:canonical_figures` | `legacy/plots/Roth-Erev_canonical_Agent_0_final_reward.png` | `plot_histograms_with_kde`, prefix `Roth-Erev_canonical` | `legacy/datasets/urnagent_results_canonical.csv` | confirmed |
-| §3.1 | `legacy/plots/Q-learning_canonical_Agent_0_final_reward.png` | `plot_histograms_with_kde`, prefix `Q-learning_canonical` | `legacy/datasets/qlearning_results_canonical.csv` | confirmed |
-| §3.1 | `legacy/plots/Roth-Erev_canonical_Agent_0_NMI.png` | `plot_histograms_with_kde`, prefix `Roth-Erev_canonical` | `legacy/datasets/urnagent_results_canonical.csv` | confirmed |
-| §3.1 | `legacy/plots/Q-learning_canonical_Agent_0_NMI.png` | `plot_histograms_with_kde`, prefix `Q-learning_canonical` | `legacy/datasets/qlearning_results_canonical.csv` | confirmed |
-| §3.1 | `legacy/plots/Roth-Erev_canonical_regression_signals_True_fullinfo_False.png` | `plot_regression`, prefix `Roth-Erev_canonical` | `legacy/datasets/urnagent_results_canonical.csv` | confirmed |
-| §3.1 | `legacy/plots/Q-learning_canonical_regression_signals_True_fullinfo_False.png` | `plot_regression`, prefix `Q-learning_canonical` | `legacy/datasets/qlearning_results_canonical.csv` | confirmed |
-| §3.2 Random Games, `fig:random_figures` | `legacy/plots/Roth-Erev_complex_randomized_Agent_0_final_reward.png` | `plot_histograms_with_kde`, prefix `Roth-Erev_complex_randomized` | `legacy/datasets/urnagent_results_complex_randomized.csv` | confirmed |
-| §3.2 | `legacy/plots/Q-learning_complex_randomized_Agent_0_final_reward.png` | `plot_histograms_with_kde`, prefix `Q-learning_complex_randomized` | `legacy/datasets/qlearning_results_complex_randomized.csv` | confirmed |
-| §3.2 | `legacy/plots/Roth-Erev_complex_randomized_Agent_0_NMI.png` | `plot_histograms_with_kde`, prefix `Roth-Erev_complex_randomized` | `legacy/datasets/urnagent_results_complex_randomized.csv` | confirmed |
-| §3.2 | `legacy/plots/Q-learning_complex_randomized_Agent_0_NMI.png` | `plot_histograms_with_kde`, prefix `Q-learning_complex_randomized` | `legacy/datasets/qlearning_results_complex_randomized.csv` | confirmed |
-| §3.2 | `legacy/plots/Roth-Erev_complex_randomized_regression_signals_True_fullinfo_False.png` | `plot_regression`, prefix `Roth-Erev_complex_randomized` | `legacy/datasets/urnagent_results_complex_randomized.csv` | confirmed |
-| §3.2 | `legacy/plots/Q-learning_complex_randomized_regression_signals_True_fullinfo_False.png` | `plot_regression`, prefix `Q-learning_complex_randomized` | `legacy/datasets/qlearning_results_complex_randomized.csv` | confirmed |
+| §3.1 Matching Games, `fig:canonical_figures` | `plots/Roth-Erev_canonical_Agent_0_final_reward.png` | `plot_histograms_with_kde`, prefix `Roth-Erev_canonical` | `datasets/urnagent_results_canonical.csv` | confirmed |
+| §3.1 | `plots/Q-learning_canonical_Agent_0_final_reward.png` | `plot_histograms_with_kde`, prefix `Q-learning_canonical` | `datasets/qlearning_results_canonical.csv` | confirmed |
+| §3.1 | `plots/Roth-Erev_canonical_Agent_0_NMI.png` | `plot_histograms_with_kde`, prefix `Roth-Erev_canonical` | `datasets/urnagent_results_canonical.csv` | confirmed |
+| §3.1 | `plots/Q-learning_canonical_Agent_0_NMI.png` | `plot_histograms_with_kde`, prefix `Q-learning_canonical` | `datasets/qlearning_results_canonical.csv` | confirmed |
+| §3.1 | `plots/Roth-Erev_canonical_regression_signals_True_fullinfo_False.png` | `plot_regression`, prefix `Roth-Erev_canonical` | `datasets/urnagent_results_canonical.csv` | confirmed |
+| §3.1 | `plots/Q-learning_canonical_regression_signals_True_fullinfo_False.png` | `plot_regression`, prefix `Q-learning_canonical` | `datasets/qlearning_results_canonical.csv` | confirmed |
+| §3.2 Random Games, `fig:random_figures` | `plots/Roth-Erev_complex_randomized_Agent_0_final_reward.png` | `plot_histograms_with_kde`, prefix `Roth-Erev_complex_randomized` | `datasets/urnagent_results_complex_randomized.csv` | confirmed |
+| §3.2 | `plots/Q-learning_complex_randomized_Agent_0_final_reward.png` | `plot_histograms_with_kde`, prefix `Q-learning_complex_randomized` | `datasets/qlearning_results_complex_randomized.csv` | confirmed |
+| §3.2 | `plots/Roth-Erev_complex_randomized_Agent_0_NMI.png` | `plot_histograms_with_kde`, prefix `Roth-Erev_complex_randomized` | `datasets/urnagent_results_complex_randomized.csv` | confirmed |
+| §3.2 | `plots/Q-learning_complex_randomized_Agent_0_NMI.png` | `plot_histograms_with_kde`, prefix `Q-learning_complex_randomized` | `datasets/qlearning_results_complex_randomized.csv` | confirmed |
+| §3.2 | `plots/Roth-Erev_complex_randomized_regression_signals_True_fullinfo_False.png` | `plot_regression`, prefix `Roth-Erev_complex_randomized` | `datasets/urnagent_results_complex_randomized.csv` | confirmed |
+| §3.2 | `plots/Q-learning_complex_randomized_regression_signals_True_fullinfo_False.png` | `plot_regression`, prefix `Q-learning_complex_randomized` | `datasets/qlearning_results_complex_randomized.csv` | confirmed |
 
 `Roth-Erev` is the Roth–Erev urn agent (`UrnAgent`); its datasets are named `urnagent_*`.
 
@@ -53,20 +53,20 @@ Both are driven from [notebooks/plotting_results.ipynb](../notebooks/plotting_re
 
 | Paper location | Figure file | Produced by | Input data | Traced |
 |:---|:---|:---|:---|:---|
-| Costly Signals and Alarms, `fig:costlysignals` | `legacy/plots/q_rewards_costlysignal.png` | costly-signal run | `legacy/datasets/qlearning_results_canonical_costly_signal.csv` | inferred — Gap 2 |
-| Costly Signals, `fig:costlysignals` | `legacy/plots/q_signalusage_costlysignal.png` | costly-signal run | same | inferred — Gap 2 |
-| Costly Signals, `fig:rewardvscost` | `legacy/plots/q_rewardvscost_costlysignal.png` | `plot_regression_cost` family, [plotting.py:567](../rl_signaling/plotting.py#L567) | same | inferred — Gap 2 |
-| Costly Signals, `fig:rewardvscost` | `legacy/plots/q_nmivscost_costlysignal.png` | NMI-vs-cost variant, [plotting.py:630](../rl_signaling/plotting.py#L630) | same | inferred — Gap 2 |
-| TD Results, `fig:td_results` | `legacy/plots/TD-learning_canonical_Agent_0_final_reward.png` | `plot_histograms_with_kde`, prefix `TD-learning_canonical` | `legacy/datasets/td_learning_results_canonical.csv` | confirmed |
-| TD Results | `legacy/plots/TD-learning_canonical_Agent_0_NMI.png` | `plot_histograms_with_kde`, prefix `TD-learning_canonical` | same | confirmed |
-| TD Results | `legacy/plots/TD-learning_canonical_regression_signals_True_fullinfo_False.png` | `plot_regression`, prefix `TD-learning_canonical` | same | confirmed |
-| TD Results | `legacy/plots/td_complex_reward.png` | TD complex-randomized run | `legacy/datasets/td_learning_results_complex_randomized.csv` | inferred — Gap 3 |
-| TD Results | `legacy/plots/td_complex_nmi.png` | TD complex-randomized run | same | inferred — Gap 3 |
-| TD Results | `legacy/plots/td_complex_random_regression.png` | TD complex-randomized run | same | inferred — Gap 3 |
-| Optimization / Matching Games, `fig:canon_opt` | `legacy/plots/q_opt_canonical.png` | [Parameter_Optimization_wchoices.ipynb](../notebooks/Parameter_Optimization_wchoices.ipynb) | Colab sweep, 500 settings × 200 trials | inferred — Gap 4 |
-| Optimization / Matching Games | `legacy/plots/td_opt_canonical.png` | same | same | inferred — Gap 4 |
-| Optimization / Random Games, `fig:randomized_opt` | `legacy/plots/q_opt_games.png` | same | same | inferred — Gap 4 |
-| Optimization / Random Games | `legacy/plots/td_opt_games.png` | same | same | inferred — Gap 4 |
+| Costly Signals and Alarms, `fig:costlysignals` | `plots/q_rewards_costlysignal.png` | costly-signal run | `datasets/qlearning_results_canonical_costly_signal.csv` | inferred — Gap 2 |
+| Costly Signals, `fig:costlysignals` | `plots/q_signalusage_costlysignal.png` | costly-signal run | same | inferred — Gap 2 |
+| Costly Signals, `fig:rewardvscost` | `plots/q_rewardvscost_costlysignal.png` | `plot_regression_cost` family, [plotting.py:567](../rl_signaling/plotting.py#L567) | same | inferred — Gap 2 |
+| Costly Signals, `fig:rewardvscost` | `plots/q_nmivscost_costlysignal.png` | NMI-vs-cost variant, [plotting.py:630](../rl_signaling/plotting.py#L630) | same | inferred — Gap 2 |
+| TD Results, `fig:td_results` | `plots/TD-learning_canonical_Agent_0_final_reward.png` | `plot_histograms_with_kde`, prefix `TD-learning_canonical` | `datasets/td_learning_results_canonical.csv` | confirmed |
+| TD Results | `plots/TD-learning_canonical_Agent_0_NMI.png` | `plot_histograms_with_kde`, prefix `TD-learning_canonical` | same | confirmed |
+| TD Results | `plots/TD-learning_canonical_regression_signals_True_fullinfo_False.png` | `plot_regression`, prefix `TD-learning_canonical` | same | confirmed |
+| TD Results | `plots/td_complex_reward.png` | TD complex-randomized run | `datasets/td_learning_results_complex_randomized.csv` | inferred — Gap 3 |
+| TD Results | `plots/td_complex_nmi.png` | TD complex-randomized run | same | inferred — Gap 3 |
+| TD Results | `plots/td_complex_random_regression.png` | TD complex-randomized run | same | inferred — Gap 3 |
+| Optimization / Matching Games, `fig:canon_opt` | `plots/q_opt_canonical.png` | [Parameter_Optimization_wchoices.ipynb](../notebooks/Parameter_Optimization_wchoices.ipynb) | Colab sweep, 500 settings × 200 trials | inferred — Gap 4 |
+| Optimization / Matching Games | `plots/td_opt_canonical.png` | same | same | inferred — Gap 4 |
+| Optimization / Random Games, `fig:randomized_opt` | `plots/q_opt_games.png` | same | same | inferred — Gap 4 |
+| Optimization / Random Games | `plots/td_opt_games.png` | same | same | inferred — Gap 4 |
 
 ## Known reproducibility gaps
 
@@ -86,7 +86,7 @@ pip install -e .
 jupyter nbconvert --to notebook --execute --inplace notebooks/plotting_results.ipynb
 ```
 
-This reads `results/legacy/datasets/*.csv` and rewrites the 15 "confirmed" figures into `results/legacy/plots/`. It does not regenerate the figures listed under Gaps 1–4.
+This reads `results/datasets/*.csv` and rewrites the 15 "confirmed" figures into `results/plots/`. It does not regenerate the figures listed under Gaps 1–4.
 
 ## Exploratory figures (not in the paper)
 
@@ -103,11 +103,10 @@ Retained as a record of what was examined. Grouped by why they exist.
 | Initialization study | `init_smooth_{nmi,r}.png` (2) | From [Initializations_test.ipynb](../notebooks/Initializations_test.ipynb); the initialization-basin analysis lives in `analytics/math/initialization_basins.md`, which is kept local and not distributed with this repository. |
 | Worked example | `example_process_{nmi,rewards}.png` (2) | Single-run illustration of one simulation trajectory. |
 | Costly-signal NMI | `q_nmi_costlysignal.png` (1) | Cut from the appendix figure pair. |
-| Post-refactor check | `new_code/plots/figure_ql_vs_re_canonical.png` (1) | From `analytics/scripts/figure_ql_vs_re_canonical.py` (kept local, not distributed) — the only figure whose filename appears literally in the source. Verifies the refactored package reproduces the legacy comparison. |
 
 ## Datasets
 
-`results/legacy/datasets/` holds the seven simulation outputs behind the paper (~24 MB, tracked deliberately). Each is 10,000 simulations per condition.
+`results/datasets/` holds the seven simulation outputs behind the paper (~24 MB, tracked deliberately). Each is 10,000 simulations per condition.
 
 | File | Agent | Game |
 |:---|:---|:---|

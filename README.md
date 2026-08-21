@@ -48,10 +48,9 @@ rl_signaling/                   # the package
 notebooks/                      # experiment notebooks (see table below)
 results/                        # saved CSVs and PNG figures from each experiment
   MANIFEST.md                   # figure -> notebook -> dataset traceability for every published figure
-  legacy/datasets/              # the seven simulation outputs behind the paper (~24 MB, tracked deliberately)
-  legacy/plots/                 # figures from the original run
+  datasets/                     # the seven simulation outputs behind the paper (~24 MB, tracked deliberately)
+  plots/                        # the figures built from those datasets
   proof_of_concept/             # proof-of-concept figures
-  new_code/plots/               # post-refactor verification figure
 tests/                          # pytest suite (63 tests, ~4 s); includes a golden-run regression against tests/golden/baseline.json
 README.md                       # this file
 HOUSEKEEPING.md                 # recurring repo health check
@@ -148,7 +147,7 @@ The legacy `NetMultiAgentEnv` / `TempNetMultiAgentEnv` classes and `simulation_f
 
 **[results/MANIFEST.md](results/MANIFEST.md) is the authoritative map** from each of the paper's 27 figures to the code and data behind it. Read it first — figure filenames are constructed at save time from a prefix plus a variable name, so grepping the codebase for a figure's filename will find nothing.
 
-The seven datasets behind the published figures are committed under `results/legacy/datasets/`, so the figures can be rebuilt without re-running the simulations:
+The seven datasets behind the published figures are committed under `results/datasets/`, so the figures can be rebuilt without re-running the simulations:
 
 ```bash
 pip install -e .
